@@ -48,6 +48,7 @@ we use the plain `+NNN` versionName.
 | De-branding | our name + our GitHub links everywhere user-visible | `values/strings.xml`, `ui/AboutPane.kt`, `ui/Backstage.kt`, `platform/PresentationServer.kt` |
 | 白い熊 速記 UI page | the whole house look, settable + live-previewed | `ui/SokkiUiPane.kt`, `ui/SokkiPickers.kt`, `settings/SokkiUi.kt`, `ui/theme/UiFonts.kt` |
 | Export / Import | category ZIP + the Kōjiki-style panel | `ui/SokkiExportImport.kt`, `settings/SokkiBackup.kt` |
+| Pen pressure | measured input band + response curve, per tool | `ui/SokkiPressure.kt`, `core/stroke/StrokeEngine.kt`, `core/tools/ToolConfig.kt` |
 | 保存復元 automation | token-gated receiver + foreground service | `automation/` |
 
 ### The 白い熊 速記 UI page
@@ -55,8 +56,8 @@ we use the plain `+NNN` versionName.
 `BackstageView.SOKKI_UI` — reached from the sidebar, or by **long-pressing the Preferences cog**.
 Built in the kxkb page format: 20sp bold headings underlined only as wide as their own text, a thin
 hairline opening each section, rows indented 24dp per level, and row padding that is itself a
-setting (tight by default). Sections: Export/Import · Theme · Colours · Typography · Shape & lines ·
-Icons & density, each with a live preview.
+setting (tight by default). Sections: Export/Import · Pen pressure · Theme · Colours · Typography ·
+Shape & lines · Icons & density, each with a live preview.
 
 - **`settings/SokkiUi.kt`** holds every attribute with its black-yellow default, and `applyTo()`
   repaints upstream's computed `Palette`. Upstream's appearance modes and Material You paths are
@@ -66,6 +67,27 @@ Icons & density, each with a live preview.
 - **Fonts** come from the existing `FontCatalog` — bundled families, generic tokens and
   user-imported files alike — so there is no second font store. `UiFonts` only wraps the Android
   `Typeface` for Compose, and the choice drives `MaterialTheme.typography` app-wide.
+
+### Pen pressure — the input band
+
+A stylus reports only a slice of `MotionEvent.getPressure()`'s 0..1 while writing, and
+`StrokeEngine`'s response logistic is centred on 0.5 — so an uncalibrated pen writes on the curve's
+flat lower rail, where the response *compresses* the swings it exists to open up. `ToolConfig` therefore
+carries `pressureLow` / `pressureHigh` (the band, stretched back over 0..1 by
+`StrokeEngine.normalizePressure` **before** the curve) and `pressureCurve` (the logistic `k`).
+
+- **Defaults are the identity** — `0.0` / `1.0` / `8.0`, exactly the pre-band behaviour. Both codecs
+  write the three keys only when they are off-default, so notes drawn before this reload byte-identical.
+- **The band is style, not global state**: copied into the stroke at pen-down like every other
+  `ToolConfig` field, so a note reopens as drawn even after the pen is recalibrated.
+- **Measure it, never guess it.** The UI page's pad (`ui/SokkiPressure.kt`) draws with the very config
+  being edited — the app's own `StrokeEngine` and `AndroidRenderer`, not a lookalike — and reports
+  p5–p95 from a 1000-bucket histogram of stylus samples. Finger samples are drawn but never measured.
+- The page writes all four pressure tools (PEN, CALLIGRAPHY, SPEED, TAPER) at once, since the band is
+  a property of the pen and the hand; each tool's own popup keeps a per-tool override.
+- Ratio ceiling: thick:thin is capped at `1 / pressureMinFactor`, and `sensitivityToMinFactor` bottoms
+  out at `m = 0.1` — so 10:1 is the most the current sliders can express. Widening it means changing
+  the `0.9` constant in `ToolConversions`, not the band.
 
 ### Backup, and the 保存復元 contract
 
