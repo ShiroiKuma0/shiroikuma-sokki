@@ -1083,7 +1083,7 @@ class DocumentCodec(
          *  writers (or files with no "writer" at all) is compacted once at load instead. */
         private const val SIMPLIFIED_SINCE = 43
 
-        private const val NOT_XNOTE = "Not an xnotes document"
+        private const val NOT_XNOTE = "Not a 白い熊 速記 document"
     }
 }
 
