@@ -52,7 +52,7 @@ internal fun TextToolConfigPopup(editor: Editor, onDismiss: () -> Unit) {
         if (next != editor.newNoteFlow) showNewNoteRow = true
     }
 
-    DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
+    SokkiDropdownMenu(expanded = true, onDismissRequest = onDismiss) {
         Column(Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
             Text("Text", color = palette.text.toComposeColor(), fontSize = 15.sp)
 
@@ -126,7 +126,7 @@ private fun FaceDropdown(current: FontFace, monoOnly: Boolean = false, onPick: (
             )
             Text(" ▾", color = palette.textDim.toComposeColor(), fontSize = 11.sp)
         }
-        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+        SokkiDropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             FontMenuItems(current = current, monoOnly = monoOnly) {
                 if (it != null) onPick(it)
                 open = false

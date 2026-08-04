@@ -133,7 +133,7 @@ private fun FacePicker(current: FontFace, onPick: (FontFace) -> Unit) {
             )
             Text(" ▾", color = palette.textDim.toComposeColor(), fontSize = 11.sp)
         }
-        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+        SokkiDropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             FontMenuItems(current = current) {
                 if (it != null) onPick(it)
                 open = false

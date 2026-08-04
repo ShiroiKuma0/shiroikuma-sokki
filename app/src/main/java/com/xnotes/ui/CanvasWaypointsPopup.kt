@@ -38,7 +38,7 @@ fun CanvasWaypointsPopup(editor: InfiniteEditor, onDismiss: () -> Unit) {
     val palette = LocalPalette.current
     var name by remember { mutableStateOf("") }
 
-    DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
+    SokkiDropdownMenu(expanded = true, onDismissRequest = onDismiss) {
         Column(Modifier.width(268.dp).padding(horizontal = 14.dp, vertical = 8.dp)) {
             PopupTitle("WAYPOINTS")
 
