@@ -67,6 +67,11 @@ internal fun Palette.composeColorScheme(): ColorScheme {
             surfaceContainer = palette.menuBg.toComposeColor(),
             surfaceContainerHigh = palette.surface.toComposeColor(),
             surfaceContainerHighest = palette.surfaceHi.toComposeColor(),
+            // The inverse roles are what a Snackbar draws itself with. Left at the baseline they
+            // are a light grey card, which in a black app reads as a bug rather than a message.
+            inverseSurface = palette.menuBg.toComposeColor(),
+            inverseOnSurface = palette.text.toComposeColor(),
+            inversePrimary = accent,
         )
     } else {
         lightColorScheme(
@@ -85,6 +90,9 @@ internal fun Palette.composeColorScheme(): ColorScheme {
             surfaceContainer = palette.menuBg.toComposeColor(),
             surfaceContainerHigh = palette.panel.toComposeColor(),
             surfaceContainerHighest = palette.bg.toComposeColor(),
+            inverseSurface = palette.text.toComposeColor(),
+            inverseOnSurface = palette.paper.toComposeColor(),
+            inversePrimary = accent,
         )
     }
     val m = materialColors

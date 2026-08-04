@@ -1080,7 +1080,8 @@ internal fun DropdownMenu(
         offset = LocalMenuOffset.current,
         properties = properties,
         containerColor = palette.menuBg.toComposeColor(),
-        border = BorderStroke(1.dp, palette.border.toComposeColor()),
+        // Fork: the 白い熊 速記 UI page owns the border's colour and width.
+        border = sokkiSurfaceBorder(),
     ) {
         // A menu opened from inside this one hangs off its own row, not beside the rail.
         CompositionLocalProvider(LocalMenuOffset provides DpOffset.Zero) { content() }
@@ -1104,10 +1105,10 @@ internal fun AlertDialog(
     shape: Shape = MaterialTheme.shapes.large,
     containerColor: Color = LocalPalette.current.menuBg.toComposeColor(),
 ) {
-    androidx.compose.material3.AlertDialog(
+    com.xnotes.ui.AlertDialog(
         onDismissRequest = onDismissRequest,
         confirmButton = confirmButton,
-        modifier = modifier.border(1.dp, LocalPalette.current.border.toComposeColor(), shape),
+        modifier = modifier.border(sokkiSurfaceBorder(), shape),
         dismissButton = dismissButton,
         title = title,
         text = text,
