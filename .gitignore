@@ -27,3 +27,7 @@ keystore.properties
 # --- Misc ---
 .DS_Store
 *.log
+
+# Python bytecode from the asset generators in tools/
+__pycache__/
+*.pyc

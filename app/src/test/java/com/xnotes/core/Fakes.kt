@@ -45,6 +45,9 @@ class FakeRenderer : Renderer {
         super.strokePolyline(pts, from, count, pen)
     }
 
+    /** Polylines with their geometry kept, for tests that assert *where* a ruling landed. */
+    val polylines = mutableListOf<Pair<List<Pt>, Pen>>()
+
     override fun save() { ops += "save" }
     override fun restore() { ops += "restore" }
     override fun saveLayerAlpha(bounds: Rect, alpha: Double) { ops += "saveLayerAlpha" }
@@ -64,6 +67,7 @@ class FakeRenderer : Renderer {
     override fun strokePolyline(points: List<Pt>, pen: Pen) {
         ops += "strokePolyline"
         for (i in 0 until points.size - 1) segments += points[i] to points[i + 1]
+        polylines += points to pen
     }
     override fun strokePolygon(points: List<Pt>, pen: Pen) { ops += "strokePolygon" }
     override fun strokeEllipse(center: Pt, rx: Double, ry: Double, pen: Pen) { ops += "strokeEllipse" }
