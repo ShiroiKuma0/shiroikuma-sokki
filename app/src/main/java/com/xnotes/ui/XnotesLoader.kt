@@ -16,7 +16,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.xnotes.R
 
 /**
- * Fullscreen launch animation: the exported frame-by-frame glitch loader
+ * Fullscreen launch animation: the 白い熊 速記 mark being written
  * ([R.drawable.xnotes_loader] — a 24-frame ~1.6s [AnimationDrawable]) centred on a
  * pure-black stage that matches the frames' flat black background exactly, so
  * there's no edge seam. Shown while the session restores, then faded out.
