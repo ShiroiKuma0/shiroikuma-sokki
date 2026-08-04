@@ -74,6 +74,7 @@ import com.xnotes.settings.LiveSettings
 import com.xnotes.settings.Preferences
 import com.xnotes.settings.Settings
 import com.xnotes.settings.SettingsRepository
+import com.xnotes.settings.SokkiUi
 import com.xnotes.ui.theme.MaterialColors
 import com.xnotes.ui.theme.Palette
 import com.xnotes.ui.theme.dynamicMaterialColors
@@ -1452,13 +1453,17 @@ class Editor(context: Context, val pane: Pane = Pane.PRIMARY) : ToolPopupHost, S
     private fun buildPalette(p: Preferences): Palette {
         val appearance = resolvedAppearance(p)
         val dark = appearance != "light"
-        if (p.paletteStyle == "material") {
+        val base = if (p.paletteStyle == "material") {
             val m = p.materialSeed?.let { MaterialColors.seeded(it, dark = dark) }
                 ?: dynamicMaterialColors(appContext, dark = dark)
                 ?: MaterialColors.seeded(p.accentColor, dark = dark)
-            return Palette.material(appearance, m)
+            Palette.material(appearance, m)
+        } else {
+            Palette.forAppearance(appearance, p.accentColor)
         }
-        return Palette.forAppearance(appearance, p.accentColor)
+        // The 白い熊 速記 UI theme has the last word: on (the default) it repaints every chrome
+        // token from the page's own settings, off it leaves upstream's chrome exactly as built.
+        return settings.sokkiUi.applyTo(base)
     }
 
     /** The OS dark/light state flipped (uiMode arrives via onConfigurationChanged, no activity
@@ -1506,6 +1511,53 @@ class Editor(context: Context, val pane: Pane = Pane.PRIMARY) : ToolPopupHost, S
     }
 
     fun toggleFullscreen() = setFullscreenPref(!fullscreen)
+
+    /** The live settings as JSON — what the backup exports. */
+    fun settingsJson(): org.json.JSONObject = settings.toJson()
+
+    /**
+     * Adopt an imported settings blob wholesale and bring the running app onto it. Everything the
+     * UI page and Preferences can change is re-read here, so a restore shows up without a restart;
+     * the one thing that still wants one is a font file that Compose has already cached.
+     */
+    fun applyImportedSettings(merged: org.json.JSONObject) {
+        settings = com.xnotes.settings.Settings.fromJson(merged)
+        sokkiUi = settings.sokkiUi
+        recentUiColors = settings.recentColors
+        browseRoot = settings.browseRoot
+        applyPagePrefsToState(settings.prefs)
+        republishFlow(invalidate = true)
+        state.invalidateAllCaches()
+        refreshView()
+        settingsRepo.save(settings)
+    }
+
+    /** The live 白い熊 速記 UI theme. Every row on the UI page writes through [applySokkiUi]. */
+    var sokkiUi by mutableStateOf(settings.sokkiUi)
+        private set
+
+    /** Colours picked before, newest first — what the picker's one-click boxes are prefilled with. */
+    var recentUiColors by mutableStateOf(settings.recentColors)
+        private set
+
+    /**
+     * Apply an edited UI theme live and persist it. The chrome is rebuilt from the same
+     * [buildPalette] path the appearance modes use, so a colour change lands everywhere at once
+     * rather than only where the page happens to preview it.
+     */
+    fun applySokkiUi(ui: SokkiUi, remember: Rgba? = null) {
+        settings = settings.copy(sokkiUi = ui)
+        if (remember != null) {
+            settings = settings.rememberColor(remember)
+            recentUiColors = settings.recentColors
+        }
+        sokkiUi = ui
+        applyPagePrefsToState(settings.prefs)
+        republishFlow(invalidate = true)
+        state.invalidateAllCaches()
+        refreshView()
+        settingsRepo.save(settings)
+    }
 
     /** Apply edited preferences live and persist (used by the Preferences dialog). */
     fun applyPreferences(p: Preferences) {
