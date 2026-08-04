@@ -20,6 +20,9 @@ import com.xnotes.core.pal.TextMeasurer
 class FakeRenderer : Renderer {
     val ops = mutableListOf<String>()
 
+    /** Polylines with their geometry kept, for tests that assert *where* a ruling landed. */
+    val polylines = mutableListOf<Pair<List<Pt>, Pen>>()
+
     override fun save() { ops += "save" }
     override fun restore() { ops += "restore" }
     override fun saveLayerAlpha(bounds: Rect, alpha: Double) { ops += "saveLayerAlpha" }
@@ -33,7 +36,10 @@ class FakeRenderer : Renderer {
     override fun fillCircle(center: Pt, radius: Double, color: Rgba) { ops += "fillCircle" }
     override fun fillEllipse(center: Pt, rx: Double, ry: Double, color: Rgba) { ops += "fillEllipse" }
     override fun strokeRect(rect: Rect, pen: Pen) { ops += "strokeRect" }
-    override fun strokePolyline(points: List<Pt>, pen: Pen) { ops += "strokePolyline" }
+    override fun strokePolyline(points: List<Pt>, pen: Pen) {
+        ops += "strokePolyline"
+        polylines += points to pen
+    }
     override fun strokePolygon(points: List<Pt>, pen: Pen) { ops += "strokePolygon" }
     override fun strokeEllipse(center: Pt, rx: Double, ry: Double, pen: Pen) { ops += "strokeEllipse" }
     override fun drawRaster(raster: RasterSurface, dest: Rect, src: Rect?) { ops += "drawRaster" }
