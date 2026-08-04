@@ -403,7 +403,7 @@
     <string name="err_clipboard_no_image">The clipboard has no image to paste.</string>
     <string name="err_read_sticker">Could not read the sticker.</string>
     <string name="err_open_that_note">Could not open that note.</string>
-    <string name="err_not_xnotes">Not an xnotes document.</string>
+    <string name="err_not_xnotes">Not a 白い熊 速記 document.</string>
     <string name="err_open_note">Could not open the note.</string>
     <string name="note_forked">This note changed elsewhere. Your edits are now in “%1$s”.</string>
     <string name="canvas_forked">This canvas changed elsewhere. Your edits are now in “%1$s”.</string>
@@ -463,11 +463,11 @@
     <!-- About -->
     <string name="app_tagline">A handwriting notes and sketching app for Android</string>
     <string name="copy_version">Copy version</string>
-    <string name="help_make_better">Help make xnotes better</string>
+    <string name="help_make_better">Help make 白い熊 速記 better</string>
     <string name="report_bug">Report a bug</string>
     <string name="request_feature">Request a feature</string>
     <string name="sponsor">Sponsor</string>
-    <string name="enjoying_xnotes">"Enjoying xnotes? "</string>
+    <string name="enjoying_xnotes">"Enjoying 白い熊 速記? "</string>
     <string name="star_on_github">Star it on GitHub</string>
     <string name="mit_license">MIT License</string>
     <string name="version_n">Version %1$s</string>

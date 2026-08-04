@@ -374,7 +374,7 @@
     <string name="err_clipboard_no_image">剪贴板中没有可粘贴的图片。</string>
     <string name="err_read_sticker">无法读取贴纸。</string>
     <string name="err_open_that_note">无法打开该笔记。</string>
-    <string name="err_not_xnotes">该文件不是 xnotes 文档。</string>
+    <string name="err_not_xnotes">该文件不是 白い熊 速記 文档。</string>
     <string name="err_open_note">无法打开笔记。</string>
     <string name="note_forked">此笔记已在其他位置更改。你的编辑现已保存在“%1$s”中。</string>
     <string name="canvas_forked">此画布已在其他位置更改。你的编辑现已保存在“%1$s”中。</string>
@@ -433,11 +433,11 @@
     <!-- About -->
     <string name="app_tagline">Android 手写笔记与素描应用</string>
     <string name="copy_version">复制版本号</string>
-    <string name="help_make_better">帮助改进 xnotes</string>
+    <string name="help_make_better">帮助改进 白い熊 速記</string>
     <string name="report_bug">报告问题</string>
     <string name="request_feature">功能建议</string>
     <string name="sponsor">赞助</string>
-    <string name="enjoying_xnotes">喜欢 xnotes？</string>
+    <string name="enjoying_xnotes">喜欢 白い熊 速記？</string>
     <string name="star_on_github">在 GitHub 上加星</string>
     <string name="mit_license">MIT 许可证</string>
     <string name="version_n">版本 %1$s</string>
