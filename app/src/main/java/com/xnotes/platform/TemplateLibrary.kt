@@ -111,7 +111,7 @@ object TemplateLibrary {
     private fun loadBundled(am: AssetManager): List<Entry> {
         fun read(path: String) = runCatching { am.open(path).use { String(it.readBytes(), Charsets.UTF_8) } }.getOrNull()
         val out = ArrayList<Entry>()
-        for (id in listOf("lines", "dots", "grid")) {
+        for (id in listOf("lines", "dots", "grid", "sokki")) {
             val text = read("$ASSET_DIR/$id$EXT") ?: continue
             val t = runCatching { TemplateReader.read(text) }.getOrNull() ?: continue
             out += Entry(id, t, text, Source.BUILT_IN)
