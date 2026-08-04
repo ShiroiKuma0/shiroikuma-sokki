@@ -179,7 +179,7 @@ private fun CodeBlockButton(editor: Editor, lang: String?) {
                 )
             }
         }
-        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+        SokkiDropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
             val current = when {
                 lang == null -> editor.lastCodeLanguage()
                 lang.isEmpty() -> "plain"
@@ -341,7 +341,7 @@ private fun FontFaceButton(editor: Editor, current: FontFace?) {
                 style = TextStyle(fontFamily = shown.toComposeFamily(), fontSize = 14.sp),
             )
         }
-        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+        SokkiDropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             FontMenuItems(current = current, withDefault = true) {
                 editor.flowSetCharFace(it)
                 open = false

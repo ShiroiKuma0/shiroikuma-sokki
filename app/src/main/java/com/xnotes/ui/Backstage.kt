@@ -691,7 +691,7 @@ private fun ExplorerSection(
             if (selection.isEmpty()) {
                 Box {
                     IconAction(XnotesIcons.plus, "New") { newMenuOpen = true }
-                    DropdownMenu(expanded = newMenuOpen, onDismissRequest = { newMenuOpen = false }) {
+                    SokkiDropdownMenu(expanded = newMenuOpen, onDismissRequest = { newMenuOpen = false }) {
                         DropdownMenuItem(text = { Text("New Note") }, onClick = { newMenuOpen = false; onCreateMode(CreateMode.FILE) })
                         DropdownMenuItem(text = { Text("New Canvas") }, onClick = { newMenuOpen = false; onCreateMode(CreateMode.CANVAS) })
                         DropdownMenuItem(text = { Text("Import PDF") }, onClick = { newMenuOpen = false; onImportPdf() })
@@ -719,7 +719,7 @@ private fun ExplorerSection(
                 }
                 Box {
                     IconAction(XnotesIcons.more, "More") { menuOpen = true }
-                    DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    SokkiDropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                         if (sortSubmenu) {
                             val sortKey = editor.explorerSortKey
                             val sortDesc = editor.explorerSortDescending
@@ -1077,7 +1077,7 @@ private fun ExplorerSection(
     }
 
     pendingDelete?.let { targets ->
-        AlertDialog(
+        SokkiAlertDialog(
             onDismissRequest = { pendingDelete = null },
             title = { Text("Delete?") },
             text = {
@@ -1110,7 +1110,6 @@ private fun ExplorerSection(
                 }) { Text("Delete") }
             },
             dismissButton = { TextButton(onClick = { pendingDelete = null }) { Text("Cancel") } },
-            containerColor = palette.menuBg.toComposeColor(),
         )
     }
 }
@@ -1242,7 +1241,7 @@ private fun EntryMenu(
     // closing the menu resets it so it always reopens on the main list.
     var showColors by remember { mutableStateOf(false) }
     LaunchedEffect(expanded) { if (!expanded) showColors = false }
-    DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
+    SokkiDropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
         if (showColors) {
             ColorCodeMenuContent { c -> onDismiss(); onColor?.invoke(c) }
         } else {
@@ -1537,7 +1536,7 @@ private fun NameDialog(
         val n = text.text.trim()
         if (allowEmpty || n.isNotEmpty()) onConfirm(n)
     }
-    AlertDialog(
+    SokkiAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
@@ -1566,7 +1565,6 @@ private fun NameDialog(
             TextButton(onClick = { confirm() }, enabled = allowEmpty || text.text.isNotBlank()) { Text(confirmLabel) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
-        containerColor = palette.menuBg.toComposeColor(),
     )
 }
 

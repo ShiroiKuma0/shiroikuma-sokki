@@ -35,7 +35,7 @@ fun PresentationDialog(editor: Editor, onDismiss: () -> Unit) {
     var scope by remember { mutableStateOf(defaults.scope) }
     val running = editor.presentationRunning
 
-    AlertDialog(
+    SokkiAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Presentation") },
         text = {
@@ -83,7 +83,6 @@ fun PresentationDialog(editor: Editor, onDismiss: () -> Unit) {
             }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Close") } },
-        containerColor = palette.menuBg.toComposeColor(),
     )
 }
 

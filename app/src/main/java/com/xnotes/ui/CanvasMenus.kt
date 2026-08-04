@@ -172,7 +172,7 @@ fun LongPressMenu(host: LongPressMenuHost, onInsertImageAt: (com.xnotes.core.geo
     val yDp = with(density) { target.viewportY.toFloat().toDp() }
 
     Box(modifier = Modifier.offset(xDp, yDp).size(1.dp)) {
-        DropdownMenu(expanded = true, onDismissRequest = { host.dismissContextMenu() }) {
+        SokkiDropdownMenu(expanded = true, onDismissRequest = { host.dismissContextMenu() }) {
             if (host.hasClipboardItems) {
                 DropdownMenuItem(text = { Text("Paste here") }, onClick = {
                     host.pasteItemsAt(target.content); host.dismissContextMenu()
