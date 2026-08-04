@@ -134,7 +134,7 @@ fun ToolConfigPopup(editor: ToolPopupHost, tool: Tool, onDismiss: () -> Unit) {
         emit()
     }
 
-    DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
+    SokkiDropdownMenu(expanded = true, onDismissRequest = onDismiss) {
         Column(Modifier.width(250.dp).padding(horizontal = 14.dp, vertical = 8.dp)) {
             PopupTitle(tool.name)
             // COLOUR override: "Default" follows the toolbar's active ink colour; pick a hue to pin
@@ -241,7 +241,7 @@ fun StylesPopup(editor: Editor, onDismiss: () -> Unit) {
         } else { pageStyle = next; editor.setCurrentPageStyle(next) }
     }
 
-    DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
+    SokkiDropdownMenu(expanded = true, onDismissRequest = onDismiss) {
         Column(Modifier.width(286.dp).padding(horizontal = 14.dp, vertical = 8.dp)) {
             PopupTitle("STYLES")
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -395,7 +395,7 @@ fun ViewMenuPopup(editor: Editor, onDismiss: () -> Unit) {
     fun setRotation(v: Int) = apply(overrides.copy(rotation = v))
     fun setScrollbar(v: Boolean) = apply(overrides.copy(scrollbar = v))
 
-    DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
+    SokkiDropdownMenu(expanded = true, onDismissRequest = onDismiss) {
         Column(Modifier.width(300.dp).padding(horizontal = 14.dp, vertical = 8.dp)) {
             PopupTitle("VIEW")
             StyleCaption("VIEWING MODE")
@@ -485,7 +485,7 @@ fun PageJumpPopup(editor: Editor, onDismiss: () -> Unit) {
         editor.goToPage(n - 1)
         onDismiss()
     }
-    DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
+    SokkiDropdownMenu(expanded = true, onDismissRequest = onDismiss) {
         Column(Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {
             PopupTitle("GO TO PAGE")
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -530,7 +530,7 @@ fun ZoomMenuPopup(editor: Editor, onDismiss: () -> Unit) {
         ),
     )
 
-    DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
+    SokkiDropdownMenu(expanded = true, onDismissRequest = onDismiss) {
         Column(Modifier.width(280.dp).padding(horizontal = 14.dp, vertical = 8.dp)) {
             PopupTitle("ZOOM")
             ZoomLimitRow(
@@ -608,7 +608,7 @@ fun EraserConfigPopup(editor: ToolPopupHost, onDismiss: () -> Unit) {
         ),
     )
 
-    DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
+    SokkiDropdownMenu(expanded = true, onDismissRequest = onDismiss) {
         Column(Modifier.width(250.dp).padding(horizontal = 14.dp, vertical = 8.dp)) {
             PopupTitle("ERASER")
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -634,7 +634,7 @@ fun SelectConfigPopup(editor: ToolPopupHost, onDismiss: () -> Unit) {
 
     fun emit() = editor.updateToolConfig(Tool.SELECT, base.copy(switchBackAfterSelect = switchBack))
 
-    DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
+    SokkiDropdownMenu(expanded = true, onDismissRequest = onDismiss) {
         Column(Modifier.width(250.dp).padding(horizontal = 14.dp, vertical = 8.dp)) {
             PopupTitle("SELECT")
             // Re-arm the previous pen/highlighter once a selection action (move, resize, delete,
@@ -671,7 +671,7 @@ fun ShapeConfigPopup(editor: ToolPopupHost, onDismiss: () -> Unit) {
         ),
     )
 
-    DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
+    SokkiDropdownMenu(expanded = true, onDismissRequest = onDismiss) {
         Column(Modifier.width(284.dp).padding(horizontal = 14.dp, vertical = 8.dp)) {
             PopupTitle("SHAPE")
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {

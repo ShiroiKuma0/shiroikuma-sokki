@@ -675,7 +675,7 @@ private fun Swatch(c: Rgba, onPick: (Rgba) -> Unit) {
 private fun AccentColorGridPopup(onDismiss: () -> Unit, onPick: (Rgba) -> Unit) {
     val hues = (0 until 12).map { it * 360.0 / 12.0 }
     val shades = listOf(1.0 to 1.0, 1.0 to 0.82, 0.78 to 1.0)
-    DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
+    SokkiDropdownMenu(expanded = true, onDismissRequest = onDismiss) {
         Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             shades.forEach { (s, v) ->
                 Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -742,7 +742,7 @@ private fun SizeDropdown(size: PageSize, onSelect: (PageSize) -> Unit) {
         ) {
             Text(size.displayName, color = palette.text.toComposeColor(), fontSize = 14.sp)
         }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        SokkiDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             PageSize.entries.forEach { s ->
                 DropdownMenuItem(text = { Text(s.displayName) }, onClick = { onSelect(s); expanded = false })
             }
@@ -765,7 +765,7 @@ private fun OptionDropdown(options: List<Pair<String, String>>, selectedId: Stri
         ) {
             Text(label, color = palette.text.toComposeColor(), fontSize = 14.sp)
         }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        SokkiDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             options.forEach { (id, lbl) ->
                 DropdownMenuItem(text = { Text(lbl) }, onClick = { onSelect(id); expanded = false })
             }
