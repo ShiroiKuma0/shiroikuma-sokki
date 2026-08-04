@@ -157,6 +157,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.pdfbox.android)
     implementation(libs.androidsvg)
+    implementation(libs.androidx.documentfile)
     debugImplementation(libs.androidx.ui.tooling)
 
     testImplementation(libs.junit)

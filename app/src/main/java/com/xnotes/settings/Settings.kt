@@ -63,6 +63,8 @@ data class Settings(
     /** Background stamped onto every newly created canvas; null ⇒ none saved. */
     val newCanvasBackground: CanvasBackground? = null,
     val prefs: Preferences = Preferences(),
+    /** The 白い熊 速記 UI theme — every chrome attribute the UI page exposes. */
+    val sokkiUi: SokkiUi = SokkiUi(),
     /** One-shot flag: the first-run stylus check (which may auto-enable finger-draw) has run. */
     val fingerDrawAutoChecked: Boolean = false,
 ) {
@@ -97,6 +99,7 @@ data class Settings(
             .apply { if (!newNoteFlow.isEmpty) put("new_note_flow", flowDefaultsJson(newNoteFlow)) }
             .apply { newCanvasBackground?.let { put("new_canvas_background", canvasBackgroundJson(it)) } }
             .put("prefs", prefs.toJson())
+            .put("sokki_ui", sokkiUi.toJson())
             .put("view_defaults", com.xnotes.platform.ViewSettingsJson.write(JSONObject(), viewDefaults))
             .put("finger_draw_auto_checked", fingerDrawAutoChecked)
     }
@@ -145,6 +148,7 @@ data class Settings(
                 newNoteFlow = flowDefaults(o.optJSONObject("new_note_flow")),
                 newCanvasBackground = canvasBackground(o.optJSONObject("new_canvas_background")),
                 prefs = Preferences.fromJson(o.optJSONObject("prefs")),
+                sokkiUi = SokkiUi.fromJson(o.optJSONObject("sokki_ui")),
                 fingerDrawAutoChecked = o.optBoolean("finger_draw_auto_checked", false),
             )
         }

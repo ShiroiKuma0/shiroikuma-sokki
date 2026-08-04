@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- The 保存復元 automation export runs on a foreground service: a manifest receiver cannot
+         hold it without risking an ANR inside Android's broadcast window. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <!-- The infinite canvas renders on GLES 3.0. Not required: the paged notebook does not use
          it, so a device without it keeps the rest of the app. -->
     <uses-feature android:glEsVersion="0x00030000" android:required="false" />
@@ -50,6 +56,25 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
+        <!-- The 保存復元 sister-app contract. No android:permission — the caller cannot hold one,
+             so the token IS the gate (see automation/AutomationAuth.kt). The cancel action lives
+             on this same exported receiver because the service is not exported and a third-party
+             app therefore cannot reach it directly. -->
+        <receiver
+            android:name=".automation.StateExportReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="shiroikuma.sokki.action.EXPORT_STATE" />
+                <action android:name="shiroikuma.sokki.action.LIST_CATEGORIES" />
+                <action android:name="shiroikuma.sokki.action.CANCEL_EXPORT" />
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name=".automation.StateExportService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
 
         <provider
             android:name=".platform.AppStorageDocumentsProvider"
