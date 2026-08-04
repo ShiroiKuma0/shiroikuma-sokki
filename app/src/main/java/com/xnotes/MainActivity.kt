@@ -88,9 +88,32 @@ import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-/** Minimum time the launch loader stays up, so its animation is briefly seen even
- *  when the session restores instantly. */
-private const val MIN_LOADER_MS = 600L
+// --- launch loader timing -----------------------------------------------------------------------
+// Derived from the animation rather than guessed at, so re-cutting the frames cannot silently
+// desynchronise the two. Keep in step with res/drawable/xnotes_loader.xml.
+
+/** Per-frame duration declared in the animation-list. */
+private const val LOADER_FRAME_MS = 67L
+
+/**
+ * Index of the frame at which the mark is fully written — after it the animation only holds and
+ * dims. See `tools/icon/emit_loader.py`: strokes are laid down over frames 0-14.
+ */
+private const val LOADER_WRITTEN_FRAME = 14
+
+/**
+ * Minimum time the launch loader stays up: long enough to finish *writing* the mark, so the splash
+ * is never cut off mid-stroke.
+ *
+ * Upstream's 600 ms was tuned for the glitch loader, whose X was essentially complete almost at
+ * once. Ours draws two strokes in sequence and does not finish until 1005 ms, so on a fast restore
+ * the old floor tore the splash away with the second stroke half-drawn (白い熊, 2026-08-04).
+ *
+ * Only the FIRST completion is guaranteed. If restoring outlasts a whole 1.6 s loop the splash is
+ * dropped as soon as it is ready, mid-stroke or not — holding the app back up to another full loop
+ * to land on a tidy frame would trade real launch time for a detail nobody is still watching for.
+ */
+private const val MIN_LOADER_MS = (LOADER_WRITTEN_FRAME + 1) * LOADER_FRAME_MS
 
 /** Whether the display has a camera cutout (notch/hole-punch). False below API 29, which has no
  *  cutout API; such devices fall back to fullscreen by default. Also false for a context with no
