@@ -65,6 +65,7 @@ class BackgroundShader(contextGen: Int) {
         PagePattern.LINES -> MODE_LINES
         PagePattern.DOTS -> MODE_DOTS
         PagePattern.GRID -> MODE_GRID
+        PagePattern.SOKKI -> MODE_SOKKI
     }
 
     companion object {
@@ -72,6 +73,7 @@ class BackgroundShader(contextGen: Int) {
         const val MODE_LINES = 1
         const val MODE_DOTS = 2
         const val MODE_GRID = 3
+        const val MODE_SOKKI = 4
 
         private val VERTEX_SRC = """#version 300 es
             void main() {
@@ -126,6 +128,16 @@ class BackgroundShader(contextGen: Int) {
                     float cy = coverage(axisDistance(p.y, period, phase.y), halfW);
                     return max(cx, cy);
                 }
+                if (uMode == 4) {
+                    // 速記 paper: one band per period, opened by a heavy rule and divided by two
+                    // hairlines at 25/64 and 49/64 of it. Kept in step with PageStyle.SOKKI_LINES.
+                    if (period <= 0.0) return 0.0;
+                    float q = mod(p.y + phase.y, period);
+                    float band = coverage(min(q, period - q), halfW * 2.0);
+                    float hair = coverage(min(abs(q - 0.390625 * period),
+                                              abs(q - 0.765625 * period)), halfW);
+                    return max(band, hair);
+                }
                 return 0.0;
             }
 
@@ -136,7 +148,10 @@ class BackgroundShader(contextGen: Int) {
                 vec2 p = vec2(gl_FragCoord.x, uViewport.y - gl_FragCoord.y);
 
                 float base = patternAt(p, uPeriod, uPhase);
-                float sub = patternAt(p, uSubPeriod, uSubPhase) * uSubAlpha;
+                // 速記 paper subdivides itself, and at a ratio that is not a half. Fading a
+                // half-period level in on top would put a rule where the paper has none, so this
+                // one mode zooms without the subdivision.
+                float sub = uMode == 4 ? 0.0 : patternAt(p, uSubPeriod, uSubPhase) * uSubAlpha;
                 // The subdivision sits under the base level, so a shared line stays one line
                 // rather than compounding into a darker one.
                 float mask = max(base, sub);
