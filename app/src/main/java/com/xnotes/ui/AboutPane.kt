@@ -59,11 +59,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-private const val REPO_URL = "https://github.com/shardulvs/xnotes-android"
-private const val SPONSOR_URL = "https://github.com/sponsors/shardulvs"
-private const val ISSUES_URL = "https://github.com/shardulvs/xnotes-android/issues/new"
-private const val FDROID_URL = "https://f-droid.org/en/packages/com.xnotes"
-private const val LICENSE_URL = "https://github.com/shardulvs/xnotes-android/blob/master/LICENSE"
+private const val REPO_URL = "https://github.com/ShiroiKuma0/shiroikuma-sokki"
+private const val ISSUES_URL = "https://github.com/ShiroiKuma0/shiroikuma-sokki/issues/new"
+private const val LICENSE_URL = "https://github.com/ShiroiKuma0/shiroikuma-sokki/blob/custom/LICENSE"
 private const val MIN_FILL_MS = 120L
 
 /**
@@ -76,6 +74,7 @@ private const val MIN_FILL_MS = 120L
 fun AboutPane() {
     val palette = LocalPalette.current
     val ctx = LocalContext.current
+    val appName = stringResource(R.string.app_name)
 
     val appIcon = remember {
         runCatching { ctx.packageManager.getApplicationIcon(ctx.packageName).toBitmap(144, 144).asImageBitmap() }.getOrNull()
@@ -103,10 +102,10 @@ fun AboutPane() {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             if (appIcon != null) {
-                Image(appIcon, "xnotes", modifier = Modifier.size(72.dp))
+                Image(appIcon, appName, modifier = Modifier.size(72.dp))
                 Spacer(Modifier.height(16.dp))
             }
-            Text("xnotes", color = palette.text.toComposeColor(), fontWeight = FontWeight.Bold, fontSize = 24.sp)
+            Text(appName, color = palette.text.toComposeColor(), fontWeight = FontWeight.Bold, fontSize = 24.sp)
             Spacer(Modifier.height(5.dp))
             Text(
                 stringResource(R.string.app_tagline),
@@ -116,7 +115,7 @@ fun AboutPane() {
                 Spacer(Modifier.height(8.dp))
                 // Tap to copy, so a version string is easy to paste into a report.
                 Row(
-                    Modifier.clickable { copyVersion(ctx, version) }.padding(horizontal = 8.dp, vertical = 4.dp),
+                    Modifier.clickable { copyVersion(ctx, appName, version) }.padding(horizontal = 8.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(stringResource(R.string.version_n, version), color = palette.textDim.toComposeColor(), fontSize = 12.sp)
@@ -129,14 +128,13 @@ fun AboutPane() {
             Text(stringResource(R.string.help_make_better), color = palette.text.toComposeColor(), fontWeight = FontWeight.Bold, fontSize = 16.sp)
             Spacer(Modifier.height(14.dp))
 
-            // Three buttons, side by side; each fills with the selection container while pressed.
+            // Two buttons, side by side; each fills with the selection container while pressed.
             Row(
                 Modifier.fillMaxWidth().height(IntrinsicSize.Min),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                AboutButton(XnotesIcons.bug, stringResource(R.string.report_bug)) { open(bugReportUrl(version)) }
-                AboutButton(XnotesIcons.idea, stringResource(R.string.request_feature)) { open(featureRequestUrl()) }
-                AboutButton(XnotesIcons.heart, stringResource(R.string.sponsor)) { open(SPONSOR_URL) }
+                AboutButton(XnotesIcons.bug, stringResource(R.string.report_bug)) { open(bugReportUrl(appName, version)) }
+                AboutButton(XnotesIcons.idea, stringResource(R.string.request_feature)) { open(featureRequestUrl(appName)) }
             }
 
             Spacer(Modifier.height(26.dp))
@@ -152,8 +150,6 @@ fun AboutPane() {
             Spacer(Modifier.height(14.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.mit_license), color = palette.textDim.toComposeColor(), fontSize = 11.sp, modifier = Modifier.clickable { open(LICENSE_URL) })
-                Text("   ·   ", color = palette.textDim.toComposeColor(), fontSize = 11.sp)
-                Text("F-Droid", color = palette.textDim.toComposeColor(), fontSize = 11.sp, modifier = Modifier.clickable { open(FDROID_URL) })
             }
         }
     }
@@ -212,16 +208,16 @@ private fun RowScope.AboutButton(icon: ImageVector, label: String, onClick: () -
     }
 }
 
-private fun copyVersion(ctx: Context, version: String) {
+private fun copyVersion(ctx: Context, appName: String, version: String) {
     runCatching {
         val clip = ctx.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        clip.setPrimaryClip(ClipData.newPlainText("xnotes version", "xnotes $version"))
+        clip.setPrimaryClip(ClipData.newPlainText("$appName version", "$appName $version"))
         Toast.makeText(ctx, ctx.getString(R.string.version_copied), Toast.LENGTH_SHORT).show()
     }
 }
 
 /** GitHub new-issue link with a bug template and the reporter's version/device/OS pre-filled. */
-private fun bugReportUrl(version: String): String {
+private fun bugReportUrl(appName: String, version: String): String {
     val body = """
         **What happened?**
 
@@ -234,7 +230,7 @@ private fun bugReportUrl(version: String): String {
 
 
         ---
-        xnotes ${version.ifEmpty { "(unknown)" }}
+        $appName ${version.ifEmpty { "(unknown)" }}
         ${Build.MANUFACTURER} ${Build.MODEL}
         Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})
     """.trimIndent()
@@ -242,9 +238,9 @@ private fun bugReportUrl(version: String): String {
 }
 
 /** GitHub new-issue link with a lightweight feature template. */
-private fun featureRequestUrl(): String {
+private fun featureRequestUrl(appName: String): String {
     val body = """
-        **What would you like xnotes to do?**
+        **What would you like $appName to do?**
 
     """.trimIndent()
     return "$ISSUES_URL?title=${Uri.encode("[Feature] ")}&body=${Uri.encode(body)}"
