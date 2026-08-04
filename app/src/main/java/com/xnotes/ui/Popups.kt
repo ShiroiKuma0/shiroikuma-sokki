@@ -273,6 +273,7 @@ fun StylesPopup(editor: Editor, onDismiss: () -> Unit) {
                 ModeChip("Lines", style.pattern == PagePattern.LINES) { apply(style.copy(pattern = PagePattern.LINES)) }
                 ModeChip("Dots", style.pattern == PagePattern.DOTS) { apply(style.copy(pattern = PagePattern.DOTS)) }
                 ModeChip("Grid", style.pattern == PagePattern.GRID) { apply(style.copy(pattern = PagePattern.GRID)) }
+                ModeChip("速記", style.pattern == PagePattern.SOKKI) { apply(style.copy(pattern = PagePattern.SOKKI)) }
             }
 
             Spacer(Modifier.size(12.dp))
@@ -290,10 +291,15 @@ fun StylesPopup(editor: Editor, onDismiss: () -> Unit) {
 
             Spacer(Modifier.size(12.dp))
             // Effective pattern colour: the page's own, else (on the Current Page tab) the document's,
-            // else the built-in grey. Its alpha is the opacity the slider below edits.
+            // else the selected pattern's own default — grey for upstream's rulings, the template's
+            // blue for 速記. Its alpha is the opacity the slider below edits. The pattern is resolved
+            // down the same chain, so "Default" here shows what the page is actually drawing.
+            val effPattern = style.pattern
+                ?: (if (tab == 1) docStyle.pattern else null)
+                ?: PagePattern.NONE
             val effPatternColor = style.patternColor
                 ?: (if (tab == 1) docStyle.patternColor else null)
-                ?: PageStyle.DEFAULT_PATTERN_COLOR
+                ?: effPattern.defaultColor
             StyleCaption("PATTERN COLOUR")
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 ModeChip("Default", style.patternColor == null) { apply(style.copy(patternColor = null)) }

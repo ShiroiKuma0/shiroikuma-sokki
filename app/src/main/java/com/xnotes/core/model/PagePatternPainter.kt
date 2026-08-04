@@ -5,6 +5,7 @@ import com.xnotes.core.geometry.Rect
 import com.xnotes.core.pal.Pen
 import com.xnotes.core.pal.Renderer
 import kotlin.math.ceil
+import kotlin.math.floor
 
 /**
  * Paints a page-background ruling (lines / dots / grid) in **page-local content space** (origin at
@@ -36,6 +37,7 @@ fun paintPagePattern(
     val pen = Pen(ink, width = PageStyle.LINE_THICKNESS, cosmetic = false)
     when (pattern) {
         PagePattern.LINES -> hLines(r, pen, spacing, pageW, pageH, region)
+        PagePattern.SOKKI -> sokkiLines(r, ink, spacing, pageW, pageH, region)
         PagePattern.GRID -> {
             hLines(r, pen, spacing, pageW, pageH, region)
             vLines(r, pen, spacing, pageW, pageH, region)
@@ -60,6 +62,37 @@ fun paintPagePattern(
 private fun first(start: Double, spacing: Double): Double {
     val v = ceil(start / spacing) * spacing
     return if (v < spacing) spacing else v
+}
+
+/**
+ * The 速記 ruling: one band per [spacing], opened by a heavy rule and divided by two hairlines
+ * ([PageStyle.SOKKI_LINES]). Walks whole bands rather than single lines so the three weights stay
+ * in step no matter where [region] starts — a half-band cut by the sharp-viewport rect must land
+ * its lines in exactly the same places as the full-page pass, or the two would disagree at the seam.
+ */
+private fun sokkiLines(
+    r: Renderer,
+    ink: Rgba,
+    spacing: Double,
+    pageW: Double,
+    pageH: Double,
+    region: Rect,
+) {
+    val heavy = Pen(ink, width = PageStyle.LINE_THICKNESS * PageStyle.SOKKI_HEAVY_FACTOR, cosmetic = false)
+    val hair = Pen(ink, width = PageStyle.LINE_THICKNESS, cosmetic = false)
+    // Start a band early: a band whose heavy rule is above the region can still own hairlines
+    // inside it.
+    var band = floor(region.top / spacing) - 1.0
+    while (band * spacing <= region.bottom && band * spacing < pageH) {
+        for ((offset, isHeavy) in PageStyle.SOKKI_LINES) {
+            val y = (band + offset) * spacing
+            // Skip the line at the page edge itself, exactly as [first] does for the other patterns.
+            if (y > 0.0 && y < pageH && y >= region.top && y <= region.bottom) {
+                r.strokePolyline(listOf(Pt(0.0, y), Pt(pageW, y)), if (isHeavy) heavy else hair)
+            }
+        }
+        band += 1.0
+    }
 }
 
 private fun hLines(r: Renderer, pen: Pen, spacing: Double, pageW: Double, pageH: Double, region: Rect) {
