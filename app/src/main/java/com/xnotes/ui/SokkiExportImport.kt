@@ -294,9 +294,7 @@ private class PanelResult(
 private fun ResultDialog(r: PanelResult, onClose: () -> Unit) {
     val palette = LocalPalette.current
     val accent = palette.accent.toComposeColor()
-    AlertDialog(
-        modifier = Modifier.border(1.5.dp, accent, RoundedCornerShape(28.dp)),
-        containerColor = palette.bg.toComposeColor(),
+    SokkiAlertDialog(
         onDismissRequest = onClose,
         title = {
             Text(

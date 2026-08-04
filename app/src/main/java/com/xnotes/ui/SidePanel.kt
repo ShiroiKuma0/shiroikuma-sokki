@@ -262,7 +262,7 @@ private fun PageContextMenu(
     LaunchedEffect(expanded) { if (!expanded) sub = MENU_MAIN } // always reopen on the main page
     val one = listOf(index)
     fun menuIcon(icon: ImageVector) = @Composable { Icon(icon, null, tint = palette.textDim.toComposeColor(), modifier = Modifier.size(18.dp)) }
-    DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
+    SokkiDropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
         when (sub) {
             MENU_SHARE -> {
                 DropdownMenuItem(text = { Text("‹  Share as") }, onClick = { sub = MENU_MAIN })
@@ -331,7 +331,7 @@ private fun FormatMenu(icon: ImageVector, desc: String, onImage: () -> Unit, onP
     fun menuIcon(i: ImageVector) = @Composable { Icon(i, null, tint = palette.textDim.toComposeColor(), modifier = Modifier.size(18.dp)) }
     Box {
         BarAction(icon, desc) { open = true }
-        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+        SokkiDropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             DropdownMenuItem(text = { Text("Image (PNG)") }, leadingIcon = menuIcon(XnotesIcons.image), onClick = { open = false; onImage() })
             DropdownMenuItem(text = { Text("PDF") }, leadingIcon = menuIcon(XnotesIcons.exportDoc), onClick = { open = false; onPdf() })
         }
@@ -510,7 +510,7 @@ private fun BookmarksTab(editor: Editor) {
 
     if (showAdd) {
         var label by remember { mutableStateOf("Page ${editor.pageIndex + 1}") }
-        AlertDialog(
+        SokkiAlertDialog(
             onDismissRequest = { showAdd = false },
             title = { Text("Add bookmark") },
             text = { OutlinedTextField(value = label, onValueChange = { label = it }, singleLine = true) },
@@ -518,7 +518,6 @@ private fun BookmarksTab(editor: Editor) {
                 TextButton(onClick = { editor.addBookmark(label.ifBlank { "Page ${editor.pageIndex + 1}" }); showAdd = false }) { Text("Add") }
             },
             dismissButton = { TextButton(onClick = { showAdd = false }) { Text("Cancel") } },
-            containerColor = palette.menuBg.toComposeColor(),
         )
     }
 }
