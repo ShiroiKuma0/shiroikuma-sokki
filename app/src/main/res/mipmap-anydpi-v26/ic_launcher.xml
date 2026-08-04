@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   白い熊 速記 adaptive launcher icon (Android 8.0+ / API 26+).
-  A solid black background + the yellow traced-X foreground, drawn from a vector so it stays
-  sharp at any launcher size. Includes <monochrome> for Material You themed icons (Android 13+).
+  Both layers are vectors, so the icon stays sharp at whatever size a launcher asks for: the
+  背景 is the 速記 paper (black sheet + ruling), the foreground the hand-written yellow X.
+  Splitting them this way is also what makes the parallax on supporting launchers read right -
+  the mark slides over the paper, which is exactly what it is. <monochrome> carries the mark
+  alone for Material You themed icons (Android 13+).
 -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background android:drawable="@color/ic_launcher_background" />
+    <background android:drawable="@drawable/ic_launcher_sk_background" />
     <foreground android:drawable="@drawable/ic_launcher_sk_foreground" />
     <monochrome android:drawable="@drawable/ic_launcher_sk_monochrome" />
 </adaptive-icon>
