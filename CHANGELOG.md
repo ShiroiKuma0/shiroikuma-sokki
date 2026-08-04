@@ -3,6 +3,78 @@
 All notable fork changes on top of upstream [xnotes](https://github.com/shardulvs/xnotes-android).
 Versions read `<upstream version>+NNN`, where `NNN` counts our builds on that upstream base.
 
+## 0.8.10+010 — 2026-08-04
+
+On upstream **v0.8.10** (`versionCode` 47), same base as `+005`.
+
+### 速記 paper — the shorthand ruling as a page background
+
+- **New `PagePattern.SOKKI`**, chip labelled **速記**, beside Lines / Dots / Grid in both the paged
+  styles popup and the infinite-canvas styles popup. Serializes as `"sokki"`, so notes using it
+  reopen correctly in `.xnote` and `.xcanvas` alike.
+- **Geometry measured from the Samsung Notes 速記 template**, not approximated: a 2 px heavy rule
+  every 64 px, with 1 px hairlines 25 px and 49 px below it. Held as fractions of the period in
+  `PageStyle.SOKKI_LINES`, so the spacing slider scales the whole band and the paper keeps its
+  proportions at any size. 64 px is already `DEFAULT_SPACING`, so the default is the template at 1:1.
+- **Pattern-specific default colour.** `PagePattern.defaultColor` gives 速記 the template's opaque
+  blue while every upstream ruling keeps its 25%-grey; the styles popup resolves the pattern down the
+  same page → document → default chain, so the "Default" swatch shows what the page actually draws.
+- **The painter walks whole bands, not single lines**, so a sub-rect handed to the sharp-viewport
+  pass lands its rules exactly where the full-page pass puts them. A test pins that seam agreement
+  along with the band geometry, the two line weights, spacing scaling and the page-edge skip.
+- **Infinite canvas support**: `BackgroundShader` gains `MODE_SOKKI`, computing the three offsets per
+  period in the fragment shader. The zoom subdivision is suppressed for this mode alone — 速記 paper
+  already subdivides itself, at a ratio that is not a half, so fading a half-period level in would
+  put a rule where the paper has none.
+
+### A written X — new launcher icon and launch animation
+
+- **The mark is now written rather than constructed.** Two brush strokes, the first dominant, both
+  bowed, crossing above centre and carrying on past the end; filled outlines rather than a stroked
+  path, because the width varies along each leg. Chosen off rendered comparison sheets (brush nib,
+  lifted blue ruling, three bands), inked in `#FFFF00`.
+- **The adaptive icon's background layer is the 速記 paper**, not flat black — deliberately in step
+  with `PagePattern.SOKKI`. Separating paper from mark is also what makes launcher parallax read
+  correctly. Ruling colours `#2E4EFF` / `#192A8C`.
+- **The monochrome layer drops the ruling** on purpose: Material You flattens it to one tint, which
+  would fuse paper and ink into a striped tile with the X lost inside it.
+- **All 24 launch frames re-cut from the same geometry**, and they now *write* the mark: stroke one
+  over frames 0–7, stroke two crossing it 8–14, held 15–20, dimmed 21–23. Each rule fades out
+  towards both ends of the frame, so the 540 px square does not betray itself against the fullscreen
+  stage, and the paper does not fade with the ink, which is what makes the loop wrap seamlessly.
+- **Splash no longer cut off mid-stroke.** `MIN_LOADER_MS` was upstream's flat 600 ms, tuned for a
+  glitch loader whose X completed almost immediately; ours is not written until 1005 ms, so a fast
+  session restore tore the splash away with the second stroke half-drawn. It is now derived from the
+  frame timing (`LOADER_FRAME_MS`, `LOADER_WRITTEN_FRAME`), so re-cutting the frames cannot silently
+  desynchronise the two. The 280 ms fade-out lands inside the hold window, so the mark stays complete
+  and undimmed while it dissolves.
+- **Assets are generated, not drawn.** `tools/icon/` holds the stroke model (`gen.py`) and the two
+  emitters; re-running them reproduces every shipped byte of the launcher set and the frames.
+
+### Floating surfaces you can see
+
+- **`ui/SokkiSurfaces.kt`** — `SokkiAlertDialog`, `SokkiDropdownMenu` and `SokkiSnackbar`, thin
+  wrappers that add a border, the container colour and the shape. Material separates a dialog from
+  the page with a lighter surface and a shadow; the house palette makes `bg`, `surface` and `menuBg`
+  all black, so that separation collapsed and a confirmation prompt arrived as black text on black
+  with no edge anywhere.
+- **10 dialogs and 29 dropdowns/popups converted**, upstream's and the fork's alike — delete
+  note/folder, share, unsaved changes, presentation, add-to-panel, clear page, every tool config,
+  styles, view, zoom, colour picker, page jump, waypoints, canvas context menu, backstage menus.
+- **Three hand-rolled border blocks removed** from `SokkiExportImport` and `SokkiPickers`, so there
+  is one definition rather than four.
+- **Border colour and width come from the 白い熊 速記 UI page's own slots**, so those controls now
+  drive every floating surface rather than only dividers.
+- **Snackbar fixed the other way.** The theme never set Material's `inverse*` roles, so it fell back
+  to the baseline and drew as a light grey card in a black app; those roles are now palette-derived
+  in both the dark and light schemes.
+
+### Fixes
+
+- `FakeRenderer` records polyline geometry and pen alongside the op name, so ruling tests can assert
+  *where* a line landed rather than only that one was drawn.
+- `__pycache__/` and `*.pyc` gitignored for the new `tools/` scripts.
+
 ## 0.8.10+005 — 2026-08-04
 
 First published release, on upstream **v0.8.10** (`versionCode` 47). Everything below is what this
