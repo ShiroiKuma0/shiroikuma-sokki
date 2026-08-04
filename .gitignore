@@ -1,6 +1,8 @@
-# --- Planning / spec / AI artifacts (never commit) ---
-CLAUDE.md
-.claude/
+# --- Planning / spec / AI artifacts ---
+# Fork change: upstream never commits these; we DO. CLAUDE.md and the .claude/ skills are
+# the fork's working documentation and travel with the repo. Only the machine-local
+# settings file stays out.
+.claude/settings.local.json
 
 # --- Gradle ---
 .gradle/
