@@ -71,6 +71,26 @@ data class ToolConfig(
      *  is under it. A multiply has nothing to darken on a dark page, where it ends up tinting the
      *  light ink instead of the paper. Only used by [Tool.HIGHLIGHTER]. */
     val highlighterInverse: Boolean = false,
+    /** Raw stylus pressure that reads as *no press* — everything at or below it draws at the
+     *  thinnest the pen goes ([pressureMinFactor] of [baseWidth]).
+     *
+     *  This and [pressureHigh] are the input band: the slice of the stylus's reported 0..1 the
+     *  hand actually spans, stretched back over the full range before the response curve sees it
+     *  (`StrokeEngine.normalizePressure`). Defaults to the whole range, which is the identity —
+     *  so a pen that has never been calibrated draws exactly as it did before the band existed.
+     *  Narrowing it to what the pen really reports is what makes a hard press reach full width
+     *  and a light one collapse to a hairline; measure it on the 白い熊 速記 UI page. */
+    val pressureLow: Double = 0.0,
+    /** Raw stylus pressure that reads as *pressed hard*: at or above it the pen draws at its full
+     *  [baseWidth]. See [pressureLow] — the two are one setting. */
+    val pressureHigh: Double = 1.0,
+    /** Steepness `k` of the pressure response S-curve (`StrokeEngine.logisticEase`). 0 is a linear
+     *  ramp; higher steepens the middle and clips the rails nearer thin and thick, so the pen
+     *  swings between hairline and full width over a smaller change of press — the nib feel
+     *  shorthand wants. Only meaningful once the band above is right: on a curve centred in a
+     *  band the hand never reaches, raising `k` *flattens* the response instead of sharpening it.
+     *  Defaults to `StrokeEngine.PRESSURE_CURVE_K`, the value the engine has always used. */
+    val pressureCurve: Double = 8.0,
 )
 
 /** Factory defaults per tool (spec 04 §3). */
@@ -106,6 +126,21 @@ object ToolConversions {
         1.0 - (sensitivity.coerceIn(0.0, 100.0) / 100.0) * 0.9
 
     fun minFactorToSensitivity(m: Double): Double = (1.0 - m) / 0.9 * 100.0
+
+    /** LIGHT / HARD (percent of the stylus's reported range) <-> the raw pressure band
+     *  ([ToolConfig.pressureLow] / [ToolConfig.pressureHigh]). The sliders are quoted in percent
+     *  because that is what the calibration pad reports. */
+    fun percentToPressure(percent: Double): Double = percent.coerceIn(0.0, 100.0) / 100.0
+
+    fun pressureToPercent(pressure: Double): Double = pressure * 100.0
+
+    /** Narrowest band the sliders may express, as a percent span. Wide enough that the pen keeps a
+     *  usable mid-range instead of becoming an on/off switch between hairline and full width. */
+    const val MIN_BAND_PERCENT = 5.0
+
+    /** CURVE (the slider) -> `k`. A straight pass-through, named so the popup and the config can't
+     *  drift; 0 is the linear ramp and 24 is about as sharp as a nib is legible at. */
+    val CURVE_RANGE = 0.0..24.0
 
     /** MULTIPLIER (thick:thin ratio) -> `ds`, clamped to [0, 0.95]. */
     fun multiplierToDirectionStrength(multiplier: Double): Double =

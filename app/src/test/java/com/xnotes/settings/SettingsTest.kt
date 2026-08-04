@@ -135,6 +135,26 @@ class SettingsTest {
         assertEquals(Preferences.CUSTOM_PAGE_MIN_MM, back.customPageHeightMm, 1e-9)
     }
 
+    @Test fun pressureBandAndCurveRoundTrip() {
+        val tuned = com.xnotes.core.tools.ToolConfig(pressureLow = 0.06, pressureHigh = 0.44, pressureCurve = 16.0)
+        val back = Settings.fromJson(Settings(tools = mapOf(Tool.PEN to tuned)).toJson()).configFor(Tool.PEN)
+        assertEquals(0.06, back.pressureLow, 1e-9)
+        assertEquals(0.44, back.pressureHigh, 1e-9)
+        assertEquals(16.0, back.pressureCurve, 1e-9)
+    }
+
+    @Test fun pressureBandAbsentTakesTheIdentityDefaults() {
+        // Settings written before the band existed carry no keys; they must load as no remapping
+        // at all, so an upgrade cannot silently restyle a pen 白い熊 was happy with.
+        val o = JSONObject().put("tools", JSONObject().put(Tool.PEN.id, JSONObject().put("base_width", 4.0)))
+        val back = Settings.fromJson(o).configFor(Tool.PEN)
+        val d = com.xnotes.core.tools.ToolConfig()
+        assertEquals(4.0, back.baseWidth, 1e-9)
+        assertEquals(d.pressureLow, back.pressureLow, 1e-12)
+        assertEquals(d.pressureHigh, back.pressureHigh, 1e-12)
+        assertEquals(d.pressureCurve, back.pressureCurve, 1e-12)
+    }
+
     @Test fun malformedAppearanceFallsBackToSystem() {
         val o = JSONObject().put("prefs", JSONObject().put("ui_appearance", "rainbow"))
         assertEquals("system", Settings.fromJson(o).prefs.uiAppearance)
