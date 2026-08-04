@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  XNotes loading animation — frame-by-frame AnimationDrawable.
-  24 frames @ ~67ms = ~1.6s loop.
-  Place this file in res/drawable/ and the PNG frames in res/drawable-nodpi/.
+  白い熊 速記 launch animation — frame-by-frame AnimationDrawable, 24 frames @ 67ms = ~1.6s loop.
+
+  The mark is *written* rather than revealed: the launcher icon's own two brush strokes are laid
+  down one after the other (0-7, then 8-14), held (15-20), then dimmed (21-23) so the loop's wrap
+  is not a hard cut. A handwriting app's splash showing a pen writing is the honest animation, and
+  reusing the icon's geometry is what keeps splash and launcher the same mark.
+
+  Frames are generated, not drawn: tools/icon/emit_loader.py, off the same model as the icon.
 -->
 <animation-list xmlns:android="http://schemas.android.com/apk/res/android"
     android:oneshot="false">
