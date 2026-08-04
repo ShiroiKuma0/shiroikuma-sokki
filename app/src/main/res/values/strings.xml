@@ -63,6 +63,9 @@
     <string name="default_choice">Default</string>
     <string name="caption_pressure">Pressure</string>
     <string name="caption_sensitivity">Sensitivity</string>
+    <string name="caption_light">Light</string>
+    <string name="caption_hard">Hard</string>
+    <string name="caption_curve">Curve</string>
     <string name="caption_multiplier">Multiplier</string>
     <string name="caption_speed">Speed</string>
     <string name="caption_tip_width">Tip width percentage</string>

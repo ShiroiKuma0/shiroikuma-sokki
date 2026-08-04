@@ -352,6 +352,9 @@ data class Settings(
             .put("highlighter_inverse", c.highlighterInverse)
             .put("markup_mode", c.markupMode.id)
             .put("markup_intensity", c.markupIntensity)
+            .put("pressure_low", c.pressureLow)
+            .put("pressure_high", c.pressureHigh)
+            .put("pressure_curve", c.pressureCurve)
             .put("rgba", rgbaArr(c.rgba))
             .apply { c.colorOverride?.let { put("color_override", rgbaArr(it)) } }
 
@@ -381,6 +384,11 @@ data class Settings(
                 markupMode = if (o.has("markup_mode")) MarkupMode.fromId(o.optString("markup_mode")) else d.markupMode,
                 markupIntensity = o.optDouble("markup_intensity", d.markupIntensity)
                     .coerceIn(ToolConfig.MARKUP_INTENSITY_MIN, 1.0),
+                // Absent on any config saved before the band existed -> the identity band and the
+                // engine's own curve, so an upgrade changes nothing until it is calibrated.
+                pressureLow = o.optDouble("pressure_low", d.pressureLow),
+                pressureHigh = o.optDouble("pressure_high", d.pressureHigh),
+                pressureCurve = o.optDouble("pressure_curve", d.pressureCurve),
                 colorOverride = o.optJSONArray("color_override")
                     ?.let { a -> Rgba.fromList((0 until a.length()).map { i -> a.optInt(i, 0) }) }
                     ?: d.colorOverride,
