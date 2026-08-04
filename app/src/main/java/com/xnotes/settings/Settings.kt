@@ -262,6 +262,9 @@ data class Settings(
             .put("scale", c.scale)
             .put("highlighter_alpha", c.highlighterAlpha)
             .put("highlighter_inverse", c.highlighterInverse)
+            .put("pressure_low", c.pressureLow)
+            .put("pressure_high", c.pressureHigh)
+            .put("pressure_curve", c.pressureCurve)
             .put("rgba", rgbaArr(c.rgba))
             .apply { c.colorOverride?.let { put("color_override", rgbaArr(it)) } }
 
@@ -287,6 +290,11 @@ data class Settings(
                 scale = o.optBoolean("scale", d.scale),
                 highlighterAlpha = o.optDouble("highlighter_alpha", d.highlighterAlpha),
                 highlighterInverse = o.optBoolean("highlighter_inverse", d.highlighterInverse),
+                // Absent on any config saved before the band existed -> the identity band and the
+                // engine's own curve, so an upgrade changes nothing until it is calibrated.
+                pressureLow = o.optDouble("pressure_low", d.pressureLow),
+                pressureHigh = o.optDouble("pressure_high", d.pressureHigh),
+                pressureCurve = o.optDouble("pressure_curve", d.pressureCurve),
                 colorOverride = o.optJSONArray("color_override")
                     ?.let { a -> Rgba.fromList((0 until a.length()).map { i -> a.optInt(i, 0) }) }
                     ?: d.colorOverride,

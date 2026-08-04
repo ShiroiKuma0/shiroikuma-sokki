@@ -86,6 +86,10 @@ fun ToolConfigPopup(editor: ToolPopupHost, tool: Tool, onDismiss: () -> Unit) {
     var intensity by remember { mutableStateOf(ToolConversions.highlighterAlphaToIntensity(base.highlighterAlpha).toFloat()) }
     var inverse by remember { mutableStateOf(base.highlighterInverse) }
     var colorOverride by remember { mutableStateOf(base.colorOverride) }
+    // The pressure band, in percent of the stylus's reported range, and the response steepness.
+    var light by remember { mutableStateOf(ToolConversions.pressureToPercent(base.pressureLow).toFloat()) }
+    var hard by remember { mutableStateOf(ToolConversions.pressureToPercent(base.pressureHigh).toFloat()) }
+    var curve by remember { mutableStateOf(base.pressureCurve.toFloat()) }
 
     fun emit() {
         val m = ToolConversions.sensitivityToMinFactor(sensitivity.toDouble())
@@ -111,8 +115,25 @@ fun ToolConfigPopup(editor: ToolPopupHost, tool: Tool, onDismiss: () -> Unit) {
                 highlighterAlpha = ha,
                 highlighterInverse = inverse,
                 colorOverride = colorOverride,
+                pressureLow = ToolConversions.percentToPressure(light.toDouble()),
+                pressureHigh = ToolConversions.percentToPressure(hard.toDouble()),
+                pressureCurve = curve.toDouble(),
             ),
         )
+    }
+
+    /** The two band sliders share one range and may not cross: each shoves the other along rather
+     *  than stopping dead at it, so dragging LIGHT up past HARD keeps working instead of jamming. */
+    fun setLight(v: Float) {
+        light = v
+        hard = maxOf(hard, v + ToolConversions.MIN_BAND_PERCENT.toFloat())
+        emit()
+    }
+
+    fun setHard(v: Float) {
+        hard = v
+        light = minOf(light, v - ToolConversions.MIN_BAND_PERCENT.toFloat())
+        emit()
     }
 
     DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
@@ -142,6 +163,19 @@ fun ToolConfigPopup(editor: ToolPopupHost, tool: Tool, onDismiss: () -> Unit) {
             if (hasPressure) {
                 ToggleRow("PRESSURE", pressure) { pressure = it; emit() }
                 SliderRow("SENSITIVITY", sensitivity, 0f..100f, enabled = pressure) { sensitivity = it; emit() }
+                // The input band: which slice of the pen's reported range this tool spreads its
+                // whole thin-to-thick swing over. Calibrate it on the 白い熊 速記 UI page, which can
+                // measure the pen and set all four pressure tools at once; these are the per-tool
+                // overrides for when one pen wants a different bite than the rest.
+                SliderRow("LIGHT", light, 0f..95f, enabled = pressure) { setLight(it) }
+                SliderRow("HARD", hard, 5f..100f, enabled = pressure) { setHard(it) }
+                // Steepness of the S between them: 0 is a linear ramp, high snaps between hairline
+                // and full width over a small change of press.
+                SliderRow(
+                    "CURVE", curve,
+                    ToolConversions.CURVE_RANGE.start.toFloat()..ToolConversions.CURVE_RANGE.endInclusive.toFloat(),
+                    enabled = pressure,
+                ) { curve = it; emit() }
             }
             if (tool == Tool.CALLIGRAPHY) {
                 SliderRow("MULTIPLIER", multiplier, 1f..5f) { multiplier = it; emit() }
