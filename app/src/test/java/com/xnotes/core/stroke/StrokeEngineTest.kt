@@ -449,6 +449,89 @@ class StrokeEngineTest {
         for (i in 0 until g.pointCount) assertEquals(3.0 * 0.4, g.hw(i), 1e-6)
     }
 
+    // --- pressure band ---
+    @Test fun defaultBandIsTheIdentity() {
+        // The whole reported range in, the same value out: every stroke drawn before the band
+        // existed must build byte-for-byte as it did.
+        for (p in listOf(0.0, 0.1, 0.35, 0.5, 0.9, 1.0)) {
+            assertEquals(
+                p,
+                StrokeEngine.normalizePressure(p, StrokeEngine.PRESSURE_LOW, StrokeEngine.PRESSURE_HIGH),
+                1e-12,
+            )
+        }
+    }
+
+    @Test fun bandStretchesItsSliceAcrossTheFullRange() {
+        assertEquals(0.0, StrokeEngine.normalizePressure(0.05, 0.05, 0.45), 1e-12)
+        assertEquals(0.5, StrokeEngine.normalizePressure(0.25, 0.05, 0.45), 1e-12)
+        assertEquals(1.0, StrokeEngine.normalizePressure(0.45, 0.05, 0.45), 1e-12)
+    }
+
+    @Test fun bandClampsOutsideItsRails() {
+        assertEquals(0.0, StrokeEngine.normalizePressure(0.0, 0.05, 0.45), 1e-12)
+        assertEquals(1.0, StrokeEngine.normalizePressure(0.95, 0.05, 0.45), 1e-12)
+    }
+
+    @Test fun degenerateBandIsAThresholdNotADivideByZero() {
+        // low == high leaves no mid-range; it must read as a hard switch at the rail rather than
+        // dividing by ~zero and producing NaN half-widths.
+        assertEquals(0.0, StrokeEngine.normalizePressure(0.39, 0.4, 0.4), 1e-12)
+        assertEquals(1.0, StrokeEngine.normalizePressure(0.4, 0.4, 0.4), 1e-12)
+        assertEquals(1.0, StrokeEngine.normalizePressure(0.9, 0.4, 0.4), 1e-12)
+    }
+
+    @Test fun bandLetsAComfortablePressReachFullWidth() {
+        // The pen's own defaults (base 3, m = 0.35). Unbanded, a 0.45 press reaches barely a third
+        // of the width range; banded to what the hand really spans it reaches all of it.
+        val unbanded = width(3.0, true, 0.35, 0.0, 0.45, 0.0)
+        val banded = 2.0 * StrokeEngine.halfWidth(3.0, true, 0.35, 0.0, 0.45, 0.0, 0.05, 0.45)
+        assertTrue("unbanded stays well short of full width", unbanded < 2.0)
+        assertEquals("banded reaches the full base width", 3.0, banded, 1e-9)
+    }
+
+    @Test fun bandSeparatesThinFromThickFarMoreThanWidthAlone() {
+        // 白い熊's requirement: a light stroke stays a hairline while a pressed one goes fat. The
+        // ratio is what matters — raising baseWidth alone scales both ends and cannot change it.
+        fun ratio(low: Double, high: Double): Double {
+            val thin = StrokeEngine.halfWidth(3.0, true, 0.1, 0.0, 0.10, 0.0, low, high)
+            val thick = StrokeEngine.halfWidth(3.0, true, 0.1, 0.0, 0.45, 0.0, low, high)
+            return thick / thin
+        }
+        val plain = ratio(StrokeEngine.PRESSURE_LOW, StrokeEngine.PRESSURE_HIGH)
+        val banded = ratio(0.05, 0.45)
+        assertTrue("the identity band gives the old, narrow separation", plain < 4.0)
+        assertTrue("the measured band roughly doubles it", banded > 7.0)
+    }
+
+    @Test fun curveSteepensTheMiddleOnceTheBandIsRight() {
+        // Higher k moves more of the width swing into the middle of the band. Measured across the
+        // band's own mid-quartiles, a steeper curve must cover more ground than the stock one.
+        fun swing(k: Double): Double {
+            fun w(p: Double) = StrokeEngine.halfWidth(3.0, true, 0.1, 0.0, p, 0.0, 0.05, 0.45, k)
+            return w(0.30) - w(0.20)
+        }
+        assertTrue("k = 16 swings harder through the middle than k = 8", swing(16.0) > swing(8.0))
+        assertTrue("k = 8 in turn swings harder than a linear ramp", swing(8.0) > swing(0.0))
+    }
+
+    @Test fun bandAndCurveReachTheGeometryBuilder() {
+        // Not just halfWidth: build() must pass them down, else the sliders move nothing on a page.
+        val pts = (0..9).map { Sample(it * 4.0, 0.0, 0.30) }
+        val plain = StrokeEngine.build(pts, 3.0, true, 0.35, 0.0)
+        val banded = StrokeEngine.build(pts, 3.0, true, 0.35, 0.0, pressureLow = 0.05, pressureHigh = 0.45)
+        assertTrue("a 0.30 press draws thicker once the band is narrowed to it", banded.hw(5) > plain.hw(5) + 1e-6)
+    }
+
+    @Test fun pressureOffIgnoresTheBandEntirely() {
+        // The uniform-width tools must stay uniform whatever the band says.
+        val g = StrokeEngine.build(
+            (0..5).map { Sample(it * 4.0, 0.0, 0.02) }, 8.0, false, 1.0, 0.0,
+            pressureLow = 0.30, pressureHigh = 0.40, pressureCurve = 20.0,
+        )
+        for (i in 0 until g.pointCount) assertEquals(4.0, g.hw(i), 1e-6)
+    }
+
     @Test fun calligraphyWidthGlidesAcrossADirectionChange() {
         // The nib width is low-passed, so when an L-stroke turns from a long rightward run
         // (thick horizontal regime) into a long upward run (thin vertical regime), the width

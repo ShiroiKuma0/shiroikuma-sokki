@@ -33,6 +33,24 @@ object StrokeEngine {
      *  response; higher = a sharper S. */
     const val PRESSURE_CURVE_K = 8.0
 
+    /** The default input band: the whole reported range, i.e. no remapping — what the engine did
+     *  before the band existed, so every stroke drawn until now reloads identical.
+     *
+     *  A stylus rarely uses that whole range. The pressure a hand actually spans while writing is
+     *  a slice of it, often a low one, and the logistic above is centred on 0.5 — so a pen living
+     *  in (say) 0.05..0.45 sits on the curve's flat lower rail, where the response *compresses*
+     *  the very swings it was meant to open up. [normalizePressure] stretches the band the hand
+     *  really uses back across the full 0..1 first, which is what puts the fast part of the S
+     *  under a comfortable press and lets a hard press reach full width at all. Measure the band
+     *  rather than guessing it — the 白い熊 速記 UI page has a pad that reports it. */
+    const val PRESSURE_LOW = 0.0
+    const val PRESSURE_HIGH = 1.0
+
+    /** Narrowest usable input band. Below it every press is either 0 or 1 and the pen has no
+     *  mid-range left, so a degenerate band is treated as a hard threshold at [PRESSURE_HIGH]
+     *  instead of dividing by ~zero. */
+    const val MIN_PRESSURE_BAND = 1e-3
+
     /** Calligraphy pen: a heavier low-pass on the direction channel (the tangent's y that
      *  drives nib width) than [ALPHA] (position), so the width eases between thick and thin
      *  as the stroke curves instead of snapping when the tangent turns. The speed pen smooths
@@ -186,9 +204,28 @@ object StrokeEngine {
     }
 
     /**
+     * Stretches the raw stylus [pressure] band `[low, high]` back across the full `0..1` the
+     * response curve is defined on: at or below [low] the pen reads as untouched, at or above
+     * [high] as pressed as hard as it will be asked to go. The identity when the band is the
+     * whole range (see [PRESSURE_LOW]).
+     *
+     * This runs *before* [logisticEase], not after, and the order is the whole point: the curve
+     * is centred on 0.5, so it only does what it promises — a gentle light end, a fast middle,
+     * a gentle hard end — to an input that actually spans 0..1. Feed it the narrow slice a pen
+     * really reports and the fast middle sits above anything the hand ever reaches.
+     */
+    fun normalizePressure(pressure: Double, low: Double, high: Double): Double {
+        if (high - low <= MIN_PRESSURE_BAND) return if (pressure >= high) 1.0 else 0.0
+        return ((pressure - low) / (high - low)).coerceIn(0.0, 1.0)
+    }
+
+    /**
      * Half-width at a point (spec 03 step 5), given smoothed [pressure] and the
      * tangent's y-component [ty]. The pure-pressure half-width (caps and the
      * single-sample dot) uses `ty = 0`.
+     *
+     * [pressureLow]/[pressureHigh] are the input band ([normalizePressure]) and [curveK] the
+     * response steepness ([logisticEase]); their defaults are the pre-band behaviour exactly.
      */
     fun halfWidth(
         baseWidth: Double,
@@ -197,8 +234,15 @@ object StrokeEngine {
         ds: Double,
         pressure: Double,
         ty: Double,
+        pressureLow: Double = PRESSURE_LOW,
+        pressureHigh: Double = PRESSURE_HIGH,
+        curveK: Double = PRESSURE_CURVE_K,
     ): Double {
-        val pEff = if (pressureEnabled) logisticEase(pressure, PRESSURE_CURVE_K) else 1.0
+        val pEff = if (pressureEnabled) {
+            logisticEase(normalizePressure(pressure, pressureLow, pressureHigh), curveK)
+        } else {
+            1.0
+        }
         val wBase = baseWidth * (m + (1 - m) * pEff)
         val direction = max(1 + ds * ty, MIN_DIRECTION)
         return wBase * direction / 2.0
@@ -369,6 +413,9 @@ object StrokeEngine {
         holdEnds: Boolean = false,
         finished: Boolean = true,
         smoothScale: Double = 1.0,
+        pressureLow: Double = PRESSURE_LOW,
+        pressureHigh: Double = PRESSURE_HIGH,
+        pressureCurve: Double = PRESSURE_CURVE_K,
     ): StrokeGeometry {
         val n = samples.size
         if (n == 0) return StrokeGeometry.EMPTY
@@ -400,7 +447,8 @@ object StrokeEngine {
         val sp = emaByArc(rawP, steps, smoothLen)
         if (holdEnds && pressureEnabled) holdEndPressure(sp)
 
-        fun hw(i: Int, ty: Double) = halfWidth(baseWidth, pressureEnabled, m, ds, sp[i], ty)
+        fun hw(i: Int, ty: Double) =
+            halfWidth(baseWidth, pressureEnabled, m, ds, sp[i], ty, pressureLow, pressureHigh, pressureCurve)
 
         // 3. Single sample -> a filled dot: one swept disc at the pure-pressure half-width. A
         //    finished calligraphy tap takes the dot width (past the broad face) so it stays visible.
