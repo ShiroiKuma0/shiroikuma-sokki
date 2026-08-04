@@ -63,6 +63,27 @@ class ToolsTest {
         assertEquals(ShapeKind.TRIANGLE, ShapeKind.fromId("triangle"))
     }
 
+    @Test fun pressureBandDefaultsAreTheEngineIdentity() {
+        // ToolConfig cannot import StrokeEngine (core.stroke already depends on core.tools), so its
+        // literals are pinned here instead: if the engine's defaults ever move, this fails rather
+        // than every pen silently changing shape.
+        val c = ToolConfig()
+        assertEquals(com.xnotes.core.stroke.StrokeEngine.PRESSURE_LOW, c.pressureLow, 1e-12)
+        assertEquals(com.xnotes.core.stroke.StrokeEngine.PRESSURE_HIGH, c.pressureHigh, 1e-12)
+        assertEquals(com.xnotes.core.stroke.StrokeEngine.PRESSURE_CURVE_K, c.pressureCurve, 1e-12)
+    }
+
+    @Test fun pressurePercentConversions() {
+        assertEquals(0.45, ToolConversions.percentToPressure(45.0), 1e-12)
+        assertEquals(45.0, ToolConversions.pressureToPercent(0.45), 1e-12)
+        // Exact inverses on the valid range, like every other conversion here.
+        for (p in listOf(0.0, 12.0, 50.0, 87.5, 100.0)) {
+            assertEquals(p, ToolConversions.pressureToPercent(ToolConversions.percentToPressure(p)), 1e-9)
+        }
+        assertEquals(1.0, ToolConversions.percentToPressure(140.0), 1e-12)
+        assertEquals(0.0, ToolConversions.percentToPressure(-20.0), 1e-12)
+    }
+
     @Test fun toolIdRoundTrip() {
         for (t in Tool.entries) assertEquals(t, Tool.fromId(t.id))
         assertEquals(13, Tool.wheelOrder.size)

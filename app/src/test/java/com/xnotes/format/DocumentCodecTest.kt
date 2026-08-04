@@ -239,6 +239,61 @@ class DocumentCodecTest {
         assertEquals(0.0, taper.samples[0].t, 1e-9)   // non-speed stroke writes no time
     }
 
+    @Test fun pressureBandAndCurveRoundTrip() {
+        // The band is style: it travels with the stroke so a note reopens as drawn even after the
+        // pen has been recalibrated to something else.
+        val doc = Document(dpi = 150)
+        val page = Page(100.0, 100.0)
+        page.items.add(
+            Stroke(
+                Tool.PEN,
+                ToolConfig(pressureLow = 0.06, pressureHigh = 0.44, pressureCurve = 16.0),
+                mutableListOf(Sample(1.0, 2.0, 0.3), Sample(8.0, 9.0, 0.4)),
+            ),
+        )
+        doc.pages.add(page)
+        val back = (roundTrip(doc).pages[0].items[0] as Stroke).config
+        assertEquals(0.06, back.pressureLow, 1e-9)
+        assertEquals(0.44, back.pressureHigh, 1e-9)
+        assertEquals(16.0, back.pressureCurve, 1e-9)
+    }
+
+    @Test fun uncalibratedStrokeWritesNoPressureBandKeys() {
+        // A pen still on the defaults must serialize exactly as it always did — no new keys, so an
+        // untouched note's manifest stays byte-stable across the upgrade.
+        val doc = Document(dpi = 150)
+        val page = Page(100.0, 100.0)
+        page.items.add(Stroke(Tool.PEN, ToolConfig(), mutableListOf(Sample(1.0, 2.0, 0.5), Sample(8.0, 9.0, 0.5))))
+        doc.pages.add(page)
+        val out = ByteArrayOutputStream()
+        codec.write(doc, out)
+        val manifest = java.util.zip.ZipInputStream(ByteArrayInputStream(out.toByteArray())).use { zip ->
+            generateSequence { zip.nextEntry }.first { it.name == "manifest.json" }
+            String(zip.readBytes())
+        }
+        assertFalse(manifest.contains("pressure_low"))
+        assertFalse(manifest.contains("pressure_high"))
+        assertFalse(manifest.contains("pressure_curve"))
+    }
+
+    @Test fun legacyStrokeWithoutPressureBandLoadsUnremapped() {
+        val out = ByteArrayOutputStream()
+        java.util.zip.ZipOutputStream(out).use {
+            it.putNextEntry(java.util.zip.ZipEntry("manifest.json"))
+            it.write(
+                ("{\"format\":\"xnote\",\"pages\":[{\"width\":100,\"height\":100,\"items\":[" +
+                    "{\"kind\":\"stroke\",\"tool\":\"pen\",\"config\":{\"base_width\":3.0}," +
+                    "\"samples\":[[1,2,0.3],[8,9,0.4]]}]}]}").toByteArray(),
+            )
+            it.closeEntry()
+        }
+        val c = (codec.read(ByteArrayInputStream(out.toByteArray())).pages[0].items[0] as Stroke).config
+        val d = ToolConfig()
+        assertEquals(d.pressureLow, c.pressureLow, 1e-12)
+        assertEquals(d.pressureHigh, c.pressureHigh, 1e-12)
+        assertEquals(d.pressureCurve, c.pressureCurve, 1e-12)
+    }
+
     @Test fun legacyTaperLengthLoadsAsEnabledTaper() {
         // Files written before the whole-stroke taper carry taper_length but no taper_enabled; a
         // positive legacy length must still load as an enabled taper so old notes keep tapering.

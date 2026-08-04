@@ -419,6 +419,31 @@ class CanvasCodecTest {
         assertTrue(doc.isEmpty)
     }
 
+    @Test fun pressureBandAndCurveRoundTrip() {
+        val doc = InfiniteDocument()
+        doc.add(
+            Stroke(
+                Tool.PEN,
+                ToolConfig(pressureLow = 0.06, pressureHigh = 0.44, pressureCurve = 16.0),
+                mutableListOf(Sample(1.0, 2.0, 0.3), Sample(8.0, 9.0, 0.4)),
+            ),
+        )
+        val back = (roundTrip(doc).items[0] as Stroke).config
+        assertEquals(0.06, back.pressureLow, 1e-9)
+        assertEquals(0.44, back.pressureHigh, 1e-9)
+        assertEquals(16.0, back.pressureCurve, 1e-9)
+    }
+
+    @Test fun uncalibratedCanvasStrokeKeepsTheDefaults() {
+        val doc = InfiniteDocument()
+        doc.add(Stroke(Tool.PEN, ToolConfig(), mutableListOf(Sample(1.0, 2.0, 0.5), Sample(8.0, 9.0, 0.5))))
+        val back = (roundTrip(doc).items[0] as Stroke).config
+        val d = ToolConfig()
+        assertEquals(d.pressureLow, back.pressureLow, 1e-12)
+        assertEquals(d.pressureHigh, back.pressureHigh, 1e-12)
+        assertEquals(d.pressureCurve, back.pressureCurve, 1e-12)
+    }
+
     @Test fun legacyTaperStrokesReloadTapered() {
         val doc = readManifest(
             """{"format":"xcanvas","items":[{"kind":"stroke","tool":"taper",
