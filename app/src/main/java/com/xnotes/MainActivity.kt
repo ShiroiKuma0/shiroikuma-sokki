@@ -127,7 +127,7 @@ class MainActivity : ComponentActivity() {
                 ready = true
                 ed.prewarmBackstage() // warm recents/explorer caches so the first backstage open is instant
             }
-            XnotesTheme(ed.palette) {
+            XnotesTheme(ed.palette, ed.sokkiUi) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     if (ready) EditorScreen(
                         ed,

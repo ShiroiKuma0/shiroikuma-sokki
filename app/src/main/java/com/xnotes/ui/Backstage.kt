@@ -143,7 +143,7 @@ import kotlinx.coroutines.withTimeout
 import kotlin.math.roundToInt
 
 /** Which pane the backstage shows on the right. */
-enum class BackstageView { HOME, PREFERENCES, ABOUT }
+enum class BackstageView { HOME, PREFERENCES, SOKKI_UI, ABOUT }
 
 /** Whether the Home explorer is awaiting a new file/folder name. */
 private enum class CreateMode { NONE, FILE, CANVAS, FOLDER }
@@ -263,7 +263,7 @@ private fun BackstageContent(
         when {
             compact && sidebarOpen -> dismissSidebar()
             // Preferences and About are sub-pages of Home: back lands on Home rather than leaving the app.
-            view == BackstageView.PREFERENCES || view == BackstageView.ABOUT -> selectView(BackstageView.HOME)
+            view == BackstageView.PREFERENCES || view == BackstageView.ABOUT || view == BackstageView.SOKKI_UI -> selectView(BackstageView.HOME)
             createMode != CreateMode.NONE -> createMode = CreateMode.NONE
             else -> onExitApp()
         }
@@ -342,7 +342,13 @@ private fun BackstageSidebar(
         Command(XnotesIcons.importDoc, "Import PDF…") { onImportPdf() }
         Command(XnotesIcons.folder, "Open…") { onOpenSystem() }
         RailDivider()
-        Command(XnotesIcons.sliders, "Preferences", selected = view == BackstageView.PREFERENCES) { onSelectView(BackstageView.PREFERENCES) }
+        Command(
+            XnotesIcons.sliders, "Preferences",
+            selected = view == BackstageView.PREFERENCES,
+            // Long-press is the shortcut straight to the UI page (白い熊, 2026-08-04).
+            onLongClick = { onSelectView(BackstageView.SOKKI_UI) },
+        ) { onSelectView(BackstageView.PREFERENCES) }
+        Command(XnotesIcons.palette, "白い熊 速記 UI", selected = view == BackstageView.SOKKI_UI) { onSelectView(BackstageView.SOKKI_UI) }
         Command(XnotesIcons.info, "About", selected = view == BackstageView.ABOUT) { onSelectView(BackstageView.ABOUT) }
     }
 }
@@ -395,6 +401,7 @@ private fun BackstageMain(
                     onShareFile, onSaveCopyFile, onExportFilePdf, createMode, onCreateMode, sidebarOpen, onShowSidebar,
                 )
                 BackstageView.PREFERENCES -> PreferencesPane(editor, compact, sidebarOpen, onShowSidebar, onBackToHome, onImportCodeTheme, onImportFont)
+                BackstageView.SOKKI_UI -> SokkiUiPane(editor, onImportFont, onClosePage = onBackToHome)
                 BackstageView.ABOUT -> AboutPane()
             }
         }
@@ -404,14 +411,20 @@ private fun BackstageMain(
 // --- left rail ---
 
 @Composable
-private fun Command(icon: ImageVector, label: String, selected: Boolean = false, onClick: () -> Unit) {
+private fun Command(
+    icon: ImageVector,
+    label: String,
+    selected: Boolean = false,
+    onLongClick: (() -> Unit)? = null,
+    onClick: () -> Unit,
+) {
     val palette = LocalPalette.current
     Row(
         Modifier
             .fillMaxWidth()
             .height(48.dp)
             .then(if (selected) Modifier.background(palette.accentAlpha(38).toComposeColor()) else Modifier)
-            .clickable(onClick = onClick)
+            .combinedClickable(onLongClick = onLongClick, onClick = onClick)
             .padding(horizontal = 18.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
