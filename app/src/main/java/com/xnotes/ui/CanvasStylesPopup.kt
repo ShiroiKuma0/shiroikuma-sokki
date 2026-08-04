@@ -74,6 +74,9 @@ fun CanvasStylesPopup(editor: InfiniteEditor, onDismiss: () -> Unit) {
                 ModeChip(stringResource(R.string.pattern_grid), background.pattern == PagePattern.GRID) {
                     apply(background.copy(pattern = PagePattern.GRID))
                 }
+                ModeChip("速記", background.pattern == PagePattern.SOKKI) {
+                    apply(background.copy(pattern = PagePattern.SOKKI))
+                }
             }
 
             Spacer(Modifier.size(12.dp))
