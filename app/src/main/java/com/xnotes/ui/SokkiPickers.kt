@@ -73,10 +73,6 @@ fun SokkiColorPickerDialog(
     }
 
     AlertDialog(
-        modifier = Modifier.border(1.5.dp, palette.accent.toComposeColor(), RoundedCornerShape(28.dp)),
-        containerColor = palette.menuBg.toComposeColor(),
-        titleContentColor = palette.text.toComposeColor(),
-        textContentColor = palette.text.toComposeColor(),
         onDismissRequest = onDismiss,
         title = { Text(title, fontWeight = FontWeight.Bold) },
         text = {
@@ -178,10 +174,6 @@ fun SokkiFontPickerDialog(
     val palette = LocalPalette.current
     val choices = remember { UiFonts.choices() }
     AlertDialog(
-        modifier = Modifier.border(1.5.dp, palette.accent.toComposeColor(), RoundedCornerShape(28.dp)),
-        containerColor = palette.menuBg.toComposeColor(),
-        titleContentColor = palette.text.toComposeColor(),
-        textContentColor = palette.text.toComposeColor(),
         onDismissRequest = onDismiss,
         title = { Text("Font", fontWeight = FontWeight.Bold) },
         text = {
