@@ -837,7 +837,7 @@ class Editor(context: Context) : ToolPopupHost, SelectionMenuHost, LongPressMenu
     fun copyScreenshotAsImage() {
         val rect = controller.screenshotRect ?: return
         val bmp = renderRegionBitmap(rect)
-        val ok = bmp != null && putBitmapOnClipboard(bmp, "xnotes capture")
+        val ok = bmp != null && putBitmapOnClipboard(bmp, "白い熊 速記 capture")
         controller.clearScreenshot()
         controller.switchBackAfterScreenshot() // return to the previous pen, like the eraser
         message = if (ok) "Image copied. Paste it anywhere." else "Couldn’t copy the image."
@@ -1939,7 +1939,7 @@ class Editor(context: Context) : ToolPopupHost, SelectionMenuHost, LongPressMenu
             maybeBindAutosave(uri) // resume autosaving if this note lives in the granted folder
             noteOpen = true // push the editor on top of backstage (only on a successful open)
         } catch (e: XNoteFormatException) {
-            message = e.message ?: "Not an xnotes document."
+            message = e.message ?: "Not a 白い熊 速記 document."
         } catch (e: Exception) {
             message = "Could not open the note."
         } finally {
@@ -3891,7 +3891,7 @@ class Editor(context: Context) : ToolPopupHost, SelectionMenuHost, LongPressMenu
         val text = flow.plainText().substring(flow.globalOffset(sel.start), flow.globalOffset(sel.end))
         val cm = appContext.getSystemService(android.content.Context.CLIPBOARD_SERVICE)
             as? android.content.ClipboardManager ?: return
-        cm.setPrimaryClip(android.content.ClipData.newPlainText("xnotes text", text))
+        cm.setPrimaryClip(android.content.ClipData.newPlainText("白い熊 速記 text", text))
         if (cut) flowText.replaceExternal(sel, "")
     }
 
