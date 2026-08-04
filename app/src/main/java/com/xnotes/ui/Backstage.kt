@@ -163,7 +163,7 @@ import kotlinx.coroutines.withTimeout
 import kotlin.math.roundToInt
 
 /** Which pane the backstage shows on the right. */
-enum class BackstageView { HOME, PREFERENCES, ABOUT, TRASH }
+enum class BackstageView { HOME, PREFERENCES, SOKKI_UI, ABOUT, TRASH }
 
 /** Whether the Home explorer is awaiting a new file/folder name. */
 private enum class CreateMode { NONE, FILE, CANVAS, FOLDER }
@@ -401,6 +401,10 @@ private class ExplorerLink(
 )
 
 /** What the sidebar and its rail show and do, shared so the two never drift apart. */
+/** The UI page's sidebar label, built from the app's own name so the two can never drift apart. */
+@Composable
+private fun sokkiUiLabel(): String = stringResource(R.string.app_name) + " UI"
+
 private class SidebarNav(
     val view: BackstageView,
     val homeSelected: Boolean,
@@ -469,7 +473,13 @@ private fun BackstageSidebar(modifier: Modifier, nav: SidebarNav, onCollapse: ()
                 nav.onSelectView(BackstageView.TRASH)
             }
         }
-        Command(XnotesIcons.sliders, stringResource(R.string.preferences), selected = nav.view == BackstageView.PREFERENCES) { nav.onSelectView(BackstageView.PREFERENCES) }
+        Command(
+            XnotesIcons.sliders, stringResource(R.string.preferences),
+            selected = nav.view == BackstageView.PREFERENCES,
+            // Long-press is the shortcut straight to the UI page (白い熊, 2026-08-04).
+            onLongClick = { nav.onSelectView(BackstageView.SOKKI_UI) },
+        ) { nav.onSelectView(BackstageView.PREFERENCES) }
+        Command(XnotesIcons.palette, sokkiUiLabel(), selected = nav.view == BackstageView.SOKKI_UI) { nav.onSelectView(BackstageView.SOKKI_UI) }
         Command(XnotesIcons.info, stringResource(R.string.about), selected = nav.view == BackstageView.ABOUT) { nav.onSelectView(BackstageView.ABOUT) }
     }
 }
@@ -503,7 +513,12 @@ private fun BackstageRail(modifier: Modifier, nav: SidebarNav, onExpand: () -> U
             }
         }
         if (nav.trashCount >= 0) RailItem(XnotesIcons.trash, stringResource(R.string.trash), selected = nav.view == BackstageView.TRASH) { nav.onSelectView(BackstageView.TRASH) }
-        RailItem(XnotesIcons.sliders, stringResource(R.string.preferences), selected = nav.view == BackstageView.PREFERENCES) { nav.onSelectView(BackstageView.PREFERENCES) }
+        RailItem(
+            XnotesIcons.sliders, stringResource(R.string.preferences),
+            selected = nav.view == BackstageView.PREFERENCES,
+            onLongClick = { nav.onSelectView(BackstageView.SOKKI_UI) },
+        ) { nav.onSelectView(BackstageView.PREFERENCES) }
+        RailItem(XnotesIcons.palette, sokkiUiLabel(), selected = nav.view == BackstageView.SOKKI_UI) { nav.onSelectView(BackstageView.SOKKI_UI) }
         RailItem(XnotesIcons.info, stringResource(R.string.about), selected = nav.view == BackstageView.ABOUT) { nav.onSelectView(BackstageView.ABOUT) }
     }
 }
@@ -551,6 +566,7 @@ private fun BackstageMain(
                 BackstageView.HOME -> HomePane(editor, calls, createMode, onCreateMode, sidebarOpen, onShowSidebar, link)
                 BackstageView.PREFERENCES -> PreferencesPane(editor, compact, sidebarOpen, onShowSidebar, onBackToHome, onImportCodeTheme, onImportFont)
                 BackstageView.TRASH -> TrashPane(editor, sidebarOpen, onShowSidebar, onOpenPreferences)
+                BackstageView.SOKKI_UI -> SokkiUiPane(editor, onImportFont, onClosePage = onBackToHome)
                 BackstageView.ABOUT -> AboutPane()
             }
         }
@@ -560,14 +576,21 @@ private fun BackstageMain(
 // --- left rail ---
 
 @Composable
-private fun Command(icon: ImageVector, label: String, selected: Boolean = false, count: String? = null, onClick: () -> Unit) {
+private fun Command(
+    icon: ImageVector,
+    label: String,
+    selected: Boolean = false,
+    count: String? = null,
+    onLongClick: (() -> Unit)? = null,
+    onClick: () -> Unit,
+) {
     val palette = LocalPalette.current
     Row(
         Modifier
             .fillMaxWidth()
             .height(48.dp)
             .then(if (selected) Modifier.background(palette.selectionBackground.toComposeColor()) else Modifier)
-            .clickable(onClick = onClick)
+            .combinedClickable(onLongClick = onLongClick, onClick = onClick)
             .padding(horizontal = 18.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

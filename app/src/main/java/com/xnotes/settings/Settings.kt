@@ -83,6 +83,8 @@ data class Settings(
     /** Size and look the insert-table dialog starts from ("Default for new tables"). */
     val newTable: TableDefaults = TableDefaults(),
     val prefs: Preferences = Preferences(),
+    /** The 白い熊 速記 UI theme — every chrome attribute the UI page exposes. */
+    val sokkiUi: SokkiUi = SokkiUi(),
     /** One-shot flag: the first-run stylus check (which may auto-enable finger-draw) has run. */
     val fingerDrawAutoChecked: Boolean = false,
 ) {
@@ -122,6 +124,7 @@ data class Settings(
             .apply { newCanvasBackground?.let { put("new_canvas_background", canvasBackgroundJson(it)) } }
             .apply { if (!newTable.isFactory) put("new_table", tableDefaultsJson(newTable)) }
             .put("prefs", prefs.toJson())
+            .put("sokki_ui", sokkiUi.toJson())
             .put("view_defaults", com.xnotes.platform.ViewSettingsJson.write(JSONObject(), viewDefaults))
             .put("finger_draw_auto_checked", fingerDrawAutoChecked)
     }
@@ -178,6 +181,7 @@ data class Settings(
                 newCanvasBackground = canvasBackground(o.optJSONObject("new_canvas_background")),
                 newTable = tableDefaults(o.optJSONObject("new_table")),
                 prefs = Preferences.fromJson(o.optJSONObject("prefs")),
+                sokkiUi = SokkiUi.fromJson(o.optJSONObject("sokki_ui")),
                 fingerDrawAutoChecked = o.optBoolean("finger_draw_auto_checked", false),
             )
         }
