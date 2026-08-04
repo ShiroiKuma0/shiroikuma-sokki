@@ -766,7 +766,7 @@ class CanvasCodec(private val imageCodec: ImageCodec) {
         /** Default shape outline colour for a shape whose stroke colour did not survive. */
         private val DEFAULT_SHAPE_STROKE = Rgba(0, 230, 118, 255)
 
-        private const val NOT_XCANVAS = "Not an xnotes canvas"
+        private const val NOT_XCANVAS = "Not a 白い熊 速記 canvas"
     }
 }
 
