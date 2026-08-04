@@ -1,17 +1,18 @@
-<!-- shiroikuma-sokki fork: the 白い熊 速記 mark.
-     A clean, even X - two identical bars crossing, mirrored on both axes. Upstream's glitch X
-     is irregular by design (its right side carries a merged ghost bar); this is rebuilt from
-     its one clean limb, the bottom-left leg, so all four legs share that width. -->
+<?xml version="1.0" encoding="utf-8"?>
+<!-- shiroikuma-sokki fork: the 白い熊 速記 mark for Material You themed icons (Android 13+).
+
+     The same two strokes as the foreground, and the ruling deliberately dropped: the system
+     flattens this layer to one tint, which would fuse paper and ink into a striped tile with an X
+     lost in it. The mark alone is what stays recognisable. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
   <path
-      android:pathData="M22.4,21L42.04,21L54,39.13L65.96,21L85.6,21L63.82,54L85.6,87L65.96,87L54,68.87L42.04,87L22.4,87L44.18,54Z"
-      android:fillColor="#00000000"
-      android:strokeColor="#FF000000"
-      android:strokeWidth="3.0"
-      android:strokeLineJoin="round"
-      android:strokeLineCap="round"/>
+      android:pathData="M34.21,34.72 L33.91,35.51 L34.02,37.03 L34.50,38.96 L35.38,41.31 L36.43,43.56 L37.74,45.88 L40.86,50.35 L43.43,53.37 L46.58,56.62 L51.00,60.75 L59.02,67.73 L67.13,76.13 L68.53,77.20 L69.85,77.59 L70.17,77.31 L70.15,76.98 L70.42,76.66 L70.60,75.80 L70.52,73.72 L69.99,71.15 L69.11,68.37 L67.91,65.53 L65.95,61.98 L63.47,58.60 L60.63,55.45 L56.26,51.20 L37.54,35.38 L36.48,34.66 L35.57,34.24 L34.92,34.26 L34.44,34.09 L34.19,34.30 L34.17,34.62 Z"
+      android:fillColor="#FF000000"/>
+  <path
+      android:pathData="M73.56,34.67 L73.07,34.72 L72.43,35.07 L70.06,37.05 L61.48,45.99 L57.35,49.90 L53.34,53.27 L47.13,58.15 L44.43,60.55 L42.92,62.10 L41.35,64.01 L38.94,67.74 L37.47,71.02 L36.70,74.00 L36.64,74.93 L36.82,75.70 L37.08,75.84 L37.82,75.56 L38.94,74.58 L43.27,69.90 L45.95,67.43 L48.39,65.52 L54.19,61.61 L57.31,59.32 L60.45,56.69 L63.16,54.03 L65.32,51.57 L67.30,48.96 L69.10,46.23 L70.96,43.00 L72.82,39.23 L73.90,36.55 L74.14,35.49 L74.08,34.79 L73.90,34.57 L73.62,34.61 Z"
+      android:fillColor="#FF000000"/>
 </vector>
