@@ -6,18 +6,41 @@
 
 **A handwriting-first notebook for pen and stylus, tuned for shorthand.**
 
-A fork of [xnotes](https://github.com/shardulvs/xnotes-android) with **major additions**: a
-measurable pen-pressure response, a fully settable house theme, and a nine-category backup with
-token-gated automation.
+A fork of [xnotes](https://github.com/shardulvs/xnotes-android) with **major additions**: 速記
+shorthand paper as a page ruling, a measurable pen-pressure response, a fully settable house theme,
+and a nine-category backup with token-gated automation.
 
 Installs **side-by-side** with upstream (app id `shiroikuma.sokki`).
 
-**📥 Latest release: [`0.8.10+005`](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases)
+**📥 Latest release: [`0.8.10+010`](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases)
 
 <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-orange?style=flat-square" alt="License" /></a>
 <img src="https://img.shields.io/badge/Android-8.0%2B-3ddc84?style=flat-square&logo=android&logoColor=white" alt="Android 8.0+" />
 
 </div>
+
+---
+
+## 📐 速記 paper, ruled the way shorthand is written
+
+Stock offers lines, dots and a grid — all of them evenly spaced, because none of them is trying to
+be anything in particular. Shorthand paper is not evenly spaced: it is a **band**, opened by a heavy
+rule and divided by two hairlines, and the unequal spacing is the point.
+
+**速記** joins the ruling chips as a fourth pattern, reproducing that band from measurements of the
+Samsung Notes 速記 template rather than an approximation of it — a heavy rule every 64 px with
+hairlines 25 px and 49 px below it. The offsets are held as fractions of the period, so the spacing
+slider **scales the whole band** instead of just moving lines apart, and the paper keeps its
+proportions at any size. Since 64 px is already the default spacing, the default is the template at
+1:1.
+
+Steno paper is blue paper, so the pattern brings its own default colour instead of inheriting the
+grey the other rulings use — grey hairlines would not read as the thing it copies. Set it once on
+the "All pages" tab with *Use for new notes* ticked and every note you create opens already ruled.
+
+It works on the infinite canvas too, drawn procedurally in the GLES shader so it stays exact at any
+zoom — with the zoom subdivision suppressed for this one pattern, because 速記 paper already
+subdivides itself, at a ratio that is not a half.
 
 ---
 
@@ -62,6 +85,13 @@ It layers over upstream's computed palette rather than replacing it, so the appe
 Material You paths still work underneath, and a master switch returns the stock chrome without losing
 a single edit.
 
+Because the house palette makes every surface black, Material's usual way of lifting a dialog off the
+page — a lighter surface and a shadow — collapses to nothing, and a confirmation prompt arrives as
+black text on black with no edge anywhere. **Every floating surface is outlined instead**: all ten
+dialogs, all twenty-nine dropdowns and popups, and the snackbar, from one definition, using this
+page's own Border colour and Border width. Those two controls now shape the whole app, not just its
+dividers.
+
 ---
 
 ## 💾 Backup, restore, and 保存復元 automation
@@ -82,15 +112,25 @@ advertises needing no broad storage permission.
 
 ---
 
-## ⬛ Black-yellow identity
+## ⬛ Black-yellow identity, written rather than constructed
 
-The launcher icon is a clean, even X: two identical bars crossing, mirrored on both axes. Upstream's
-glitch X is irregular by design, so this one is rebuilt from its single clean limb — 9.0 units thick
-perpendicular to its own axis, edges at slope 0.66, shared by all four legs. Vector adaptive
-foreground, a monochrome variant for themed icons, raster fallbacks at all five densities.
+The launcher icon is an X that was **actually written**: two brush strokes, the first dominant, both
+bowed the way a hand bows them, crossing a little above centre and carrying on past the end. Filled
+outlines rather than a stroked path, because the width has to vary along each leg.
 
-The launch animation redraws all 24 frames: the mark writes itself on over sixteen, holds, then
-fades, so the loop restarts without a cut.
+It sits on the same 速記 paper the app now rules its pages with, so the icon says what the app is
+for. Paper and mark are separate layers, which is also what makes the parallax on supporting
+launchers read right — the mark slides over the paper, which is what it is. The monochrome layer for
+themed icons drops the ruling on purpose: Material You flattens that layer to a single tint, which
+would fuse paper and ink into a striped tile with the X lost inside it.
+
+The 24-frame launch animation is cut from the same geometry and **writes** the mark rather than
+tracing it — stroke one, then stroke two crossing it, held, then dimmed. Its rules fade out towards
+both ends of the frame, so nothing gives away that the frames are a square on a fullscreen stage,
+and the paper does not fade with the ink, which is what makes the loop wrap seamlessly.
+
+None of it is drawn by hand: `tools/icon/` holds the stroke model and the two emitters, and
+re-running them reproduces every shipped byte of the icon and the splash.
 
 ---
 
