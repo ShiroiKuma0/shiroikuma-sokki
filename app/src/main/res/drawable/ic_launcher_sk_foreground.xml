@@ -1,0 +1,17 @@
+<!-- shiroikuma-sokki fork: the 白い熊 速記 mark.
+     A clean, even X - two identical bars crossing, mirrored on both axes. Upstream's glitch X
+     is irregular by design (its right side carries a merged ghost bar); this is rebuilt from
+     its one clean limb, the bottom-left leg, so all four legs share that width. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+  <path
+      android:pathData="M22.4,21L42.04,21L54,39.13L65.96,21L85.6,21L63.82,54L85.6,87L65.96,87L54,68.87L42.04,87L22.4,87L44.18,54Z"
+      android:fillColor="#00000000"
+      android:strokeColor="#FFFF00"
+      android:strokeWidth="3.0"
+      android:strokeLineJoin="round"
+      android:strokeLineCap="round"/>
+</vector>
