@@ -46,6 +46,40 @@ we use the plain `+NNN` versionName.
 | ABI | `arm64-v8a` only (upstream ships three) | `app/build.gradle.kts` → the second `ndk { }` block |
 | Signing | gitignored `keystore.properties` → `~/.android-keystores/shiroikuma-sokki.jks` (alias `sokki`) | `app/build.gradle.kts` (upstream's own signing block reads it) |
 | De-branding | our name + our GitHub links everywhere user-visible | `values/strings.xml`, `ui/AboutPane.kt`, `ui/Backstage.kt`, `platform/PresentationServer.kt` |
+| 白い熊 速記 UI page | the whole house look, settable + live-previewed | `ui/SokkiUiPane.kt`, `ui/SokkiPickers.kt`, `settings/SokkiUi.kt`, `ui/theme/UiFonts.kt` |
+| Export / Import | category ZIP + the Kōjiki-style panel | `ui/SokkiExportImport.kt`, `settings/SokkiBackup.kt` |
+| 保存復元 automation | token-gated receiver + foreground service | `automation/` |
+
+### The 白い熊 速記 UI page
+
+`BackstageView.SOKKI_UI` — reached from the sidebar, or by **long-pressing the Preferences cog**.
+Built in the kxkb page format: 20sp bold headings underlined only as wide as their own text, a thin
+hairline opening each section, rows indented 24dp per level, and row padding that is itself a
+setting (tight by default). Sections: Export/Import · Theme · Colours · Typography · Shape & lines ·
+Icons & density, each with a live preview.
+
+- **`settings/SokkiUi.kt`** holds every attribute with its black-yellow default, and `applyTo()`
+  repaints upstream's computed `Palette`. Upstream's appearance modes and Material You paths are
+  untouched underneath — the master switch turns our layer off and stock chrome returns.
+- **Colours** are picked with four RGBA sliders over a live swatch, with one-click boxes above them
+  prefilled from `Settings.recentColors` (the store the ink palette already kept).
+- **Fonts** come from the existing `FontCatalog` — bundled families, generic tokens and
+  user-imported files alike — so there is no second font store. `UiFonts` only wraps the Android
+  `Typeface` for Compose, and the choice drives `MaterialTheme.typography` app-wide.
+
+### Backup, and the 保存復元 contract
+
+`SokkiBackup` is the one export engine: nine categories, `manifest.json` + `<id>.json` per category
+plus the font/code-theme file stores, written `.part` and renamed only when complete. The panel and
+`automation/StateExportReceiver` are both thin callers of it — **never duplicate export logic into
+the receiver**. The receiver gates on `AutomationAuth` and hands off to `StateExportService`
+(foreground, `dataSync`), because a manifest receiver that overruns the broadcast window is an ANR
+against us, killed mid-write. The token lives in its own prefs file and is in **no** export category.
+
+**We stay SAF-only.** The app advertises needing no broad storage permission, so `MANAGE_EXTERNAL_STORAGE`
+is deliberately not declared: an automation `path` override is honoured only if all-files access
+happens to be held, else the configured SAF folder is used, else `ERROR:no-storage-access` — which
+is the fallback the contract itself specifies.
 
 ### Versioning & APK naming
 

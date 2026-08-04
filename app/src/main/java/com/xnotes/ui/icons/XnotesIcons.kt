@@ -193,6 +193,11 @@ object XnotesIcons {
     val home = icon("M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z", "M9 22V12h6v10")
     val share = icon("M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8", "M16 6l-4-4-4 4", "M12 2v13")
     val check = icon("M20 6 9 17l-5-5")
+    /** The 白い熊 速記 UI page: a painter's palette with its four wells. */
+    val palette = icon(
+        "M12 2a10 10 0 0 0 0 20 2 2 0 0 0 2-2 2 2 0 0 0-.5-1.3 2 2 0 0 1-.5-1.3 2 2 0 0 1 2-2H17a5 5 0 0 0 5-5c0-4.4-4.5-8-10-8Z",
+        circle(7.5, 10.5, 1.2), circle(11.0, 7.0, 1.2), circle(15.0, 7.5, 1.2), circle(17.5, 11.0, 1.2),
+    )
     val arrowUp = icon("M12 19V5", "M5 12l7-7 7 7")
     val arrowDown = icon("M12 5v14", "M19 12l-7 7-7-7")
     val newFolder = icon("M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2Z", "M12 11v6", "M9 14h6")
