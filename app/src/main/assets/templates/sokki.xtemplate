@@ -1,0 +1,21 @@
+{
+  "xtemplate": 1,
+  "id": "shiroikuma.sokki.sokki",
+  "name": "速記",
+  "description": "白い熊's shorthand paper: a heavy rule opening each band, with two hairlines dividing it.",
+  "license": "MIT",
+  "tags": ["lines", "writing", "shorthand"],
+  "params": {
+    "spacing": { "type": "length", "default": "10.837333mm", "min": "2.709333mm", "max": "33.866667mm",
+                 "label": "Band height", "role": "spacing" },
+    "rule": { "type": "color", "default": "#0000ff", "label": "Rule colour" }
+  },
+  "strokeWidth": "0.254mm",
+  "items": [
+    { "type": "repeat", "axis": "y", "period": "spacing", "extend": true, "children": [
+      { "type": "hline", "y": 0, "stroke": "rule", "strokeWidth": "0.508mm" },
+      { "type": "hline", "y": "spacing * 25 / 64", "stroke": "rule" },
+      { "type": "hline", "y": "spacing * 49 / 64", "stroke": "rule" }
+    ]}
+  ]
+}

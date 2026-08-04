@@ -5,6 +5,7 @@ import com.xnotes.core.geometry.Rect
 import com.xnotes.core.pal.Pen
 import com.xnotes.core.pal.Renderer
 import kotlin.math.ceil
+import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 
@@ -41,6 +42,7 @@ fun paintPagePattern(
     val pen = Pen(ink, width = PageStyle.LINE_THICKNESS, cosmetic = false)
     when (pattern) {
         PagePattern.LINES -> hLines(r, pen, spacing, bounds, clip)
+        PagePattern.SOKKI -> sokkiLines(r, ink, spacing, bounds, clip)
         PagePattern.GRID -> {
             hLines(r, pen, spacing, bounds, clip)
             vLines(r, pen, spacing, bounds, clip)
@@ -108,6 +110,38 @@ private fun intersect(a: Rect, b: Rect): Rect? {
 
 /** The first ruling coordinate at or after [start]; the paper's own edges are skipped by the callers. */
 private fun first(start: Double, spacing: Double): Double = ceil(start / spacing) * spacing
+
+/**
+ * The 速記 ruling: one band per [spacing], opened by a heavy rule and divided by two hairlines
+ * ([PageStyle.SOKKI_LINES]). Walks whole bands rather than single lines so the three weights stay
+ * in step no matter where [clip] starts — a half-band cut by the sharp-viewport rect must land its
+ * lines in exactly the same places as the full-page pass, or the two would disagree at the seam.
+ * Bands are counted from page-space zero like every other pattern, so a margin extends the ruling
+ * outward instead of sliding it under the ink already written on it.
+ */
+private fun sokkiLines(
+    r: Renderer,
+    ink: Rgba,
+    spacing: Double,
+    bounds: Rect,
+    clip: Rect,
+) {
+    val heavy = Pen(ink, width = PageStyle.LINE_THICKNESS * PageStyle.SOKKI_HEAVY_FACTOR, cosmetic = false)
+    val hair = Pen(ink, width = PageStyle.LINE_THICKNESS, cosmetic = false)
+    // Start a band early: a band whose heavy rule is above the clip can still own hairlines
+    // inside it.
+    var band = floor(clip.top / spacing) - 1.0
+    while (band * spacing <= clip.bottom && band * spacing < bounds.bottom) {
+        for ((offset, isHeavy) in PageStyle.SOKKI_LINES) {
+            val y = (band + offset) * spacing
+            // Skip the line on the paper's own edge, exactly as [first] does for the other patterns.
+            if (y > bounds.top && y < bounds.bottom && y >= clip.top && y <= clip.bottom) {
+                r.strokePolyline(listOf(Pt(bounds.left, y), Pt(bounds.right, y)), if (isHeavy) heavy else hair)
+            }
+        }
+        band += 1.0
+    }
+}
 
 private fun hLines(r: Renderer, pen: Pen, spacing: Double, bounds: Rect, clip: Rect) {
     var y = first(clip.top, spacing)
