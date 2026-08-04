@@ -131,6 +131,10 @@ class DocumentCodec(
         j.endObject()
     }
 
+    /** The style defaults, hoisted out of the per-stroke write: [writeStroke] omits any optional
+     *  field still sitting at its default, and a manifest can hold thousands of strokes. */
+    private val DEFAULT_CONFIG = ToolConfig()
+
     private fun writeStroke(j: JsonWrite, s: Stroke) {
         // Per-sample time is only meaningful to the speed pen, so it's written as an
         // optional 4th element only then — every other stroke serializes unchanged.
@@ -163,6 +167,12 @@ class DocumentCodec(
         }
         // Strength matters only to the highlighter; baked per-stroke so a note reopens unchanged.
         if (s.tool == Tool.HIGHLIGHTER) j.name("highlighter_alpha").value(s.config.highlighterAlpha)
+        // The pressure band and response curve: style, so they travel with the stroke and it
+        // reloads as drawn even after the pen is recalibrated. Written only when moved off the
+        // defaults, so a note written before any calibration serializes exactly as it always did.
+        if (s.config.pressureLow != DEFAULT_CONFIG.pressureLow) j.name("pressure_low").value(s.config.pressureLow)
+        if (s.config.pressureHigh != DEFAULT_CONFIG.pressureHigh) j.name("pressure_high").value(s.config.pressureHigh)
+        if (s.config.pressureCurve != DEFAULT_CONFIG.pressureCurve) j.name("pressure_curve").value(s.config.pressureCurve)
         j.endObject()
         // Samples are ~97% of a dense manifest's bytes, so they serialize rounded: 0.01
         // content px (2dp) and 0.001 pressure (3dp) are far below anything visible, and a
@@ -539,6 +549,9 @@ class DocumentCodec(
         var dashLength: Double? = null
         var dashGap: Double? = null
         var highlighterAlpha: Double? = null
+        var pressureLow: Double? = null
+        var pressureHigh: Double? = null
+        var pressureCurve: Double? = null
     }
 
     private fun parseItem(p: JsonPull, items: MutableList<CanvasItem>, pending: MutableList<PendingImage>) {
@@ -631,6 +644,11 @@ class DocumentCodec(
             dashGap = c?.dashGap ?: def.dashGap,
             // Absent on legacy highlighter strokes -> the historical 0.35, so they reload unchanged.
             highlighterAlpha = c?.highlighterAlpha ?: def.highlighterAlpha,
+            // Absent on every stroke written before the band existed -> the identity band and the
+            // engine's own curve, which is exactly how those strokes were built.
+            pressureLow = c?.pressureLow ?: def.pressureLow,
+            pressureHigh = c?.pressureHigh ?: def.pressureHigh,
+            pressureCurve = c?.pressureCurve ?: def.pressureCurve,
         )
         return Stroke(tool, config, s.samples ?: mutableListOf(), s.speedScale, s.straight, s.smoothScale)
     }
@@ -682,6 +700,9 @@ class DocumentCodec(
                 "dash_length" -> c.dashLength = doubleOrNull(p)
                 "dash_gap" -> c.dashGap = doubleOrNull(p)
                 "highlighter_alpha" -> c.highlighterAlpha = doubleOrNull(p)
+                "pressure_low" -> c.pressureLow = doubleOrNull(p)
+                "pressure_high" -> c.pressureHigh = doubleOrNull(p)
+                "pressure_curve" -> c.pressureCurve = doubleOrNull(p)
                 else -> p.skipValue()
             }
         }

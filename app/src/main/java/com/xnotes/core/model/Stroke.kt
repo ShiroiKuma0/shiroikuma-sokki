@@ -223,6 +223,9 @@ class Stroke(
             holdEnds = tool == Tool.PEN || tool == Tool.HIGHLIGHTER,
             finished = finished,
             smoothScale = smoothScale,
+            pressureLow = config.pressureLow,
+            pressureHigh = config.pressureHigh,
+            pressureCurve = config.pressureCurve,
         ).also { cachedGeometry = it }
     }
 
