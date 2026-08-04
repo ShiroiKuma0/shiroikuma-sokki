@@ -39,7 +39,7 @@ fun CanvasStylesPopup(editor: InfiniteEditor, onDismiss: () -> Unit) {
         editor.setBackground(next)
     }
 
-    DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
+    SokkiDropdownMenu(expanded = true, onDismissRequest = onDismiss) {
         Column(Modifier.width(286.dp).padding(horizontal = 14.dp, vertical = 8.dp)) {
             PopupTitle("STYLES")
 

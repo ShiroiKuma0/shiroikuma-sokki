@@ -289,7 +289,7 @@ private fun RenameDialog(initial: String, onConfirm: (String) -> Unit, onDismiss
     var text by remember { mutableStateOf(initial) }
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
-    AlertDialog(
+    SokkiAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Rename note") },
         text = {
@@ -304,7 +304,6 @@ private fun RenameDialog(initial: String, onConfirm: (String) -> Unit, onDismiss
             TextButton(onClick = { if (text.isBlank()) onDismiss() else onConfirm(text) }) { Text("Rename") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
-        containerColor = LocalPalette.current.menuBg.toComposeColor(),
     )
 }
 
@@ -428,7 +427,7 @@ private fun ImageMenu(editor: Editor, onInsertImage: () -> Unit, onAddStickers: 
     var stickersOpen by remember { mutableStateOf(false) }
     Box {
         ToolbarIcon(XnotesIcons.image, "Image") { expanded = true }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        SokkiDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuItem(text = { Text("Paste image") }, onClick = { editor.pasteImage(); expanded = false })
             DropdownMenuItem(text = { Text("Insert image…") }, onClick = { onInsertImage(); expanded = false })
             DropdownMenuItem(text = { Text("Stickers") }, onClick = { expanded = false; stickersOpen = true })
@@ -445,7 +444,7 @@ private fun ImageMenu(editor: Editor, onInsertImage: () -> Unit, onAddStickers: 
 @Composable
 private fun StickersMenu(editor: Editor, onAddStickers: () -> Unit, onDismiss: () -> Unit) {
     val palette = LocalPalette.current
-    DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
+    SokkiDropdownMenu(expanded = true, onDismissRequest = onDismiss) {
         DropdownMenuItem(
             text = { Text("Add stickers…") },
             leadingIcon = { Icon(XnotesIcons.plus, contentDescription = null, modifier = Modifier.size(18.dp)) },
@@ -523,7 +522,7 @@ private fun FitMenu(editor: Editor) {
     var expanded by remember { mutableStateOf(false) }
     Box {
         ToolbarIcon(XnotesIcons.fit, "Fit") { expanded = true }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        SokkiDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuItem(text = { Text("Fit whole page") }, onClick = { editor.fitPage(); expanded = false })
             DropdownMenuItem(text = { Text("Fit page width") }, onClick = { editor.fitWidth(); expanded = false })
             DropdownMenuItem(text = { Text("Fit page height") }, onClick = { editor.fitHeight(); expanded = false })
