@@ -165,6 +165,7 @@ dependencies {
     implementation(libs.latex.base)
     implementation(libs.latex.parser)
     implementation(libs.latex.renderer)
+    implementation(libs.androidx.documentfile)
     debugImplementation(libs.androidx.ui.tooling)
 
     testImplementation(libs.junit)

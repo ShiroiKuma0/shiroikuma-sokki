@@ -117,6 +117,9 @@ does **not** apply here — we use the plain `+NNN` versionName.
    | Black-yellow icon | yellow `#FFFF00` traced line-art on black | `mipmap-anydpi-v26/ic_launcher*.xml`, `drawable/ic_launcher_sk_foreground.xml`, `mipmap-*/ic_launcher*.png` |
    | Launch loader | our traced frames, not upstream's glitch-X | `drawable-nodpi/xnotes_frame_*.png` |
    | De-branding | no "xnotes" in user-visible text, our GitHub links in About | `ui/AboutPane.kt`, `ui/Backstage.kt`, `platform/PresentationServer.kt` |
+   | 白い熊 速記 UI page | `BackstageView.SOKKI_UI` + the sidebar entry + the cog's long-press | `ui/SokkiUiPane.kt`, `ui/SokkiPickers.kt`, `settings/SokkiUi.kt`, `ui/theme/UiFonts.kt`, `ui/Backstage.kt` |
+   | Theme hooks | `SokkiUi.applyTo` at the end of `buildPalette`; `XnotesTheme(palette, ui)` | `ui/Editor.kt`, `ui/theme/XnotesTheme.kt`, `MainActivity.kt` |
+   | Backup + automation | the export engine, the panel, the token-gated receiver + service | `settings/SokkiBackup.kt`, `ui/SokkiExportImport.kt`, `automation/`, `AndroidManifest.xml` |
    | Kept as infrastructure | `com.xnotes` namespace, `.xnote` format, `libxnotests`, `xnotes.gl` log tags, `XnotesIcons`/`XnotesTheme` symbols | throughout |
    | Committed agent files | `CLAUDE.md`, `.claude/` un-ignored; signing material ignored | `.gitignore` |
 
