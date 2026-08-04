@@ -648,7 +648,10 @@ private fun EditorScreen(
     // bar rides right above it); a floating keyboard reports no inset and the bar stays at the
     // bottom. Insets are consumed below so inner imePadding fields don't pad a second time.
     val contentInsets = if (fullscreen) WindowInsets.ime else WindowInsets.systemBars.union(WindowInsets.ime)
-    Scaffold(snackbarHost = { SnackbarHost(snackbar) }, contentWindowInsets = contentInsets) { inner ->
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbar) { com.xnotes.ui.SokkiSnackbar(it) } },
+        contentWindowInsets = contentInsets,
+    ) { inner ->
         Box(modifier = Modifier.fillMaxSize().padding(inner).consumeWindowInsets(contentInsets)) {
             // BASE LAYER: backstage is the root of the stack — always present underneath.
             com.xnotes.ui.Backstage(
@@ -774,7 +777,7 @@ private fun EditorScreen(
     }
     if (showShareChooser) {
         val shareUri = pendingShareUri
-        androidx.compose.material3.AlertDialog(
+        com.xnotes.ui.SokkiAlertDialog(
             onDismissRequest = { showShareChooser = false; pendingShareUri = null },
             title = { androidx.compose.material3.Text("Share note") },
             text = { androidx.compose.material3.Text("Share “${shareUri?.let { stemOf(it) } ?: ""}” as:") },
@@ -799,7 +802,7 @@ private fun EditorScreen(
         com.xnotes.ui.PresentationDialog(editor = editor, onDismiss = { showPresentation = false })
     }
     guardAction?.let { action ->
-        androidx.compose.material3.AlertDialog(
+        com.xnotes.ui.SokkiAlertDialog(
             onDismissRequest = { guardAction = null },
             title = { androidx.compose.material3.Text("Unsaved changes") },
             text = { androidx.compose.material3.Text("Save changes to “${editor.title}” before continuing?") },

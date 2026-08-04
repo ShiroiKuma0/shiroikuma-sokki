@@ -120,7 +120,7 @@ internal fun ColorPickerPopup(
     }
     fun commit(c: Rgba) { applyLive(c); onPick(c) }
 
-    DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
+    SokkiDropdownMenu(expanded = true, onDismissRequest = onDismiss) {
         Column(Modifier.width(GRID_W.dp).padding(horizontal = 12.dp, vertical = 8.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 TabChip("Swatches", tab == 0) { tab = 0 }
