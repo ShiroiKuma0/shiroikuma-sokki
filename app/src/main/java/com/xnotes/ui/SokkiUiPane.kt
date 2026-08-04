@@ -39,6 +39,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.xnotes.automation.AutomationAuth
 import com.xnotes.core.model.Rgba
+import com.xnotes.core.tools.Tool
+import com.xnotes.core.tools.ToolConversions
 import com.xnotes.settings.ColorSlot
 import com.xnotes.settings.SokkiBackup
 import com.xnotes.settings.SokkiUi
@@ -83,8 +85,25 @@ fun SokkiUiPane(editor: Editor, onImportFont: () -> Unit, onClosePage: () -> Uni
     var automationOn by remember { mutableStateOf(AutomationAuth.enabled(ctx)) }
     var token by remember { mutableStateOf(AutomationAuth.token(ctx)) }
     val dirSet = remember(showExim) { SokkiBackup.backupDirLabel(ctx) != null }
+    // Pen pressure: hoisted, because the pad, the readout and the three sliders are one control.
+    var pen by remember { mutableStateOf(editor.toolConfig(Tool.PEN)) }
+    var stats by remember { mutableStateOf(PressureStats()) }
+    var padClear by remember { mutableStateOf(0) }
 
     fun set(next: SokkiUi) = editor.applySokkiUi(next)
+
+    /** The band and the curve are a property of the pen and the hand, not of one tool, so this page
+     *  writes all four pressure tools at once. The per-tool override still lives in each tool's own
+     *  popup, for when one pen wants a different bite than the rest. */
+    fun setPressure(low: Double, high: Double, curve: Double) {
+        PRESSURE_TOOLS.forEach { t ->
+            editor.updateToolConfig(
+                t,
+                editor.toolConfig(t).copy(pressureLow = low, pressureHigh = high, pressureCurve = curve),
+            )
+        }
+        pen = editor.toolConfig(Tool.PEN)
+    }
 
     LazyColumn(
         Modifier.fillMaxSize().background(palette.bg.toComposeColor()),
@@ -118,6 +137,88 @@ fun SokkiUiPane(editor: Editor, onImportFont: () -> Unit, onClosePage: () -> Uni
                 android.widget.Toast.makeText(ctx, "New token — update pasted copies", android.widget.Toast.LENGTH_LONG).show()
             })
         }
+
+        // Not an appearance setting, but this is the fork's settings home and it is the one 白い熊
+        // reaches for while writing, so it sits near the top rather than under the colour lists.
+        item { SectionHeader("Pen pressure") }
+        item {
+            PreviewFrame {
+                Column {
+                    Text(
+                        "Write here as you normally would — the ink is the pen being tuned.",
+                        fontSize = 11.sp,
+                        color = palette.textDim.toComposeColor(),
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    PressurePad(
+                        config = pen,
+                        ink = palette.accent,
+                        clearKey = padClear,
+                        modifier = Modifier.fillMaxWidth().height(150.dp),
+                        onStats = { stats = it },
+                    )
+                }
+            }
+        }
+        item { ReadoutRow(1, stats) }
+        item {
+            ActionRow(
+                1, "Use the measured band", "Take the measured p5–p95",
+                if (stats.hasData) {
+                    "Sets Light and Hard to ${pct(stats.p5)} – ${pct(stats.p95)} on all four pressure pens."
+                } else {
+                    "Write in the pad above with the pen first — a finger is not measured."
+                },
+                enabled = stats.hasData,
+            ) { setPressure(stats.p5, stats.p95, pen.pressureCurve) }
+        }
+        item {
+            ActionRow(
+                1, "Calibration pad", "Clear",
+                "Wipes the ink and starts the measurement over.",
+                enabled = true,
+            ) { padClear++ }
+        }
+        item {
+            SliderRow(
+                1, "Light", bandPercent(pen.pressureLow), "${bandPercent(pen.pressureLow)} % — thinnest below this",
+                0f..95f,
+            ) { v ->
+                val low = ToolConversions.percentToPressure(v.toDouble())
+                val high = maxOf(pen.pressureHigh, low + ToolConversions.MIN_BAND_PERCENT / 100.0)
+                setPressure(low, high, pen.pressureCurve)
+            }
+        }
+        item {
+            SliderRow(
+                1, "Hard", bandPercent(pen.pressureHigh), "${bandPercent(pen.pressureHigh)} % — full width above this",
+                5f..100f,
+            ) { v ->
+                val high = ToolConversions.percentToPressure(v.toDouble())
+                val low = minOf(pen.pressureLow, high - ToolConversions.MIN_BAND_PERCENT / 100.0)
+                setPressure(low, high, pen.pressureCurve)
+            }
+        }
+        item {
+            SliderRow(
+                1, "Curve", pen.pressureCurve.roundToInt(), curveLabel(pen.pressureCurve),
+                ToolConversions.CURVE_RANGE.start.toFloat()..ToolConversions.CURVE_RANGE.endInclusive.toFloat(),
+            ) { v -> setPressure(pen.pressureLow, pen.pressureHigh, v.toDouble()) }
+        }
+        item {
+            val d = com.xnotes.core.tools.ToolConfig()
+            ActionRow(
+                1, "Pressure response", "Reset",
+                "Back to the whole reported range and the stock curve.",
+                enabled = pen.pressureLow != d.pressureLow ||
+                    pen.pressureHigh != d.pressureHigh ||
+                    pen.pressureCurve != d.pressureCurve,
+            ) { setPressure(d.pressureLow, d.pressureHigh, d.pressureCurve) }
+        }
+        // The reference sits under the controls it talks about, so a stroke that came out wrong can
+        // be read about and fixed without leaving the page.
+        item { GroupLabel(1, "If it isn't right") }
+        items2(PRESSURE_FIXES) { (symptom, remedy) -> FixRow(2, symptom, remedy) }
 
         item { SectionHeader("Theme") }
         item {
@@ -411,6 +512,73 @@ private fun TokenRow(level: Int, token: String, enabled: Boolean, onCopy: () -> 
     }
 }
 
+/** A row whose right-hand side is a verb rather than a control: the calibration actions. */
+@Composable
+private fun ActionRow(
+    level: Int,
+    label: String,
+    verb: String,
+    about: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    val palette = LocalPalette.current
+    val dim = palette.textDim.toComposeColor()
+    RowScaffold(level, onClick = { if (enabled) onClick() }) {
+        Column(Modifier.weight(1f)) {
+            Text(label, fontSize = 15.sp, color = if (enabled) palette.text.toComposeColor() else dim)
+            Text(about, fontSize = 11.sp, color = dim)
+        }
+        Text(verb, fontSize = 12.sp, color = if (enabled) palette.accent.toComposeColor() else dim)
+    }
+}
+
+/**
+ * One line of the symptom → slider reference: what the ink is doing wrong, and which slider moves.
+ * Deliberately not a control — it is the page's only piece of pure documentation, so it is drawn
+ * flatter than a row that does something, with the remedy carrying the accent rather than the text.
+ */
+@Composable
+private fun FixRow(level: Int, symptom: String, remedy: String) {
+    val palette = LocalPalette.current
+    RowScaffold(level) {
+        Column(Modifier.weight(1f)) {
+            Text(symptom, fontSize = 13.sp, color = palette.text.toComposeColor())
+            Text(remedy, fontSize = 12.sp, color = palette.accent.toComposeColor())
+        }
+    }
+}
+
+/**
+ * What the pad has measured. The band the response is set from is p5–p95, so that pair is the line
+ * that reads as the answer; the outright min/max sit behind it as the sanity check that the pen is
+ * reporting a range at all rather than a constant.
+ */
+@Composable
+private fun ReadoutRow(level: Int, stats: PressureStats) {
+    val palette = LocalPalette.current
+    RowScaffold(level) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                if (stats.hasData) "Measured  ${pct(stats.p5)} – ${pct(stats.p95)}" else "Measured  —",
+                fontSize = 15.sp,
+                fontFamily = FontFamily.Monospace,
+                color = palette.text.toComposeColor(),
+            )
+            Text(
+                if (stats.hasData) {
+                    "now ${pct(stats.current)}  ·  seen ${pct(stats.min)} – ${pct(stats.max)}  ·  ${stats.count} pen samples"
+                } else {
+                    "No stylus samples yet."
+                },
+                fontSize = 11.sp,
+                fontFamily = FontFamily.Monospace,
+                color = palette.textDim.toComposeColor(),
+            )
+        }
+    }
+}
+
 @Composable
 private fun SwitchRow(level: Int, label: String, about: String, checked: Boolean, onChange: (Boolean) -> Unit) {
     val palette = LocalPalette.current
@@ -544,6 +712,40 @@ private fun weightLabel(w: Int) = when (w) {
     100 -> "100 Thin"; 200 -> "200 Extra light"; 300 -> "300 Light"; 400 -> "400 Regular"
     500 -> "500 Medium"; 600 -> "600 Semi bold"; 700 -> "700 Bold"; 800 -> "800 Extra bold"
     else -> "900 Black"
+}
+
+/** The four tools that read pressure — the ones this page's calibration writes. */
+private val PRESSURE_TOOLS = listOf(Tool.PEN, Tool.CALLIGRAPHY, Tool.SPEED, Tool.TAPER)
+
+/**
+ * Symptom → slider. Two rules are worth carrying in mind while reading it, because they are what
+ * make the wrong slider tempting: **Width is a multiplier on both ends**, so it moves the thick and
+ * the thin together and can never change the ratio between them (Sensitivity is the only control
+ * that moves the thin end alone); and **a dead zone is nearly always the band, not the curve** —
+ * the press has drifted onto a rail, so the window moves rather than the S flattening.
+ */
+private val PRESSURE_FIXES = listOf(
+    "Thin strokes aren't thin enough" to "Sensitivity up — then Light up",
+    "Thick isn't thick enough" to "Width up, and Sensitivity up to keep the hairline",
+    "Have to press too hard for thick" to "Hard down",
+    "Thick comes too easily, or blobs" to "Hard up",
+    "Both ends fine, the change is too gradual" to "Curve up",
+    "The line pulses or flickers mid-stroke" to "Curve down",
+    "Whole pen too fat, but the ratio is right" to "Width down",
+    "A dead zone where pressing changes nothing" to "Move Light/Hard so your usual press sits mid-band",
+)
+
+/** Raw pressure as the percent of the reported range the readout and the sliders both speak in. */
+private fun pct(p: Double) = "${(p * 100).roundToInt()}%"
+
+private fun bandPercent(p: Double) = ToolConversions.pressureToPercent(p).roundToInt()
+
+private fun curveLabel(k: Double) = when {
+    k < 0.5 -> "0 — linear, no S"
+    k < 6 -> "${k.roundToInt()} — gentle"
+    k < 12 -> "${k.roundToInt()} — the stock pen"
+    k < 18 -> "${k.roundToInt()} — nib-like"
+    else -> "${k.roundToInt()} — near a hard switch"
 }
 
 private fun borderLabel(dp: Int) = if (dp == 0) "0 dp — no borders" else "$dp dp"
