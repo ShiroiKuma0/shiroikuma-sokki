@@ -811,7 +811,7 @@ private fun EditorScreen(
     // inset. Insets are consumed below so inner imePadding only adds what the bars don't cover.
     val contentInsets = if (fullscreen) WindowInsets(0, 0, 0, 0) else WindowInsets.systemBars
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbar, Modifier.windowInsetsPadding(WindowInsets.ime.exclude(contentInsets))) },
+        snackbarHost = { SnackbarHost(snackbar, Modifier.windowInsetsPadding(WindowInsets.ime.exclude(contentInsets))) { com.xnotes.ui.SokkiSnackbar(it) } },
         contentWindowInsets = contentInsets,
     ) { inner ->
         Box(modifier = Modifier.fillMaxSize().padding(inner).consumeWindowInsets(contentInsets)) {
