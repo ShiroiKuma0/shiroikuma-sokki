@@ -171,7 +171,7 @@ class PresentationServer {
         val VIEWER_HTML = """
             <!doctype html><html><head><meta charset="utf-8">
             <meta name="viewport" content="width=device-width,initial-scale=1">
-            <title>xnotes presentation</title>
+            <title>白い熊 速記 presentation</title>
             <style>
               html,body{margin:0;height:100%;background:#000;overflow:hidden}
               img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
