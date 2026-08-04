@@ -1153,7 +1153,7 @@ class CanvasCodec(private val imageCodec: ImageCodec, private val textMeasurer: 
         /** How closely a curved connector's stand-in polyline follows it, in content px. */
         private const val STAND_IN_FLATTEN = 0.25
 
-        private const val NOT_XCANVAS = "Not an xnotes canvas"
+        private const val NOT_XCANVAS = "Not a 白い熊 速記 canvas"
     }
 }
 
