@@ -48,6 +48,9 @@ class WetRibbonTest {
             smooth = true,
             holdEnds = tool == Tool.PEN || tool == Tool.HIGHLIGHTER,
             smoothScale = smoothScale,
+            pressureLow = config.pressureLow,
+            pressureHigh = config.pressureHigh,
+            pressureCurve = config.pressureCurve,
         )
 
     private fun build(
@@ -70,6 +73,9 @@ class WetRibbonTest {
         holdEnds = tool == Tool.PEN || tool == Tool.HIGHLIGHTER,
         finished = false,
         smoothScale = smoothScale,
+        pressureLow = config.pressureLow,
+        pressureHigh = config.pressureHigh,
+        pressureCurve = config.pressureCurve,
     )
 
     /** Grow a ribbon over [samples], checking it against the batch build at every single length. */
@@ -78,8 +84,8 @@ class WetRibbonTest {
         samples: List<Sample>,
         smoothScale: Double = 1.0,
         speedScale: Double = 1.0,
+        config: ToolConfig = configFor(tool),
     ) {
-        val config = configFor(tool)
         val ribbon = ribbonFor(config, tool, smoothScale, speedScale)
         for (n in 1..samples.size) {
             val s = samples[n - 1]
@@ -117,6 +123,20 @@ class WetRibbonTest {
 
     @Test fun dashedMatchesTheBatchEngine() {
         assertMatchesAtEveryLength(Tool.DASHED, path(140))
+    }
+
+    @Test fun matchesWithACalibratedPressureBand() {
+        // A pen calibrated to the slice its hand really spans: the band and the curve are style,
+        // carried into the stroke at pen-down, so the live ribbon has to remap pressure exactly as
+        // the rebuild does. Left unthreaded, the ink drawn under the pen is one width and the ink
+        // left behind at pen-up another — which is what a plain merge of the upstream wet ribbon
+        // produces (0.8.11 sync).
+        val band = { c: ToolConfig -> c.copy(pressureLow = 0.05, pressureHigh = 0.45, pressureCurve = 12.0) }
+        assertMatchesAtEveryLength(Tool.PEN, path(140), config = band(configFor(Tool.PEN)))
+        assertMatchesAtEveryLength(
+            Tool.CALLIGRAPHY, path(140), config = band(configFor(Tool.CALLIGRAPHY)),
+        )
+        assertMatchesAtEveryLength(Tool.SPEED, path(140), config = band(configFor(Tool.SPEED)))
     }
 
     @Test fun matchesWhenDrawnZoomedIn() {
