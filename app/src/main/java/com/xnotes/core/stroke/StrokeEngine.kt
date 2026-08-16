@@ -585,6 +585,7 @@ object StrokeEngine {
         return build(
             rawX, rawY, rawP, rawT, baseWidth, pressureEnabled, m, ds, speedStrength,
             taperEnabled, taperMinFactor, speedScale, smooth, holdEnds, finished, smoothScale,
+            pressureLow, pressureHigh, pressureCurve,
         )
     }
 
@@ -611,6 +612,9 @@ object StrokeEngine {
         holdEnds: Boolean = false,
         finished: Boolean = true,
         smoothScale: Double = 1.0,
+        pressureLow: Double = PRESSURE_LOW,
+        pressureHigh: Double = PRESSURE_HIGH,
+        pressureCurve: Double = PRESSURE_CURVE_K,
     ): StrokeGeometry {
         val n = rawX.size
         if (n == 0) return StrokeGeometry.EMPTY
