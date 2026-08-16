@@ -47,6 +47,12 @@ class WetRibbon(
     private val smooth: Boolean,
     private val holdEnds: Boolean,
     private val smoothScale: Double,
+    // The pen's input band and response curve, carried here for the same reason as every other
+    // style field: the live ribbon must compute the *same* half-width the rebuild will, or the ink
+    // would change width under the pen at lift. Defaults are the identity (see [StrokeEngine]).
+    private val pressureLow: Double = StrokeEngine.PRESSURE_LOW,
+    private val pressureHigh: Double = StrokeEngine.PRESSURE_HIGH,
+    private val pressureCurve: Double = StrokeEngine.PRESSURE_CURVE_K,
 ) : RibbonPoints {
     /** Samples taken so far; one ribbon point each. */
     override var pointCount = 0
@@ -334,7 +340,10 @@ class WetRibbon(
                 else -> (if (i < nibDone) nib[i] else liveNib).coerceIn(-1.0, StrokeEngine.DOT_DIR_Y)
             }
             val pressure = if (held) StrokeEngine.heldPressureAt(sp, n, i) else sp[i]
-            var h = StrokeEngine.halfWidth(baseWidth, pressureEnabled, m, ds, pressure, dir)
+            var h = StrokeEngine.halfWidth(
+                baseWidth, pressureEnabled, m, ds, pressure, dir,
+                pressureLow, pressureHigh, pressureCurve,
+            )
             if (speed) {
                 h *= StrokeEngine.speedFactorAt(times, rawCum, n, i, speedScratch, speedStrength, speedScale)
             }
