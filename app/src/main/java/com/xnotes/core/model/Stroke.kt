@@ -309,6 +309,9 @@ class Stroke(
             smooth = !straight,
             holdEnds = tool == Tool.PEN || tool == Tool.HIGHLIGHTER,
             smoothScale = smoothScale,
+            pressureLow = config.pressureLow,
+            pressureHigh = config.pressureHigh,
+            pressureCurve = config.pressureCurve,
         )
         // Everything before the sample being added; the caller appends that one itself.
         for (i in 0 until n - 1) w.append(xAt(i), yAt(i), pAt(i), tAt(i))
