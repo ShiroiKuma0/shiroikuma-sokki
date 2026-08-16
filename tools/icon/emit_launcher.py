@@ -8,7 +8,11 @@ Writes, into app/src/main/res:
   drawable/ic_launcher_sk_background.xml   black sheet + the 速記 ruling
   drawable/ic_launcher_sk_foreground.xml   the yellow X
   drawable/ic_launcher_sk_monochrome.xml   the X alone, for Material You
-  mipmap-*/ic_launcher{,_round,_foreground,_monochrome}.png   the legacy set
+  mipmap-*/ic_launcher{,_round,_foreground}.png   the legacy set
+
+The themed icon is the vector alone: upstream dropped its per-density monochrome PNGs in
+v0.8.12, and ours were dead too - the adaptive XML has always pointed <monochrome> at the
+drawable.
 
 Re-runnable: same input, same bytes out.
 """
@@ -107,7 +111,7 @@ DENSITIES = {"mdpi": 1, "hdpi": 1.5, "xhdpi": 2, "xxhdpi": 3, "xxxhdpi": 4}
 
 
 def ink_only(px, color):
-    """The X on transparency, in the full 108 dp layer - the foreground/monochrome PNGs."""
+    """The X on transparency, in the full 108 dp layer - the foreground PNGs."""
     body = "".join(
         f'<path d="{d}" fill="{color}" fill-rule="nonzero"/>' for d in gen.leg_paths(CHOSEN))
     svg = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{px}" height="{px}" '
@@ -126,7 +130,6 @@ for density, factor in DENSITIES.items():
     for name, kind in (("ic_launcher", "squircle"), ("ic_launcher_round", "circle")):
         gen.masked(CHOSEN, legacy, kind).save(os.path.join(RES, f"mipmap-{density}/{name}.png"))
     ink_only(layer, INK).save(os.path.join(RES, f"mipmap-{density}/ic_launcher_foreground.png"))
-    ink_only(layer, "#000000").save(os.path.join(RES, f"mipmap-{density}/ic_launcher_monochrome.png"))
     print(f"wrote mipmap-{density}/ (legacy {legacy}px, layers {layer}px)")
 
 print(f"\nink {INK}   rule {RULE}   hairline {HAIR}")
