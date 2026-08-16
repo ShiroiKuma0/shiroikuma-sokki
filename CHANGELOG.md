@@ -3,6 +3,66 @@
 All notable fork changes on top of upstream [xnotes](https://github.com/shardulvs/xnotes-android).
 Versions read `<upstream version>+NNN`, where `NNN` counts our builds on that upstream base.
 
+## 0.8.12+001 — 2026-08-16
+
+First build on upstream **v0.8.12** (`versionCode` 49), rebased off **v0.8.11** (48). All eleven fork
+commits replay onto the new base; the work below is what the new base required of them.
+
+### The themed icon is the vector alone
+
+- **Upstream moved its Material You layer to a vector** and deleted the five per-density
+  `mipmap-*/ic_launcher_monochrome.png`. Ours has been a vector since the icon was first traced —
+  the adaptive XML has always pointed `<monochrome>` at `drawable/ic_launcher_sk_monochrome.xml` —
+  so the five PNGs the generator still cut were unreferenced bytes riding along in the APK.
+- **The rebase takes upstream's deletion** (the same conflict lands twice, once in each of the
+  fork's two icon commits), and `tools/icon/emit_launcher.py` stops re-cutting them, so the next
+  icon regeneration cannot resurrect them.
+- Upstream's own `drawable/ic_launcher_monochrome.xml` comes in with the base and stays unreferenced;
+  resource shrinking drops it, and leaving it in place keeps future rebases small.
+
+### The pressure band and the inverse highlighter share a line
+
+- **Upstream's new inverse highlighter lands on exactly the fork's lines.** It adds a `ToolConfig`
+  field and a `highlighter_inverse` key to `CanvasCodec`, `DocumentCodec` and the settings JSON —
+  the same four files, and the same six insertion points, that carry `pressureLow` / `pressureHigh`
+  / `pressureCurve`. The two are independent fields that merely collided textually, so both sides
+  are kept everywhere.
+- **The codec write path takes upstream's braced highlighter block** — it grew from a one-liner to a
+  block when the inverse flag joined the alpha — **with the fork's off-default-only pressure writes
+  after it**. A stroke drawn before any calibration therefore still serialises byte-identically,
+  which is the guarantee the band shipped with.
+
+### Kept intact across the rebase
+
+- Verified after the rebase: install identity, ABI filter, fork version block, the traced icon and
+  its 24 launch frames, the 白い熊 速記 UI page and its cog long-press, `SokkiUi.applyTo` at the end
+  of `buildPalette`, the backup engine and the 保存復元 receiver, and the de-branding sweep. The
+  README keeps the fork's story rather than upstream's new store badges.
+- **The new upstream settings reach the backup by themselves**: `highlighter_inverse` and
+  `fill_alpha` sit inside the tool config, so the *Tools & toolbars* category already carries them,
+  and `new_note_name_template` sits in `prefs`, so *Preferences* does. Upstream's `last_tool` is a
+  new **top-level** key that no category owns, and so is not exported — it is launch state rather
+  than a setting, but it is the first upstream key to fall outside the nine categories.
+
+### What the new upstream base brings (upstream's work)
+
+- **Restyle a finished selection** — lasso strokes already drawn and change their colour and
+  thickness in place, as one undoable command.
+- **An inverse highlighter** that lightens instead of darkens, for marking up a dark page where a
+  multiply has nothing to darken and tints the ink instead.
+- **A fill-opacity slider for the shape tool**, so a shape can be filled at a chosen strength rather
+  than solid or not at all.
+- **New notes named from a template** you set in Preferences, with the field dismissing its focus on
+  an outside tap.
+- **The last used tool re-armed on launch**, instead of always coming back to the default pen.
+- **Pull past the last page to add one** in horizontal scrolling, reachable by a two-finger pan as
+  well as one finger.
+- **A zoom lock on the infinite canvas**, and its styles menu brought in line with the paginated one.
+- Stamps renamed to **stickers** throughout.
+- Colour picker fixes: the spectrum square no longer steals touches meant for the hue ring at its
+  corners, and the marker no longer jumps away when you pick black.
+- Two pages no longer sit off-centre when zoomed out to fit.
+
 ## 0.8.11+001 — 2026-08-16
 
 First build on upstream **v0.8.11** (`versionCode` 48), rebased off **v0.8.10** (47). All nine fork
