@@ -3,6 +3,56 @@
 All notable fork changes on top of upstream [xnotes](https://github.com/shardulvs/xnotes-android).
 Versions read `<upstream version>+NNN`, where `NNN` counts our builds on that upstream base.
 
+## 0.8.11+001 — 2026-08-16
+
+First build on upstream **v0.8.11** (`versionCode` 48), rebased off **v0.8.10** (47). All nine fork
+commits replay onto the new base; the work below is what the new base required of them.
+
+### The pressure band follows the ink into the wet ribbon
+
+- **Upstream now draws a live stroke twice over.** `WetRibbon` grows a ribbon sample by sample under
+  the pen and `WetInkCache` bakes its settled part into a raster, while `StrokeEngine.build` still
+  rebuilds the whole stroke at pen-up. The two must agree point for point — that parity is what the
+  raster and mesh caches are built on — and the fork's input band reached only the rebuild. A pen
+  calibrated to a measured band would have written one width and left another behind at lift.
+- **The band is carried into the wet path** like every other style field: `WetRibbon` takes
+  `pressureLow` / `pressureHigh` / `pressureCurve` and hands them to `StrokeEngine.halfWidth`, and
+  `Stroke` copies them in at pen-down for the live ribbon exactly as it already did for the rebuild.
+- **The three parameters moved onto `build`'s primitive-channel overload** — the one `Stroke` calls
+  now that upstream packs its samples into float arrays off a double origin; the `Sample` overload
+  forwards them on. Defaults remain the identity, so an uncalibrated pen is byte-for-byte unchanged.
+- **`WetRibbonTest` holds the ribbon against the batch engine at every single length**, so threading
+  the band through its two helpers puts every existing parity test on a banded pen the moment one is
+  configured. `matchesWithACalibratedPressureBand` supplies a measured-looking band (0.05–0.45,
+  `k` = 12) for the pen, calligraphy and speed tools; removing the threading fails that test alone.
+
+### Kept intact across the rebase
+
+- **The unsaved-changes prompt is per-pane now** (upstream routes it to the pane being acted on) and
+  still opens as a `SokkiAlertDialog`, so the outlined-surface sweep survives the split view.
+- **`FakeRenderer` records both sets of primitives** — upstream's ribbon, dash and raster runs
+  alongside the fork's polyline geometry, which the 速記 ruling tests assert against.
+- **`DIR_ALPHA` retired with upstream's calligraphy nib rewrite**; the fork's pressure constants
+  moved up beside `PRESSURE_CURVE_K` in its place.
+- Verified after the rebase: install identity, ABI filter, fork version block, the traced icon and
+  its 24 launch frames, the 白い熊 速記 UI page and its cog long-press, `SokkiUi.applyTo` at the end
+  of `buildPalette`, the backup engine and the 保存復元 receiver, and the de-branding sweep.
+
+### What the new upstream base brings (upstream's work)
+
+- **Split view** — two notes side by side, the focused pane marked and its dialogs, shortcuts and
+  messages routed to it; a process-wide `LiveSettings` so both panes share one settings copy.
+- **Wet-ink cache** — live strokes grown as rails and baked into a raster rather than rebuilt per
+  frame, anchored to the old pixel grid as the surface grows.
+- **Calligraphy nib rebuilt** on a head chord and a slew limiter, with its widening capped over the
+  last 8 px at pen-up.
+- Stroke samples packed into float arrays off a double origin; sample reduction back on.
+- Image rotation by a grip on the selection instead of a menu button; press-select and hold-grab on
+  the canvas; a dragged item handed to the page it lands on; the shape a stroke snapped into comes
+  up selected; long thin rectangles recognised; a cut clipboard spent on one paste; the colour picker
+  opened from the canvas swatches; copy/front/duplicate/bring-to-front icons redrawn; the minimap
+  button drawn as an inset panel; pane touches no longer falling through to the backstage.
+
 ## 0.8.10+010 — 2026-08-04
 
 On upstream **v0.8.10** (`versionCode` 47), same base as `+005`.
