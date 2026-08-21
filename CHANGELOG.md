@@ -3,6 +3,90 @@
 All notable fork changes on top of upstream [xnotes](https://github.com/shardulvs/xnotes-android).
 Versions read `<upstream version>+NNN`, where `NNN` counts our builds on that upstream base.
 
+## 0.8.13+001 — 2026-08-21
+
+First build on upstream **v0.8.13** (`versionCode` 50), rebased off **v0.8.12** (49). All thirteen
+fork commits replay onto the new base; the work below is what the new base required of them.
+
+### The 速記 ruling follows the page into its margins
+
+- **Upstream gave pages margins, and rewrote the pattern painter around them.** `paintPagePattern`
+  no longer takes the page's width and height: it takes the **paper rect** the ruling fills — the
+  whole margined footprint, whose top-left goes negative on a margined edge — plus the sub-rect
+  actually being painted, and it anchors the pattern to page-space zero so growing a margin extends
+  the ruling outward instead of sliding it under the ink already written on it.
+- **The fork's `sokkiLines` is ported onto that shape rather than replayed.** It walks `(bounds,
+  clip)`; the bands are still counted from page-space zero — which is exactly what keeps a
+  sharp-viewport half-region landing its lines where the whole-page pass puts them — the rules run
+  the full width of the grown paper, and the edge skip moves from `y > 0` to `y > bounds.top`.
+- **That last move is the behaviour change, and it is the right one**: on a margined page `y = 0`
+  stops being the paper's edge and becomes an ordinary band rule, drawn like any other, which is
+  precisely how upstream's own `hLines` now treats it. A 速記 page grown at the top carries its
+  band upward in step instead of starting a fresh one at the margin.
+- `SokkiPatternTest` gains `aMarginIsRuledOutwardAndKeepsTheBandsInStep`: a page grown by one whole
+  band on every edge rules −39, −15, 0 (heavy), 25 — the same phase the unmargined page has.
+- **`FakeRenderer` collided textually.** Upstream's margin tests record polyline *segments*; the
+  fork's ruling tests record whole *polylines with their pens*, because it is the pen width that
+  tells a heavy band rule from a hairline. Both recordings are kept.
+
+### A menu leaves the toolbar, a popup arrives on it
+
+- **Upstream dropped the page menu** — Add page / Delete current page — giving its toolbar slot to
+  the new Margins button and deleting the `PageMenu` composable outright. The fork's outline swap
+  inside it goes with the function; there is nothing left to keep in step.
+- **Upstream's new margins popup arrives on stock chrome**, the only floating surface in `Popups.kt`
+  not going through the fork's outlined menu, so it takes `SokkiDropdownMenu` like its siblings and
+  answers to the UI page's Border colour and Border width. One outlined dropdown leaves with
+  `PageMenu` and one arrives with the margins menu, so the count holds at twenty-nine.
+- **The long-press canvas menu gained upstream's lock and unlock entries** inside the fork's
+  outlined menu, with the early return a locked item takes relabelled to it.
+
+### Kept intact across the rebase
+
+- Verified after the rebase: install identity, ABI filter, the fork version block (upstream's
+  `versionCode = 50` / `versionName = "0.8.13"` literals untouched, our lines deriving from them),
+  the traced icon and its 24 launch frames, the 白い熊 速記 UI page and its cog long-press,
+  `SokkiUi.applyTo` at the end of `buildPalette`, the backup engine and the 保存復元 receiver, and
+  the de-branding sweep. The new base brought no new branding with it — no new "xnotes" in
+  user-visible text, no new `github.com/shardulvs` link.
+- **The new upstream preferences reach the backup by themselves**: `custom_page_width_mm`,
+  `custom_page_height_mm` and `hide_page_borders` all sit inside the `prefs` object, so the
+  *Preferences* category already carries them. Unlike v0.8.12's `last_tool`, nothing new landed
+  outside the nine categories.
+- **Page margins are document state, not settings.** They ride the `.xnote` manifest and are written
+  only when an edge is set, so a note with no margins still serialises byte-identically and the
+  export categories are untouched by the feature.
+- Upstream swapped in a new monochrome launcher layer of its own; ours has pointed `<monochrome>` at
+  `drawable/ic_launcher_sk_monochrome.xml` since the icon was traced, so the change is inert here
+  and resource shrinking drops the unreferenced file.
+
+### What the new upstream base brings (upstream's work)
+
+- **Page margins, per edge**, for all pages or just the current one — extra paper on any side, a page
+  inheriting from the document unless it overrides it, applied live and never on the undo stack. The
+  ruling extends into it, and thumbnails, screen captures, the presentation stream and PDF export all
+  size themselves to the grown page, so ink written in a margin survives the export.
+- **An SVG drawn as real vector art on the infinite canvas.** A new `core/vector` package parses,
+  flattens, triangulates and meshes a document into GPU-resident triangles, so a placed SVG stays
+  sharp at any zoom and a pinch costs it nothing. Gradients become per-vertex colour on a mesh
+  subdivided until the interpolation error goes away, text becomes glyph outlines, and rectangular
+  clips are applied at mesh time; filters, masks and group opacity are named where used rather than
+  dropped in silence.
+- **Heavy SVGs rasterize on the GPU, and only the slice on screen.** A `RenderNode`/`ImageReader`
+  path on API 29+, chosen per document by timing both backends, with the render bounded by the
+  viewport instead of the whole document.
+- **Lock an item so nothing can select it** — out of reach of a tap, a band, a lasso, select-all and
+  the eraser, with a held finger over it offering only to release it. The flag rides both file
+  formats and is written only when set.
+- **Disappearing ink on the infinite canvas toolbar.**
+- **A stroke carries onto the page the pen walks onto** instead of being cut at the page edge.
+- **Legal, and a custom default page size** (10–2000 mm a side) in Preferences, and **the page border
+  can now be hidden**.
+- Fixes: a tap inside a selection no longer clears it; a page no longer stays blank when a cache
+  build is discarded mid-flight; a resized page blanks instead of stretching under the slider; an SVG
+  rect's top-right and bottom-left corners no longer arrive with reversed tangents; and a lifted SVG
+  no longer re-renders the whole document every few frames.
+
 ## 0.8.12+001 — 2026-08-16
 
 First build on upstream **v0.8.12** (`versionCode` 49), rebased off **v0.8.11** (48). All eleven fork
