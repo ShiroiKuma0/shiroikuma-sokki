@@ -12,7 +12,7 @@ and a nine-category backup with token-gated automation.
 
 Installs **side-by-side** with upstream (app id `shiroikuma.sokki`).
 
-**📥 Latest release: [`0.8.12+001`](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases)
+**📥 Latest release: [`0.8.13+001`](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases)
 
 <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-orange?style=flat-square" alt="License" /></a>
 <img src="https://img.shields.io/badge/Android-8.0%2B-3ddc84?style=flat-square&logo=android&logoColor=white" alt="Android 8.0+" />
@@ -37,6 +37,10 @@ proportions at any size. Since 64 px is already the default spacing, the default
 Steno paper is blue paper, so the pattern brings its own default colour instead of inheriting the
 grey the other rulings use — grey hairlines would not read as the thing it copies. Set it once on
 the "All pages" tab with *Use for new notes* ticked and every note you create opens already ruled.
+
+Give a page margins — upstream's extra paper on any edge — and the band carries straight on into
+them, counted from the same origin as the rest of the page, so a margined 速記 page gains paper
+without the ruling restarting or falling out of step at the seam.
 
 It works on the infinite canvas too, drawn procedurally in the GLES shader so it stays exact at any
 zoom — with the zoom subdivision suppressed for this one pattern, because 速記 paper already
