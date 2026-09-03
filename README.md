@@ -100,8 +100,8 @@ dividers.
 
 ## 💾 Backup, restore, and 保存復元 automation
 
-Nine logically split categories — theme, preferences, tools and toolbars, view defaults, text
-defaults, explorer, presentation server, imported fonts, imported code theme — exported as one ZIP,
+Eight logically split categories — theme, preferences, tools and toolbars, view defaults, text
+defaults, explorer, imported fonts, imported code theme — exported as one ZIP,
 written `.part` and renamed only once complete, so a killed export can never leave something a
 restore would trust.
 
@@ -164,8 +164,8 @@ itself called finished.
 
 A fork of [xnotes](https://github.com/shardulvs/xnotes-android) by Shardul Vikram Singh (app id
 `shiroikuma.sokki`, so it coexists with the official build). All of the app — the GLES infinite
-canvas, the stroke engine, the `.xnote` format, the vendored tree-sitter highlighting, the
-presentation server — is upstream's work; this fork adds to it and repackages it. The code remains
+canvas, the stroke engine, the `.xnote` format, the vendored tree-sitter highlighting — is
+upstream's work; this fork adds to it and repackages it. The code remains
 under MIT, same as upstream — see [LICENSE](LICENSE).
 
 ## Building
