@@ -59,7 +59,6 @@ object SokkiBackup {
         VIEW("view", "View defaults", listOf("view_defaults", "render_scale")),
         TEXT("text", "New-note text & page defaults", listOf("new_note_style", "new_note_flow")),
         EXPLORER("explorer", "Explorer (folder · sorting · start-up)", listOf("browse_root", "explorer_sort_key", "explorer_sort_descending", "start_on_home", "sidebar_visible")),
-        PRESENTATION("presentation", "Presentation server", listOf("presentation")),
         FONTS("fonts", "Imported fonts", files = true),
         CODE_THEME("code_theme", "Imported code theme", files = true);
 
