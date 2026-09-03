@@ -3,6 +3,81 @@
 All notable fork changes on top of upstream [xnotes](https://github.com/shardulvs/xnotes-android).
 Versions read `<upstream version>+NNN`, where `NNN` counts our builds on that upstream base.
 
+## 0.8.15+001 — 2026-09-03
+
+First build on upstream **v0.8.15** (`versionCode` 52), rebased off **v0.8.13** (50) — two upstream
+releases in one hop, and the largest base change the fork has taken: 68 upstream commits, 76 files,
++5554/−1449. All fourteen fork commits replay onto it; the work below is what the new base required
+of them, plus the one commit it forced.
+
+### Upstream removed live presenting, and the backup lost a category
+
+- **The whole feature is gone from the base.** v0.8.14 deleted `PresentationServer`,
+  `PresentationController`, `PresentationFrameSource`, `PresentationDialog`, the toolbar's
+  `PRESENT` item and the `presentation` settings block, and dropped `INTERNET` with them. Upstream's
+  own store copy now says the app has *no network access at all*.
+- **Two fork patches went with the files rather than being ported.** The de-branded viewer page
+  title (`白い熊 速記 presentation`) and the `SokkiAlertDialog` restyling of the presentation dialog
+  were changes to a feature that no longer exists; both delete/modify conflicts resolve to the
+  deletion. There is nothing left in the fork to de-brand there.
+- **`SokkiBackup.Cat.PRESENTATION` is dropped, and nine categories become eight.** It owned exactly
+  one key, `presentation`, which upstream deleted from `Settings`, so it would have exported an
+  empty category and imported nothing.
+- **This is a 保存復元 contract change, not a tidy-up.** The category list *is* the contract's
+  `LIST_CATEGORIES` answer, so an automation caller asking for `presentation` now gets nothing back
+  rather than an empty payload. Callers selecting categories explicitly should drop it from their
+  list; the default set is unaffected apart from being one shorter.
+- **The manifest keeps our three permissions and loses upstream's.** `FOREGROUND_SERVICE`,
+  `FOREGROUND_SERVICE_DATA_SYNC` and `POST_NOTIFICATIONS` are still ours — the export service needs
+  them — but `INTERNET` goes: the automation export is local broadcasts and SAF, and never wanted a
+  socket. The fork is now as close to upstream's no-permissions claim as the contract allows.
+
+### The pressure band came through a rewritten codec intact
+
+- **Upstream rewrote both codecs for speed**, which is where the fork's three keys live. Samples now
+  go out through a fixed-point fast path (`JsonWrite.samplePoint`) and come back through raw-array
+  reads (`JsonPull`, `RawSamples`); deflate is pinned at level 1, the manifest is written last, asset
+  checksums are remembered rather than re-read (`AssetCrc`), and a stroke added to a PDF note
+  replaces its manifest entry in place instead of rewriting the container (`ZipTail`).
+- **The rewrite moved the sample path but left the config object an ordinary key sequence**, so
+  `pressure_low`, `pressure_high` and `pressure_curve` — and their three parse arms — port onto the
+  new shape unchanged in both `DocumentCodec` and `CanvasCodec`. This was checked by reading the
+  merged `writeStroke`, not inferred from a clean merge.
+- **`Stroke` froze its samples into one immutable tuple** (+329 lines changed) and the band's
+  pass-through to the wet ribbon follows it into the restructured methods. `StrokeEngine` and
+  `ToolConfig` — where the band is actually applied — upstream never touched.
+- **The byte-compatibility promise still holds.** All three keys are written only when off-default,
+  so a note drawn before any calibration serialises exactly as it always did, on a codec that is
+  otherwise substantially faster.
+
+### What the new base brings the fork for free
+
+- **Wet ink is drawn into the front buffer** the screen is scanning out, so the line stays under the
+  nib instead of waiting a frame — the largest latency change the app has had, and it lands under
+  the fork's own pressure band unmodified.
+- **Ink no longer blinks between strokes**: a second stroke joins the wet pad rather than wiping it,
+  and a stale release can no longer clear the pad under a new one.
+- **Saving is off the main thread and far faster** on a large note, and **opening a big handwriting
+  note is several times faster**.
+- **Undo repairs only the regions its command touched** instead of hanging on a dense note, and the
+  undo stack is bounded at 200 commands, which fixes an out-of-memory on save.
+- **Fixes**: a crash closing a PDF note mid-render, a canvas autosave silently dropping a write made
+  while it ran, a note being overwritten rather than forked when a sync app moved it underneath, and
+  the caret snapping back to the last word on predictive keyboards.
+- **Additions**: the lasso and every marquee drawn dashed, Redmi Smart Pen side buttons 1 and 2 with
+  their own tap actions, and a set of redrawn toolbar glyphs.
+
+### Kept intact across the rebase
+
+- Fork identity — `shiroikuma.sokki`, 白い熊 速記, the `+NNN` version tail on upstream's own literals,
+  arm64-v8a only, our signing — and the `com.xnotes` namespace and `.xnote` format untouched.
+- The 速記 ruling, the pressure band and its measuring pad, the 白い熊 速記 UI page and its cog
+  long-press, `sokkiUi.applyTo` closing `buildPalette`, the outlined floating surfaces, the traced
+  black-yellow icon and its 24 launch frames, the backup engine and the 保存復元 receiver.
+- **No new upstream branding arrived** — no new "xnotes" in user-visible text, no new
+  `github.com/shardulvs` link, despite two releases' worth of new UI.
+- 1054 unit tests across 88 classes pass on the new base.
+
 ## 0.8.13+001 — 2026-08-21
 
 First build on upstream **v0.8.13** (`versionCode` 50), rebased off **v0.8.12** (49). All thirteen
