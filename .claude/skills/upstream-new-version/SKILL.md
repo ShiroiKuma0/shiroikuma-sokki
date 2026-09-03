@@ -65,7 +65,7 @@ does **not** apply here — we use the plain `+NNN` versionName.
    - **The last column is the point**: flag every change landing in a file we patch — the launcher
      icon + loader resources, `values/strings.xml` (`app_name`), `app/build.gradle.kts`,
      `gradle.properties`, `.gitignore`, `ui/AboutPane.kt`, `ui/Backstage.kt` (the sidebar wordmark),
-     `platform/PresentationServer.kt` (the served page title), and any other de-branded surface.
+     and any other de-branded surface.
      Those are the rebase conflicts, predicted in advance.
    - Below the table, add the base line: old tag → new tag, old `versionCode`/`versionName` → new,
      and the resulting fork version (`<newVersionName>+001`, code `<newVersionCode>*10000+1`).
@@ -116,7 +116,7 @@ does **not** apply here — we use the plain `+NNN` versionName.
    | Build tail | `BUILD_NUMBER=1` | `gradle.properties` |
    | Black-yellow icon | yellow `#FFFF00` traced line-art on black | `mipmap-anydpi-v26/ic_launcher*.xml`, `drawable/ic_launcher_sk_foreground.xml`, `mipmap-*/ic_launcher*.png` |
    | Launch loader | our traced frames, not upstream's glitch-X | `drawable-nodpi/xnotes_frame_*.png` |
-   | De-branding | no "xnotes" in user-visible text, our GitHub links in About | `ui/AboutPane.kt`, `ui/Backstage.kt`, `platform/PresentationServer.kt` |
+   | De-branding | no "xnotes" in user-visible text, our GitHub links in About | `ui/AboutPane.kt`, `ui/Backstage.kt` |
    | 白い熊 速記 UI page | `BackstageView.SOKKI_UI` + the sidebar entry + the cog's long-press | `ui/SokkiUiPane.kt`, `ui/SokkiPickers.kt`, `settings/SokkiUi.kt`, `ui/theme/UiFonts.kt`, `ui/Backstage.kt` |
    | Theme hooks | `SokkiUi.applyTo` at the end of `buildPalette`; `XnotesTheme(palette, ui)` | `ui/Editor.kt`, `ui/theme/XnotesTheme.kt`, `MainActivity.kt` |
    | Backup + automation | the export engine, the panel, the token-gated receiver + service | `settings/SokkiBackup.kt`, `ui/SokkiExportImport.kt`, `automation/`, `AndroidManifest.xml` |

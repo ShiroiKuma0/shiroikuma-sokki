@@ -45,7 +45,7 @@ we use the plain `+NNN` versionName.
 | Version tail | `versionName = "<upstream>+NNN"`, `versionCode = <upstream code>*10000+N` | `app/build.gradle.kts` fork blocks |
 | ABI | `arm64-v8a` only (upstream ships three) | `app/build.gradle.kts` → the second `ndk { }` block |
 | Signing | gitignored `keystore.properties` → `~/.android-keystores/shiroikuma-sokki.jks` (alias `sokki`) | `app/build.gradle.kts` (upstream's own signing block reads it) |
-| De-branding | our name + our GitHub links everywhere user-visible | `values/strings.xml`, `ui/AboutPane.kt`, `ui/Backstage.kt`, `platform/PresentationServer.kt` |
+| De-branding | our name + our GitHub links everywhere user-visible | `values/strings.xml`, `ui/AboutPane.kt`, `ui/Backstage.kt` |
 | 白い熊 速記 UI page | the whole house look, settable + live-previewed | `ui/SokkiUiPane.kt`, `ui/SokkiPickers.kt`, `settings/SokkiUi.kt`, `ui/theme/UiFonts.kt` |
 | Export / Import | category ZIP + the Kōjiki-style panel | `ui/SokkiExportImport.kt`, `settings/SokkiBackup.kt` |
 | Pen pressure | measured input band + response curve, per tool | `ui/SokkiPressure.kt`, `core/stroke/StrokeEngine.kt`, `core/tools/ToolConfig.kt` |
@@ -91,7 +91,7 @@ carries `pressureLow` / `pressureHigh` (the band, stretched back over 0..1 by
 
 ### Backup, and the 保存復元 contract
 
-`SokkiBackup` is the one export engine: nine categories, `manifest.json` + `<id>.json` per category
+`SokkiBackup` is the one export engine: eight categories, `manifest.json` + `<id>.json` per category
 plus the font/code-theme file stores, written `.part` and renamed only when complete. The panel and
 `automation/StateExportReceiver` are both thin callers of it — **never duplicate export logic into
 the receiver**. The receiver gates on `AutomationAuth` and hands off to `StateExportService`
@@ -163,7 +163,6 @@ the drawing surfaces on custom Views (GLES + Android Canvas).
 | Compose UI — backstage/explorer, editors, toolbars, popups, About | `ui/` |
 | Android-side platform services: PDF (PdfBox), fonts, thumbnails, storage, tree-sitter JNI | `platform/` |
 | `.xnote` / canvas / flow-XML codecs | `format/` |
-| Live presentation server (streams the canvas over LAN) | `platform/PresentationServer.kt`, `presentation/` |
 | Preferences + settings repository | `settings/` |
 | Vendored tree-sitter + grammars (C), highlight queries | `app/src/main/cpp/`, `app/src/main/assets/scm/` |
 | Bundled fonts (19 families) | `app/src/main/assets/fonts/` |
@@ -174,8 +173,8 @@ branding.** The namespace is the R/BuildConfig package, `.xnote` is the on-disk 
 (files 白い熊 already has must keep opening), `libxnotests` is the JNI library name, and the log tags
 are invisible to users. `XnotesIcons` / `XnotesTheme` / `XnotesLoader` are internal Kotlin symbols —
 renaming any of these buys nothing and makes every rebase a mass-conflict. **Branding is what a user
-reads or sees**: the app label, the sidebar wordmark, the About pane, the launch animation, the
-presentation page title, and every `github.com/shardulvs` link.
+reads or sees**: the app label, the sidebar wordmark, the About pane, the launch animation, and
+every `github.com/shardulvs` link.
 
 ## Hard rules
 
