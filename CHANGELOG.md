@@ -3,6 +3,79 @@
 All notable fork changes on top of upstream [xnotes](https://github.com/shardulvs/xnotes-android).
 Versions read `<upstream version>+NNN`, where `NNN` counts our builds on that upstream base.
 
+## 0.8.15+003 — 2026-09-04
+
+Same upstream base as `+001` (**v0.8.15**, `versionCode` 52). This build implements **version 2 of
+the sister-app 保存復元 contract**: the token stops being the gate, and a second, authenticated door
+is added through which 白い熊 応用管理 can back this app up *with its data* and put it back on a
+wiped phone.
+
+### The token stopped being the gate
+
+- **`automation_enabled` now defaults to ON, and the token became opt-in.** A new
+  `automation_require_token` preference defaults to OFF, so the app answers the 保存復元 batch out of
+  the box. The reason is the clean-phone case: a 48-character secret pasted from this app's settings
+  into a caller's cannot survive a wipe, and a gate that only works once the phone is already set up
+  is no gate for setting the phone up.
+- **A token sent to the app while it is not asking for one is ignored, never refused.** Tokens
+  outlive the setting they were pasted for, so refusing a stale one would turn "one switch was
+  turned off" into "half the batch mysteriously fails".
+- **Both checks now live in a single `AutomationAuth.refuse()`**, returning either `null` or the
+  exact `ERROR:` line to answer with. Written once, because two checks spelled out separately in a
+  receiver, a provider and a service is how `automation disabled` and `bad token` drift apart.
+- **The UI page gained a 「Use authorization token?」 switch**, and the token row is now shown only
+  when that switch is on — a secret sitting under an off switch only invites pasting it somewhere it
+  will do nothing. The master switch stays, because it is the only way to close the app off
+  entirely.
+
+### A data door that knows who is calling
+
+- **A `ContentProvider` at `shiroikuma.sokki.automation`**, exported with no permission, answering
+  `describe`, `export`, `import` and `cancel`. A broadcast cannot tell you who sent it; a provider
+  gets the caller's identity from the framework, which is what makes removing the token safe rather
+  than merely convenient.
+- **The caller is checked three ways**: an exact package name from a two-entry map — never a prefix,
+  since any sideloaded app may call itself `shiroikuma.evil` and pass one — then the uid the kernel
+  reports, then the SHA-256 of the signing certificate against a pin. The certificate check is the
+  one that matters on a clean phone, where a caller package that is not installed yet is a name
+  anyone can take.
+- **The payload moves through a caller-supplied `ParcelFileDescriptor`**, not a path and not a URI.
+  応用管理 writes into a temporary path and renames on commit, and encrypts and checksums per file it
+  knows about, so a file this app dropped into that directory itself would be renamed out from under
+  it and would sit in plaintext inside an otherwise encrypted backup. The descriptor is duplicated
+  before it leaves the binder call and closed in a `finally`.
+- **`import` exists only here.** It never gets a broadcast action: an import overwrites the app's
+  data, and the export receiver is exported without a permission.
+- **The work runs on a foreground service** (`AutomationDataService`, `specialUse`), and a restore
+  spools the archive to the cache directory rather than reading it into the heap — this app's
+  archive carries every imported font file, so a large one is measured in tens of megabytes.
+- **Manifest capability discovery**: `shiroikuma.automation.contract` = 2, `.format` = 1 and
+  `.min_format` = 1, readable without waking the app, so 応用管理 can answer "can this be backed up"
+  for an app that is currently frozen.
+
+### The reply that was never heard
+
+- **The manifest had no `<queries>` element at all**, and now names both `shiroikuma.oyokanri` and
+  `shiroikuma.jiyusagyoban`. Without it a reply broadcast's `setPackage()` fails **silently** on
+  Android 11+: every 保存復元 reply this fork has ever sent was discarded, so the export ran, wrote
+  its ZIP correctly, and was never heard of. The contract has been implemented here since
+  `0.8.10+005`; this is the build in which it first actually answers.
+- **Progress broadcasts now require both `progress_action` and `reply_package`** — in the new data
+  service and in the pre-existing export service, which had the same defect. Since API 26 an
+  implicit broadcast is not delivered to a manifest-declared receiver at all, so a progress line
+  without `setPackage` does not arrive weakly; it does not arrive.
+
+### What the archive still does not hold
+
+- **The notes themselves are not in the backup, and this build does not add them.** The eight
+  categories are settings, imported fonts and the code theme; the `.xnote` notebooks live under the
+  SAF tree picked in the explorer. A clean-phone restore therefore returns a fully configured 速記
+  with an empty library.
+- **The `describe` header says so verbatim.** Its `contains` list ends with an explicit line stating
+  that the handwritten notes are not included and where they live, because 応用管理 renders those
+  strings unchanged and a row that implied otherwise would be the most expensive kind of wrong.
+  Covering the notebooks needs its own design decision, not a wider export.
+
 ## 0.8.15+001 — 2026-09-03
 
 First build on upstream **v0.8.15** (`versionCode` 52), rebased off **v0.8.13** (50) — two upstream
