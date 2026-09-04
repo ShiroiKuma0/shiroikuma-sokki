@@ -111,11 +111,16 @@ class StateExportService : Service() {
         val onProgress: (SokkiBackup.Progress) -> Unit = { p ->
             val now = System.currentTimeMillis()
             // Throttled to one every 500 ms; the completion one always goes out.
-            if (progressAction != null && (now - lastProgress >= 500 || p.index == p.total)) {
+            // BOTH extras or none: since API 26 an implicit broadcast is not delivered to a
+            // manifest-declared receiver at all, so a progress line without setPackage does not
+            // arrive weakly — it does not arrive.
+            if (progressAction != null && replyPackage != null &&
+                (now - lastProgress >= 500 || p.index == p.total)
+            ) {
                 lastProgress = now
                 sendBroadcast(
                     Intent(progressAction).apply {
-                        replyPackage?.let { setPackage(it) }
+                        setPackage(replyPackage)
                         addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
                         putExtra("reply_id", replyId)
                         putExtra("app", getString(R.string.app_name))
