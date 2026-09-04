@@ -83,6 +83,7 @@ fun SokkiUiPane(editor: Editor, onImportFont: () -> Unit, onClosePage: () -> Uni
     var pickingFont by remember { mutableStateOf(false) }
     var showExim by remember { mutableStateOf(false) }
     var automationOn by remember { mutableStateOf(AutomationAuth.enabled(ctx)) }
+    var requireToken by remember { mutableStateOf(AutomationAuth.requireToken(ctx)) }
     var token by remember { mutableStateOf(AutomationAuth.token(ctx)) }
     val dirSet = remember(showExim) { SokkiBackup.backupDirLabel(ctx) != null }
     // Pen pressure: hoisted, because the pad, the readout and the three sliders are one control.
@@ -123,19 +124,33 @@ fun SokkiUiPane(editor: Editor, onImportFont: () -> Unit, onClosePage: () -> Uni
         item {
             SwitchRow(
                 1, "Automation export",
-                "Let 白い熊 自由作業盤 trigger this app's export over the token-gated intent.",
+                "Let sister apps trigger this app's export and back its settings up. On by default; " +
+                    "this switch is the only way to close 白い熊 速記 off entirely.",
                 automationOn,
             ) { on -> AutomationAuth.setEnabled(ctx, on); automationOn = on }
         }
         item {
-            TokenRow(1, token, enabled = automationOn, onCopy = {
-                val cm = ctx.getSystemService(android.content.ClipboardManager::class.java)
-                cm?.setPrimaryClip(android.content.ClipData.newPlainText("automation token", token))
-                android.widget.Toast.makeText(ctx, "Token copied", android.widget.Toast.LENGTH_SHORT).show()
-            }, onRegenerate = {
-                token = AutomationAuth.regenerate(ctx)
-                android.widget.Toast.makeText(ctx, "New token — update pasted copies", android.widget.Toast.LENGTH_LONG).show()
-            })
+            SwitchRow(
+                1, "Use authorization token?",
+                if (requireToken) "A caller must also present the token below."
+                else "Off: any sister app may drive the automation. The data door checks the " +
+                    "caller's package and signing certificate either way.",
+                requireToken,
+            ) { on -> AutomationAuth.setRequireToken(ctx, on); requireToken = on }
+        }
+        // Hidden unless it is actually being asked for: a 48-character secret sitting under an off
+        // switch only invites 白い熊 to paste it somewhere it will do nothing.
+        if (automationOn && requireToken) {
+            item {
+                TokenRow(1, token, onCopy = {
+                    val cm = ctx.getSystemService(android.content.ClipboardManager::class.java)
+                    cm?.setPrimaryClip(android.content.ClipData.newPlainText("automation token", token))
+                    android.widget.Toast.makeText(ctx, "Token copied", android.widget.Toast.LENGTH_SHORT).show()
+                }, onRegenerate = {
+                    token = AutomationAuth.regenerate(ctx)
+                    android.widget.Toast.makeText(ctx, "New token — update pasted copies", android.widget.Toast.LENGTH_LONG).show()
+                })
+            }
         }
 
         // Not an appearance setting, but this is the fork's settings home and it is the one 白い熊
@@ -487,27 +502,23 @@ private fun NavRow(level: Int, label: String, about: String, warn: Boolean = fal
 
 /** The automation token: tap to copy the whole thing, Regenerate on the right. */
 @Composable
-private fun TokenRow(level: Int, token: String, enabled: Boolean, onCopy: () -> Unit, onRegenerate: () -> Unit) {
+private fun TokenRow(level: Int, token: String, onCopy: () -> Unit, onRegenerate: () -> Unit) {
     val palette = LocalPalette.current
     val dim = palette.textDim.toComposeColor()
-    RowScaffold(level, onClick = { if (enabled) onCopy() }) {
+    RowScaffold(level, onClick = onCopy) {
         Column(Modifier.weight(1f)) {
+            Text("Token", fontSize = 15.sp, color = palette.text.toComposeColor())
             Text(
-                "Token",
-                fontSize = 15.sp,
-                color = if (enabled) palette.text.toComposeColor() else dim,
-            )
-            Text(
-                if (enabled) "${AutomationAuth.abbreviated(token)}  ·  tap to copy" else "Turn automation on to use the token",
+                "${AutomationAuth.abbreviated(token)}  ·  tap to copy",
                 fontSize = 11.sp,
                 color = dim,
             )
         }
         Text(
             "Regenerate",
-            Modifier.clickable(enabled = enabled) { onRegenerate() },
+            Modifier.clickable { onRegenerate() },
             fontSize = 12.sp,
-            color = if (enabled) palette.accent.toComposeColor() else dim,
+            color = palette.accent.toComposeColor(),
         )
     }
 }
