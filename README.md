@@ -8,11 +8,11 @@
 
 A fork of [xnotes](https://github.com/shardulvs/xnotes-android) with **major additions**: 速記
 shorthand paper as a page ruling, a measurable pen-pressure response, a fully settable house theme,
-and an eight-category backup with token-gated automation.
+and an eight-category backup with identity-checked sister-app automation.
 
 Installs **side-by-side** with upstream (app id `shiroikuma.sokki`).
 
-**📥 Latest release: [`0.8.15+001`](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases)
+**📥 Latest release: [`0.8.15+003`](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases)
 
 <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-orange?style=flat-square" alt="License" /></a>
 <img src="https://img.shields.io/badge/Android-8.0%2B-3ddc84?style=flat-square&logo=android&logoColor=white" alt="Android 8.0+" />
@@ -105,11 +105,23 @@ defaults, explorer, imported fonts, imported code theme — exported as one ZIP,
 written `.part` and renamed only once complete, so a killed export can never leave something a
 restore would trust.
 
-The same engine is driven by a token-gated broadcast receiver implementing the 保存復元 contract, so
-a backup can be triggered from outside the app. It hands off to a foreground service rather than
-answering in the broadcast window, because this app can carry imported fonts and a code theme and is
-not bounded by a few seconds. The token is 24 `SecureRandom` bytes, compared constant-time, kept in
+The same engine is driven from outside the app by the 保存復元 sister-app contract, in two halves.
+A broadcast receiver triggers the ordinary export and hands off to a foreground service rather than
+answering inside the broadcast window, because this app can carry imported fonts and a code theme
+and is not bounded by a few seconds. A `ContentProvider` carries the other half, through which
+白い熊 応用管理 can back the app up and restore it on a wiped phone: the payload moves over a
+descriptor the caller opened, never a path, and the caller is identified by exact package name, by
+the uid the kernel reports, and by a pinned signing certificate.
+
+**Automation is on by default and the token is optional.** A shared secret cannot survive a wipe,
+which is the case the contract exists to serve, so identity replaced it — but 「Use authorization
+token?」 is still there to switch on, and a token sent to the app while it is not asking for one is
+ignored rather than refused. The token is 24 `SecureRandom` bytes, compared constant-time, kept in
 its own preferences file that no export category touches.
+
+The archive holds everything **settable** — it does not hold the notes themselves, which live in the
+folder you pick in the explorer. The backup says so in the header it reports to a caller, rather
+than letting a restore look more complete than it is.
 
 The app stays **SAF-only** — `MANAGE_EXTERNAL_STORAGE` is deliberately not declared, since it
 advertises needing no broad storage permission.
