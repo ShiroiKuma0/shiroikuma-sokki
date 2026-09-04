@@ -5,11 +5,22 @@
          hold it without risking an ANR inside Android's broadcast window. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- The infinite canvas renders on GLES 3.0. Not required: the paged notebook does not use
          it, so a device without it keeps the rest of the app. -->
     <uses-feature android:glEsVersion="0x00030000" android:required="false" />
+
+    <!-- Without this our reply broadcast's setPackage() fails SILENTLY on Android 11+: the export
+         runs, writes correctly, and is never heard of. BOTH callers, always — 自由作業盤 drives the
+         保存復元 batch (§1) and 応用管理 drives the data door (§2a). This element was entirely absent
+         from this fork's manifest until the v2 rollout, so every §1 reply it has ever sent was
+         discarded. Adding a third caller is one line here; QUERY_ALL_PACKAGES buys nothing. -->
+    <queries>
+        <package android:name="shiroikuma.oyokanri" />
+        <package android:name="shiroikuma.jiyusagyoban" />
+    </queries>
 
     <application
         android:allowBackup="true"
@@ -57,10 +68,12 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <!-- The 保存復元 sister-app contract. No android:permission — the caller cannot hold one,
-             so the token IS the gate (see automation/AutomationAuth.kt). The cancel action lives
-             on this same exported receiver because the service is not exported and a third-party
-             app therefore cannot reach it directly. -->
+        <!-- The 保存復元 sister-app contract, §1. No android:permission: in v2 this receiver is the
+             UNAUTHENTICATED half of the surface, deliberately — it only ever writes where it was
+             told to and reports what it did. Everything that moves data through a caller-supplied
+             descriptor lives behind the provider below, which knows who is calling. The cancel
+             action is on this same exported receiver because the service is not exported and a
+             third-party app therefore cannot reach it directly. -->
         <receiver
             android:name=".automation.StateExportReceiver"
             android:exported="true">
@@ -75,6 +88,33 @@
             android:name=".automation.StateExportService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
+
+        <!-- §2a, the data door: 応用管理 backs this app up WITH its data and puts it back on a
+             wiped phone. Exported with no android:permission for a real reason — a custom
+             permission would have to be `normal` (any app may hold it) or `signature` (impossible:
+             every app in this family has its own keystore). The caller is identified instead, three
+             ways, in automation/AutomationCallers.kt. `import` exists ONLY here: an import
+             overwrites the app's data, and the receiver above is exported without a permission. -->
+        <provider
+            android:name=".automation.AutomationProvider"
+            android:authorities="${applicationId}.automation"
+            android:exported="true" />
+
+        <service
+            android:name=".automation.AutomationDataService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Automation data export/import" />
+        </service>
+
+        <!-- Capability discovery. Read with MATCH_UNINSTALLED_PACKAGES|MATCH_DISABLED_COMPONENTS,
+             so 応用管理 can answer "can this app be backed up" for an app 白い熊 has frozen —
+             a frozen app cannot be asked anything, which is why this is not a query intent. -->
+        <meta-data android:name="shiroikuma.automation.contract" android:value="2" />
+        <meta-data android:name="shiroikuma.automation.format" android:value="1" />
+        <meta-data android:name="shiroikuma.automation.min_format" android:value="1" />
 
         <provider
             android:name=".platform.AppStorageDocumentsProvider"
