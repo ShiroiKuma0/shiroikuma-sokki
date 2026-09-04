@@ -9,7 +9,7 @@ import com.xnotes.settings.SokkiBackup
 /**
  * The 保存復元 wire contract (白い熊 自由作業盤 drives every sister app's backup in one run).
  *
- * The receiver does nothing but gate and hand off: check the switch and the token, validate
+ * The receiver does nothing but gate and hand off: run the one gate of v2 §2, validate
  * `items`, start the foreground service, return. Running the export here would risk an ANR inside
  * Android's broadcast window and take the process down mid-write.
  */
@@ -25,12 +25,10 @@ class StateExportReceiver : BroadcastReceiver() {
                 val replyAction = intent.getStringExtra("reply_action")
                 val replyPackage = intent.getStringExtra("reply_package")
                 val replyId = intent.getStringExtra("reply_id")
-                // The two gate failures are reported apart: they debug differently.
-                if (!AutomationAuth.enabled(app)) {
-                    reply(app, replyAction, replyPackage, replyId, "ERROR:automation disabled"); return
-                }
-                if (!AutomationAuth.isTokenValid(app, token)) {
-                    reply(app, replyAction, replyPackage, replyId, "ERROR:bad token"); return
+                // One gate, in one place — and a token sent to an app that does not ask for one
+                // is ignored rather than refused (v2 §2).
+                AutomationAuth.refuse(app, token)?.let {
+                    reply(app, replyAction, replyPackage, replyId, it); return
                 }
                 val items = intent.getStringExtra("items")
                 if (!items.isNullOrBlank()) {
@@ -55,11 +53,8 @@ class StateExportReceiver : BroadcastReceiver() {
                 val replyAction = intent.getStringExtra("reply_action")
                 val replyPackage = intent.getStringExtra("reply_package")
                 val replyId = intent.getStringExtra("reply_id")
-                if (!AutomationAuth.enabled(app)) {
-                    reply(app, replyAction, replyPackage, replyId, "ERROR:automation disabled"); return
-                }
-                if (!AutomationAuth.isTokenValid(app, token)) {
-                    reply(app, replyAction, replyPackage, replyId, "ERROR:bad token"); return
+                AutomationAuth.refuse(app, token)?.let {
+                    reply(app, replyAction, replyPackage, replyId, it); return
                 }
                 // id<TAB>label<TAB>parent<TAB>on|off — our parts are flat, so the parent is empty.
                 val lines = SokkiBackup.Cat.entries.joinToString("\n") { c ->
@@ -70,8 +65,7 @@ class StateExportReceiver : BroadcastReceiver() {
 
             "$pkg.action.CANCEL_EXPORT" -> {
                 // Fire-and-forget: answers nothing at all, and is a silent no-op when idle.
-                if (!AutomationAuth.enabled(app)) return
-                if (!AutomationAuth.isTokenValid(app, token)) return
+                if (AutomationAuth.refuse(app, token) != null) return
                 StateExportService.requestCancel(app)
             }
         }
