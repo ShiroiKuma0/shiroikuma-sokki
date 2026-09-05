@@ -46,7 +46,24 @@ class StateExportReceiver : BroadcastReceiver() {
                     putExtra("reply_package", replyPackage)
                     putExtra("reply_id", replyId)
                 }
-                ContextCompat.startForegroundService(app, svc)
+                // A broadcast is a BACKGROUND start on API 31+: unless we happen to hold a
+                // foreground-start allowance the framework throws
+                // ForegroundServiceStartNotAllowedException, and an exception escaping onReceive
+                // kills the process mid-request. Confirmed on 白い熊's Mate XT against this very
+                // receiver — `dumpsys activity services` reports `uidState: RCVR; code:DENIED`.
+                //
+                // Catching it is only half the fix. A swallowed refusal is a SILENT no-export: the
+                // caller waits out its whole timeout and reports "no response", which is
+                // indistinguishable from an app that never implemented the contract. The ERROR
+                // reply is what makes it diagnosable, because 保存復元 renders the string verbatim.
+                try {
+                    ContextCompat.startForegroundService(app, svc)
+                } catch (e: Exception) {
+                    reply(
+                        app, replyAction, replyPackage, replyId,
+                        "ERROR:${e.message ?: e.javaClass.simpleName}",
+                    )
+                }
             }
 
             "$pkg.action.LIST_CATEGORIES" -> {
