@@ -3,6 +3,58 @@
 All notable fork changes on top of upstream [xnotes](https://github.com/shardulvs/xnotes-android).
 Versions read `<upstream version>+NNN`, where `NNN` counts our builds on that upstream base.
 
+## 0.8.15+004 — 2026-09-05
+
+Same upstream base as `+001` (**v0.8.15**, `versionCode` 52). One defect, found by running the
+contract against the installed app rather than by reading the code, and fixed in the four places it
+lived.
+
+### A refused foreground start was killing the app mid-request
+
+- **`startForegroundService()` from a broadcast receiver is a BACKGROUND start on API 31+.** Unless
+  the app happens to hold a foreground-start allowance the framework throws
+  `ForegroundServiceStartNotAllowedException`, and an exception escaping `onReceive` **kills the
+  process**. Nothing replies, nothing is written, and the caller waits out its whole timeout.
+- **Reproduced on 白い熊's Mate XT against this app**, not inferred from a sister app:
+  `startForegroundService() not allowed due to mAllowStartForeground false`, thrown at
+  `StateExportReceiver.onReceive`, with `dumpsys activity services` giving the reason in the app's
+  own record — `infoAllowStartForeground=[… uidState: RCVR; code:DENIED; tempAllowListReason:<null>]`.
+- **Four start sites, not one.** The receiver's `startForegroundService` was the reported one; the
+  other three were found by reproducing the crash and following the paths out of it:
+  `StateExportService.onStartCommand`'s own `startForeground`, which sat **above** the code that
+  reads `reply_action`, so a refusal there had nothing to answer with; the same call in
+  `AutomationDataService`; and that service's existing guard, which closed the descriptor and
+  stopped **silently** while the provider had already told the caller `OK:<job_id>`.
+- **Catching it is only half the fix.** A swallowed refusal is a silent no-export, which looks
+  exactly like an app that never implemented the contract. Every site now answers with the real
+  `ERROR:` line, which 保存復元 renders verbatim on the failed row.
+
+### What this does and does not do
+
+- **It converts a silent hang into a diagnosable error.** That is the whole of it, and it is worth
+  having: a red row carrying `ERROR:startForegroundService() not allowed due to
+  mAllowStartForeground false` is the first honest output this path has produced.
+- **It does not make a cold export work.** The foreground start is still refused; the app now
+  reports that instead of dying from it. A backup of 速記 triggered while the app is cold still does
+  not happen, and reading this entry as "the backup is fixed" would make the next red row look like
+  a regression when it is the opposite.
+- **What would actually make it work is not in this build**: a battery-optimisation exemption (速記
+  is absent from `dumpsys deviceidle whitelist`), EMUI's 「アプリ起動管理」 → 手動管理 with
+  バックグラウンドで実行 on, which no app can set for itself — or, better than either, the caller
+  sending the request with `BroadcastOptions.setTemporaryAppAllowlist(…)`, which is one change in
+  自由作業盤 rather than a permission grant in every sister app, and the only route that survives the
+  clean phone the contract exists for.
+
+### Two testing traps worth recording
+
+- **A bare `am broadcast` after `am force-stop` tests nothing.** It does not set
+  `FLAG_INCLUDE_STOPPED_PACKAGES` (flags come out `0x400000`), so a stopped app never receives it —
+  producing a convincing silent nothing that looks like the bug and has a different cause. Use
+  `am broadcast --include-stopped-packages`, and check the flags read `0x400020`.
+- **Fire `LIST_CATEGORIES` first to isolate the fault.** That path starts no service anywhere, so if
+  it answers and `EXPORT_STATE` does not, the problem is the foreground start; if neither answers,
+  the service code is not where to look.
+
 ## 0.8.15+003 — 2026-09-04
 
 Same upstream base as `+001` (**v0.8.15**, `versionCode` 52). This build implements **version 2 of
