@@ -58,22 +58,32 @@ class AutomationDataService : Service() {
         // throws. Left in the map it would hold the caller's file open forever, and a caller cannot
         // checksum or encrypt a file that is still open.
         val fd = jobId?.let { HANDOVER.remove(it) }
+        val replyAction = intent?.getStringExtra(AutomationProvider.KEY_REPLY_ACTION)
+        val replyPackage = intent?.getStringExtra(AutomationProvider.KEY_REPLY_PACKAGE)
+        val progressAction = intent?.getStringExtra(AutomationProvider.KEY_PROGRESS_ACTION)
+        val items = intent?.getStringExtra(AutomationProvider.KEY_ITEMS)
+
         try {
             // The system started us with startForegroundService and wants a notification within
             // 5 s, whether or not the request turns out to be usable.
             startForeground(NOTIFICATION_ID, notification(importing))
         } catch (t: Throwable) {
+            // Refused because this is a background start (API 31+). The provider answered the
+            // caller `OK:<job_id>` a moment ago, so dying quietly here would leave it waiting on a
+            // job that no longer exists — the terminal reply has to go out even though the work
+            // never began.
             runCatching { fd?.close() }
-            jobId?.let { AutomationJobs.finish(it) }
+            if (jobId != null) {
+                broadcastReply(
+                    replyAction, replyPackage, jobId,
+                    "ERROR:${t.message ?: t.javaClass.simpleName}",
+                )
+                AutomationJobs.finish(jobId)
+            }
             stopSelf(startId)
             return START_NOT_STICKY
         }
         if (jobId == null || fd == null) return stop(startId)
-
-        val replyAction = intent.getStringExtra(AutomationProvider.KEY_REPLY_ACTION)
-        val replyPackage = intent.getStringExtra(AutomationProvider.KEY_REPLY_PACKAGE)
-        val progressAction = intent.getStringExtra(AutomationProvider.KEY_PROGRESS_ACTION)
-        val items = intent.getStringExtra(AutomationProvider.KEY_ITEMS)
 
         val replied = AtomicBoolean(false)
         fun reply(result: String) {
@@ -82,17 +92,7 @@ class AutomationDataService : Service() {
             // contract has carried since the first sister app.
             if (!replied.compareAndSet(false, true)) return
             AutomationJobs.finish(jobId)
-            if (replyAction.isNullOrEmpty() || replyPackage.isNullOrEmpty()) return
-            sendBroadcast(
-                Intent(replyAction).apply {
-                    setPackage(replyPackage)
-                    // Without this a backgrounded caller never hears the answer, and on a clean
-                    // phone the caller may not have been launched at all.
-                    addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
-                    putExtra(AutomationProvider.KEY_JOB_ID, jobId)
-                    putExtra(AutomationProvider.KEY_RESULT, result)
-                },
-            )
+            broadcastReply(replyAction, replyPackage, jobId, result)
         }
 
         scope.launch {
@@ -111,6 +111,26 @@ class AutomationDataService : Service() {
             }
         }
         return START_NOT_STICKY
+    }
+
+    /**
+     * The one reply channel, reachable from the coroutine and from the startForeground guard alike.
+     *
+     * Both extras or none: `setPackage` is what makes an implicit broadcast reach a
+     * manifest-declared receiver at all on API 26+.
+     */
+    private fun broadcastReply(action: String?, pkg: String?, jobId: String, result: String) {
+        if (action.isNullOrEmpty() || pkg.isNullOrEmpty()) return
+        sendBroadcast(
+            Intent(action).apply {
+                setPackage(pkg)
+                // Without this a backgrounded caller never hears the answer, and on a clean phone
+                // the caller may not have been launched at all.
+                addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
+                putExtra(AutomationProvider.KEY_JOB_ID, jobId)
+                putExtra(AutomationProvider.KEY_RESULT, result)
+            },
+        )
     }
 
     private fun runExport(

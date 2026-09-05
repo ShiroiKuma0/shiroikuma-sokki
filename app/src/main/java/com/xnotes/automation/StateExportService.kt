@@ -37,7 +37,6 @@ class StateExportService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        startForeground(NOTIF_ID, buildNotification())
         val i = intent ?: run { stopSelf(); return START_NOT_STICKY }
 
         val replyAction = i.getStringExtra("reply_action")
@@ -47,19 +46,24 @@ class StateExportService : Service() {
         val pathOverride = i.getStringExtra("path")
         val items = i.getStringExtra("items")
 
+        // The extras are read BEFORE going foreground, because this call is the second place the
+        // background-start restriction bites: the receiver's startForegroundService can be allowed
+        // and this still refused, and without the reply details in hand there would be nothing to
+        // answer the refusal with. A service that dies here without replying is the silent
+        // no-export the caller cannot tell apart from an unimplemented contract.
+        try {
+            startForeground(NOTIF_ID, buildNotification())
+        } catch (e: Exception) {
+            broadcastReply(replyAction, replyPackage, replyId, "ERROR:${e.message ?: e.javaClass.simpleName}")
+            stopSelf()
+            return START_NOT_STICKY
+        }
+
         scope.launch {
             val replied = AtomicBoolean(false)
             fun reply(result: String) {
                 if (!replied.compareAndSet(false, true)) return
-                if (replyAction.isNullOrBlank()) return
-                sendBroadcast(
-                    Intent(replyAction).apply {
-                        replyPackage?.let { setPackage(it) }
-                        addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
-                        putExtra("reply_id", replyId)
-                        putExtra("result", result)
-                    },
-                )
+                broadcastReply(replyAction, replyPackage, replyId, result)
             }
             if (!running.compareAndSet(false, true)) {
                 reply("ERROR:export already running")
@@ -86,6 +90,19 @@ class StateExportService : Service() {
             }
         }
         return START_NOT_STICKY
+    }
+
+    /** The only reply channel that survives EMUI: a fresh broadcast, never a live Binder. */
+    private fun broadcastReply(action: String?, pkg: String?, replyId: String?, result: String) {
+        if (action.isNullOrBlank()) return
+        sendBroadcast(
+            Intent(action).apply {
+                pkg?.let { setPackage(it) }
+                addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
+                putExtra("reply_id", replyId)
+                putExtra("result", result)
+            },
+        )
     }
 
     private class Written(val path: String, val bytes: Long, val count: Int)
