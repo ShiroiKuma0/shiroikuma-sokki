@@ -3,6 +3,81 @@
 All notable fork changes on top of upstream [xnotes](https://github.com/shardulvs/xnotes-android).
 Versions read `<upstream version>+NNN`, where `NNN` counts our builds on that upstream base.
 
+## 0.8.17+001 — 2026-09-13
+
+First build on upstream **v0.8.17** (`versionCode` 54), rebased off **v0.8.15** (52) — two upstream
+releases in one hop (0.8.16 was a single fix), 16 upstream commits, 28 files, +1096/−173. All twenty
+fork commits replay onto it; the work below is what the new base required of them, plus the one
+commit it asked for.
+
+### The new-canvas background rides along in 保存復元
+
+- **Upstream let a canvas background become the default for every new canvas**, stored as a new
+  **top-level** `Settings` key, `new_canvas_background`, beside `new_note_style` and
+  `new_note_flow`.
+- **`SokkiBackup` copies a category by naming its keys, so a key no category owns is neither
+  exported nor imported** — silently, with no error anywhere to notice. The new key joins *TEXT*,
+  the category that already holds the other new-document defaults, and the label now says what it
+  covers: **New-note & new-canvas defaults (text · page · background)**. The category id stays
+  `text`, so the 保存復元 contract's `LIST_CATEGORIES` answer is unchanged and callers need no edit.
+- **The other two new settings reach the backup by themselves.** `disable_front_buffering` sits
+  inside the `prefs` object, so *Preferences* already carries it; the PDF blend colours (`multiply`,
+  `screen`) and the `sepia` strength are view settings inside `view_defaults`, so *View defaults*
+  does. Eight categories remain eight.
+
+### The explorer's create button arrives outlined
+
+- **Upstream made the round create button ask what to create.** It used to jump straight to a new
+  note; it now opens *New Note · New Canvas · Import PDF*, sharing one item list
+  (`NewItemMenuItems`, taller rows with icons) with the toolbar's New menu so the two cannot drift.
+- **That collided with the fork's outlined New menu**: upstream replaced the menu body our
+  `SokkiDropdownMenu` wraps with a call to the shared helper. The resolution is the wrapper around
+  the helper — upstream's rows, our border.
+- **The button's own menu is a brand-new stock `DropdownMenu`**, which merged without a conflict and
+  would have been the one un-outlined floating surface in the app: black rows on a black page, no
+  edge. It takes `SokkiDropdownMenu` like every other, so **twenty-nine outlined dropdowns and popups
+  become thirty**, still from the one definition.
+- **The share dialog collided too**: upstream inserted a `remember(shareUri)` block — resolving the
+  document kind so a canvas is shared under its own extension — on exactly the line where the fork
+  swaps `AlertDialog` for `SokkiAlertDialog`. Both are kept: a canvas now leaves as a canvas, through
+  the outlined dialog.
+
+### What the new base brings the fork for free (upstream's work)
+
+- **Export a canvas to PDF.** One page cut to fit the drawn content, ink still vector; a single
+  place (`PdfItemRaster`) now decides what cannot stay vector and rasterises only that. Notes had
+  this; canvases did not.
+- **Screen and Multiply colour filters for PDF pages**, in the View menu beside Invert and a Sepia
+  strength that keeps going past CSS's 100 — blend the page with a colour for dark reading without
+  the photo-negative look. "Off" is the blend's identity colour, so no separate enable flag exists.
+- **A "Disable front buffering" preference** for the few panels that do not hand the front buffer
+  over cleanly and flicker or lag under the nib; with it on, every stroke takes the ordinary canvas
+  path. The fork's pressure band is applied before either path and is unaffected.
+- **"Default for new canvases"** in the canvas styles popup, stamping the current background onto
+  every canvas made from then on.
+- **Wet ink no longer lands away from the pen after the window changed size** (the whole of
+  v0.8.16): the GL wet pad rebuilds its surface on resize and hands the in-flight stroke back when
+  its pixels are lost instead of drawing it offset.
+- **A side-button pan stops exactly where the pen lifts**, instead of gliding on.
+- **A settled lasso selection can be grabbed with the pen** on the infinite canvas, instead of being
+  dropped in favour of a new stroke.
+- **Sharing or copying a canvas out keeps it a canvas**, and the export dialog now says what it is
+  actually counting.
+
+### Kept intact across the rebase
+
+- Fork identity — `shiroikuma.sokki`, 白い熊 速記, the `+NNN` version tail on upstream's own
+  literals (`versionCode = 54` / `versionName = "0.8.17"`, untouched), arm64-v8a only, our signing —
+  and the `com.xnotes` namespace and `.xnote` format untouched.
+- The 速記 ruling, the pressure band and its measuring pad, the 白い熊 速記 UI page and its cog
+  long-press, `sokkiUi.applyTo` closing `buildPalette`, the outlined floating surfaces, the traced
+  black-yellow icon and its 24 launch frames, the backup engine, the token-optional 保存復元
+  receiver and the identity-checked data provider.
+- **No new upstream branding arrived** — no new "xnotes" in user-visible text, no new
+  `github.com/shardulvs` link.
+- 1078 unit tests across 89 classes pass on the new base (up from 1054 across 88: upstream added
+  `PdfColorFilterTest` and `CanvasPdfLayoutTest`).
+
 ## 0.8.15+004 — 2026-09-05
 
 Same upstream base as `+001` (**v0.8.15**, `versionCode` 52). One defect, found by running the

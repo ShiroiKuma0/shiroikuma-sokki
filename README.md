@@ -12,7 +12,7 @@ and an eight-category backup with identity-checked sister-app automation.
 
 Installs **side-by-side** with upstream (app id `shiroikuma.sokki`).
 
-**📥 Latest release: [`0.8.15+004`](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases)
+**📥 Latest release: [`0.8.17+001`](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases)
 
 <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-orange?style=flat-square" alt="License" /></a>
 <img src="https://img.shields.io/badge/Android-8.0%2B-3ddc84?style=flat-square&logo=android&logoColor=white" alt="Android 8.0+" />
@@ -92,7 +92,7 @@ a single edit.
 Because the house palette makes every surface black, Material's usual way of lifting a dialog off the
 page — a lighter surface and a shadow — collapses to nothing, and a confirmation prompt arrives as
 black text on black with no edge anywhere. **Every floating surface is outlined instead**: all ten
-dialogs, all twenty-nine dropdowns and popups, and the snackbar, from one definition, using this
+dialogs, all thirty dropdowns and popups, and the snackbar, from one definition, using this
 page's own Border colour and Border width. Those two controls now shape the whole app, not just its
 dividers.
 
