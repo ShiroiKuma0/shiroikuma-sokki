@@ -12,7 +12,7 @@ and an eight-category backup with identity-checked sister-app automation.
 
 Installs **side-by-side** with upstream (app id `shiroikuma.sokki`).
 
-**📥 Latest release: [`0.8.17+001`](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases)
+**📥 Latest release: [`0.8.23+001`](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases)
 
 <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-orange?style=flat-square" alt="License" /></a>
 <img src="https://img.shields.io/badge/Android-8.0%2B-3ddc84?style=flat-square&logo=android&logoColor=white" alt="Android 8.0+" />
@@ -27,16 +27,20 @@ Stock offers lines, dots and a grid — all of them evenly spaced, because none 
 be anything in particular. Shorthand paper is not evenly spaced: it is a **band**, opened by a heavy
 rule and divided by two hairlines, and the unequal spacing is the point.
 
-**速記** joins the ruling chips as a fourth pattern, reproducing that band from measurements of the
-Samsung Notes 速記 template rather than an approximation of it — a heavy rule every 64 px with
-hairlines 25 px and 49 px below it. The offsets are held as fractions of the period, so the spacing
+**速記** ships as a fourth built-in ruling beside Lines, Dots and Grid, reproducing that band from
+measurements of the Samsung Notes 速記 template rather than an approximation of it — a heavy rule
+every 64 px with hairlines 25 px and 49 px below it. Since upstream 0.8.21 it is written in
+upstream's own page-template format, so it sits in the template picker with the rest and a note
+carries it like any other template. The offsets are held as fractions of the period, so the spacing
 slider **scales the whole band** instead of just moving lines apart, and the paper keeps its
 proportions at any size. Since 64 px is already the default spacing, the default is the template at
 1:1.
 
-Steno paper is blue paper, so the pattern brings its own default colour instead of inheriting the
-grey the other rulings use — grey hairlines would not read as the thing it copies. Set it once on
-the "All pages" tab with *Use for new notes* ticked and every note you create opens already ruled.
+Steno paper is blue paper, so the ruling brings its own blue instead of inheriting the grey the
+other rulings use — grey hairlines would not read as the thing it copies. It arrives as the
+template's own colour parameter, so the blue is both the default and yours to change per note. Set
+it once on the "All pages" tab with *Use for new notes* ticked and every note you create opens
+already ruled.
 
 Give a page margins — upstream's extra paper on any edge — and the band carries straight on into
 them, counted from the same origin as the rest of the page, so a margined 速記 page gains paper
@@ -91,9 +95,12 @@ a single edit.
 
 Because the house palette makes every surface black, Material's usual way of lifting a dialog off the
 page — a lighter surface and a shadow — collapses to nothing, and a confirmation prompt arrives as
-black text on black with no edge anywhere. **Every floating surface is outlined instead**: all ten
-dialogs, all thirty dropdowns and popups, and the snackbar, from one definition, using this
-page's own Border colour and Border width. Those two controls now shape the whole app, not just its
+black text on black with no edge anywhere. **Every floating surface is outlined instead.** Upstream
+reached the same conclusion in 0.8.20 and now routes every menu and dialog through two wrappers of
+its own, so the fork no longer carries wrappers or touches a single call site: it simply hands those
+two wrappers **this page's Border colour and Border width** in place of their fixed hairline. One
+setting still outlines every dialog, dropdown and popup in the app — and the snackbar, which
+upstream does not route, is outlined here too. Those two controls shape the whole app, not just its
 dividers.
 
 ---

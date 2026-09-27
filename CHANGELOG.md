@@ -3,6 +3,79 @@
 All notable fork changes on top of upstream [xnotes](https://github.com/shardulvs/xnotes-android).
 Versions read `<upstream version>+NNN`, where `NNN` counts our builds on that upstream base.
 
+## 0.8.23+001 — 2026-09-27
+
+First build on upstream **v0.8.23** (`versionCode` 60), rebased off **v0.8.17** (54) — six upstream
+releases in one hop, 80 upstream commits, 230 files, +33116/−2668, the largest sync this fork has
+taken. Upstream brought the redesigned explorer, Simplified Chinese, dual-tone Material themes,
+tables and maths in inline text, page templates, a floating toolbar, a Corners setting, and a round
+of canvas and PDF crash fixes. All twenty-two fork commits replay onto it; the work below is what
+the new base required of them.
+
+### 速記 is now a page template
+
+- **Upstream replaced the ruling chips with a template system** — an `xtemplate` reader, evaluator
+  and painter in 0.8.21, and in 0.8.22 the chip row itself gave way to a template strip. The 速記
+  chip had nowhere left to stand.
+- The ruling is **rewritten in upstream's own template format** (`assets/templates/sokki.xtemplate`)
+  and registered as a fourth built-in beside Lines, Dots and Grid, so it sits in the template picker
+  with the rest and a note carries it like any other template.
+- **The geometry is unchanged** — a heavy rule at the band's head, hairlines at 25/64 and 49/64 of
+  the period, the heavy rule at double weight — and it still persists as `pattern: "sokki"`, so
+  every note already ruled this way reopens exactly as drawn.
+- The blue arrives as the **template's own colour parameter** rather than a hardcoded pattern
+  default: still blue out of the box, now adjustable per note.
+- The GLES canvas path is untouched — the infinite canvas still draws 速記 procedurally in the
+  shader.
+
+### The UI theme follows upstream's rebuilt palette
+
+- **Upstream dropped the classic palette**, made Material the only one, and added dual-tone themes
+  and a contrast slider. `Palette.accentDim` and `ColorMath.dim`/`lighten` ceased to exist — a break
+  that never surfaced as a rebase conflict, because the file it lives in is not one we patch.
+- `SokkiUi.applyTo` **re-seeds `Palette.materialColors` from our own accent**. Upstream now *derives*
+  `onAccent`, the selection pair, `disabled` and `danger` from that scheme instead of storing them,
+  so without the re-seed those roles would have kept the stock hue and fought the chrome the UI page
+  had just painted.
+- `XnotesTheme` carries upstream's corner style and our UI layer together, so the Corners setting
+  and the house typography both apply.
+
+### Floating surfaces converge on upstream's own funnel
+
+- **Upstream 0.8.20 arrived at this fork's own idea**: it now shadows material3's `DropdownMenu` and
+  `AlertDialog` for every same-package caller, giving each the palette menu surface and a hairline.
+- The fork's wrappers are **deleted** and roughly twenty call-site files are **un-patched**. Upstream's
+  two wrappers simply draw `sokkiSurfaceBorder()` in place of their fixed 1 dp hairline, which puts
+  the UI page's Border colour and Border width back in charge of every dialog, dropdown and popup.
+- `SokkiSnackbar` stays, since upstream funnels no snackbar.
+- Net effect: the same "one border, everything that floats" behaviour, with far less fork surface to
+  carry through the next sync.
+
+### De-branding moved down into string resources
+
+- **Upstream moved its UI text into resources** and added a Simplified Chinese locale, superseding
+  the fork's Kotlin-level de-branding.
+- `app_name`, `err_not_xnotes`, `help_make_better` and `enjoying_xnotes` now carry the fork's name
+  **in both locales**, so no second literal can drift from the label.
+- The About pane is rebuilt on upstream's new structure: our repository, issues and licence links,
+  with the Sponsor and F-Droid links — which point at upstream's own listings — dropped again.
+- The sidebar's UI-page entry is built from `app_name` rather than written out, for the same reason.
+
+### The UI page rejoins the redesigned explorer
+
+- Upstream rewrote home and the file explorer wholesale (grid, gallery, list, columns and timeline
+  views, pinned folders, a Trash pane). `BackstageView.SOKKI_UI` now sits alongside upstream's new
+  `TRASH`, and the **Preferences cog's long-press shortcut works in both the expanded sidebar and
+  the collapsed rail**.
+- The fork's duplicate palette icon gave way to the one upstream now ships.
+
+### Pen pressure
+
+- Upstream moved the tool-popup captions into resources and into sentence case; the fork's **Light**,
+  **Hard** and **Curve** rows follow, translated into Chinese alongside the rest.
+- Upstream raised the default taper tip to 50% and pinned a separate legacy value; the fork's input
+  band and response curve sit beside it unchanged.
+
 ## 0.8.17+001 — 2026-09-13
 
 First build on upstream **v0.8.17** (`versionCode` 54), rebased off **v0.8.15** (52) — two upstream
