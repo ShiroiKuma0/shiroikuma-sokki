@@ -3,6 +3,75 @@
 All notable fork changes on top of upstream [xnotes](https://github.com/shardulvs/xnotes-android).
 Versions read `<upstream version>+NNN`, where `NNN` counts our builds on that upstream base.
 
+## 0.9.0+001 — 2026-10-02
+
+First build on upstream **v0.9.0** (`versionCode` 61), rebased off **v0.8.23** (60). 64 upstream
+commits, 1722 files, +747215/−1192 — but 1579 of those files are a newly vendored PDFium tree, so
+the real surface is 143 changed files and 49 new Kotlin sources. Upstream's release is almost
+entirely PDF work: rendering moved off PdfBox onto PDFium, PDF text became selectable, a text
+markup tool arrived, notes gained an in-note search, and exported PDFs now carry real text, links
+and bookmarks. All twenty-three fork commits replay onto it; the work below is what the new base
+required of them.
+
+### The pressure band now shares a data class with upstream's markup tool
+
+- **`ToolConfig` gained three fields of upstream's own** — `markupMode`, `markupIntensity` and
+  `eraseMarkups` — inserted immediately after `highlighterInverse`, which is exactly where the
+  fork's `pressureLow` / `pressureHigh` / `pressureCurve` sit. Upstream also closed the data class
+  with a new `companion object` holding the markup intensity constants, so the conflict covered the
+  class's closing line as well as its parameter list.
+- Both field sets are kept, upstream's first, and the companion object is upstream's unchanged.
+- The same collision repeated in **`Settings`'s tool-config codec**, in both the writer and the
+  reader: `markup_mode` / `markup_intensity` / `erase_markups` land beside `pressure_low` /
+  `pressure_high` / `pressure_curve`. Both sets are written and both are read, each still absent
+  from the JSON when it holds its default — so notes and configs saved on the old base reload
+  byte-identical.
+- **Pressure behaviour is unchanged**: the band's defaults are still the identity (`0.0` / `1.0` /
+  `8.0`), so an uncalibrated pen draws exactly as it did on 0.8.23.
+
+### One `<queries>` block, two reasons for it
+
+- **Upstream added a `<queries>` element** declaring the `PROCESS_TEXT` intent, so the apps that act
+  on selected text ("Translate", "Search") appear in a PDF text selection's menu.
+- The fork already had a `<queries>` element, for an entirely different reason: without its
+  `<package>` entries the 保存復元 reply broadcast's `setPackage()` fails *silently* on Android 11+.
+- Android takes **one** `<queries>` block with all its children, so the two are merged into a single
+  element carrying `shiroikuma.oyokanri`, `shiroikuma.jiyusagyoban` and upstream's `<intent>`. Both
+  purposes are served and the comment records both.
+
+### PDFium builds for one ABI, because the fork ships one ABI
+
+- Upstream vendors **PDFium at chromium/8076** (revision `8ca5b73`) as 627 C/C++ sources and builds
+  a second native library, `libxnotespdf`, beside `libxnotests`. Nothing is fetched at build time,
+  keeping the F-Droid build reproducible.
+- This arrived in `defaultConfig` as a new `externalNativeBuild { cmake { arguments +=
+  "-DANDROID_STL=c++_static" } }` block, landing on the fork's version tail and `arm64-v8a` filter.
+  Both are kept: upstream's flag applies, and PDFium compiles for **one** ABI instead of three.
+- The shipped library is **4.98 MB** of arm64 code next to tree-sitter's 10.91 MB. With upstream's
+  compressed `jniLibs` packaging the APK grows from **20.6 MB to 23.3 MB** — +2.6 MB, not the
+  doubling the uncompressed figure suggests.
+- `.gitignore` merged cleanly: upstream's `!app/src/main/cpp/pdfium/build/` (PDFium's `build/`
+  directory holds vendored headers, not build output) sits alongside the fork's un-ignored
+  `CLAUDE.md` and `.claude/`.
+
+### De-branding keeps pace
+
+- Upstream's one new user-visible mention of its own name, `err_pdf_password`, carries the fork's
+  name **in both locales**: “That PDF is password-protected, which 白い熊 速記 can’t open.” and its
+  Simplified Chinese counterpart.
+- No new `github.com/shardulvs` links appeared, so the About pane needed nothing.
+
+### Unchanged by this base
+
+- **`Renderer` grew a `Mark` taxonomy and five new members** for the tagged-PDF export path — all
+  of them defaulted, so `AndroidRenderer` compiles untouched and the UI page's pressure pad, which
+  paints through it, needed no change.
+- Upstream's lift of the toolbar palette from 7 swatches to 15 (`InkPalette.MAX_SWATCHES`) landed
+  clear of the fork's hunks; the UI page's colour boxes read `Settings.recentColors`, which is
+  untouched.
+- The 速記 template, the UI page, the eight-category backup and the 保存復元 automation all replay
+  without a conflict.
+
 ## 0.8.23+001 — 2026-09-27
 
 First build on upstream **v0.8.23** (`versionCode` 60), rebased off **v0.8.17** (54) — six upstream
