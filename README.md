@@ -12,7 +12,7 @@ and an eight-category backup with identity-checked sister-app automation.
 
 Installs **side-by-side** with upstream (app id `shiroikuma.sokki`).
 
-**📥 Latest release: [`0.8.23+001`](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases)
+**📥 Latest release: [`0.9.0+001`](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases)
 
 <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-orange?style=flat-square" alt="License" /></a>
 <img src="https://img.shields.io/badge/Android-8.0%2B-3ddc84?style=flat-square&logo=android&logoColor=white" alt="Android 8.0+" />
@@ -163,7 +163,7 @@ re-running them reproduces every shipped byte of the icon and the splash.
 |---|---|
 | Application id | `shiroikuma.sokki` (upstream: `com.xnotes`) — both installable at once |
 | Label | 白い熊 速記 |
-| ABI | `arm64-v8a` only — upstream ships three, and the vendored tree-sitter libraries dominate the APK |
+| ABI | `arm64-v8a` only — upstream ships three, and the vendored native libraries (tree-sitter + PDFium) dominate the APK |
 | Version | `<upstream version>+NNN`, where `NNN` counts our builds on that upstream base |
 
 The code namespace stays `com.xnotes` and the `.xnote` document format is untouched, so notes written
@@ -190,7 +190,8 @@ under MIT, same as upstream — see [LICENSE](LICENSE).
 ## Building
 
 Requires JDK 21 to run Gradle (the project itself compiles to Java 17), the Android SDK, NDK
-`27.0.12077973` and CMake `3.22.1` for the vendored tree-sitter build.
+`27.0.12077973` and CMake `3.22.1` for the vendored native builds (tree-sitter and, since
+upstream 0.9.0, PDFium).
 
 ```bash
 git clone https://github.com/ShiroiKuma0/shiroikuma-sokki
