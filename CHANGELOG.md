@@ -3,6 +3,29 @@
 All notable fork changes on top of upstream [xnotes](https://github.com/shardulvs/xnotes-android).
 Versions read `<upstream version>+NNN`, where `NNN` counts our builds on that upstream base.
 
+## 0.9.0+002 — 2026-10-08
+
+A fix release on the same upstream **v0.9.0** base (`versionCode` 61) as 0.9.0+001.
+
+### Dialogs no longer crash the app
+
+- **"New note" crashed 0.9.0+001 outright**, with a `StackOverflowError`, and so did every other
+  dialog routed through the house `AlertDialog` wrapper — about ten across the app: delete and
+  trash confirmations, rename, folder and table prompts, and the rest.
+- The cause was the wrapper itself. When every floating surface was given the one border driven by
+  the 白い熊 速記 UI page's Border slot and Border width, the wrapper's inner call was rewritten from
+  material3's `AlertDialog` to `com.xnotes.ui.AlertDialog` — its own name — so it called itself
+  until the stack ran out. It calls material3 again, keeping the border.
+
+### The fork's own dialogs get the house border back
+
+- The **colour picker**, the **font picker** and the **Export / Import result dialog** had their
+  hand-rolled borders removed in that same change, on the understanding that the wrapper would draw
+  one. They still imported material3's `AlertDialog` by name, though, and an explicit import beats
+  a same-package declaration — so they bypassed the wrapper (which is why they never crashed) and
+  were drawn with no edge at all, black on black. The stale imports are gone; all three now route
+  through the wrapper and wear the same border as every other dialog and menu.
+
 ## 0.9.0+001 — 2026-10-02
 
 First build on upstream **v0.9.0** (`versionCode` 61), rebased off **v0.8.23** (60). 64 upstream
