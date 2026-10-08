@@ -1146,7 +1146,7 @@ internal fun AlertDialog(
     shape: Shape = MaterialTheme.shapes.large,
     containerColor: Color = LocalPalette.current.menuBg.toComposeColor(),
 ) {
-    com.xnotes.ui.AlertDialog(
+    androidx.compose.material3.AlertDialog(
         onDismissRequest = onDismissRequest,
         confirmButton = confirmButton,
         modifier = modifier.border(sokkiSurfaceBorder(), shape),
