@@ -112,10 +112,25 @@ data class ToolConfig(
      *  band the hand never reaches, raising `k` *flattens* the response instead of sharpening it.
      *  Defaults to `StrokeEngine.PRESSURE_CURVE_K`, the value the engine has always used. */
     val pressureCurve: Double = 8.0,
+    /** 筆 brush: the pressure response exponent — higher keeps a light touch thin and brings the
+     *  belly in late. Only used by [Tool.BRUSH]. */
+    val brushGamma: Double = DEFAULT_BRUSH_GAMMA,
+    /** 筆 brush: strength (0..1) of the 起筆 press-in at the landing. Only used by [Tool.BRUSH]. */
+    val brushEntry: Double = DEFAULT_BRUSH_ENTRY,
+    /** 筆 brush: strength (0..1) of the 払い sweep when the brush leaves the paper moving: 0 keeps
+     *  a short point, 1 sweeps out over several brush widths. Only used by [Tool.BRUSH]. */
+    val brushHarai: Double = DEFAULT_BRUSH_HARAI,
+    /** 筆 brush: how readily (0..1) the ink runs dry into かすれ streaks — at speed, along long
+     *  strokes and in the tails. 0 keeps it wet and solid. Only used by [Tool.BRUSH]. */
+    val brushDry: Double = DEFAULT_BRUSH_DRY,
 ) {
     companion object {
         const val DEFAULT_MARKUP_INTENSITY = 0.5
         const val MARKUP_INTENSITY_MIN = 0.1
+        const val DEFAULT_BRUSH_GAMMA = 0.6
+        const val DEFAULT_BRUSH_ENTRY = 0.5
+        const val DEFAULT_BRUSH_HARAI = 0.5
+        const val DEFAULT_BRUSH_DRY = 0.5
     }
 }
 
@@ -133,6 +148,8 @@ object ToolDefaults {
         // Dashed pen: uniform-width (pressure off), so its dashes stay even; dash/gap set the rhythm.
         Tool.DASHED -> ToolConfig(baseWidth = 3.0, pressureEnabled = false, pressureMinFactor = 1.0, directionStrength = 0.0, dashLength = 10.0, dashGap = 8.0)
         Tool.CALLIGRAPHY -> ToolConfig(baseWidth = 6.0, pressureEnabled = true, pressureMinFactor = 0.40, directionStrength = 0.60)
+        // 筆: wide, and able to thin to a hair (30:1) for the sweeps.
+        Tool.BRUSH -> ToolConfig(baseWidth = 320.0, pressureEnabled = true, pressureMinFactor = 0.03, directionStrength = 0.0)
         Tool.SPEED -> ToolConfig(baseWidth = 4.0, pressureEnabled = true, pressureMinFactor = 0.35, directionStrength = 0.0, speedStrength = 0.8)
         Tool.TAPER -> ToolConfig(baseWidth = 4.0, pressureEnabled = true, pressureMinFactor = 0.45, directionStrength = 0.0, taperEnabled = true, taperMinFactor = DEFAULT_TAPER_TIP)
         Tool.HIGHLIGHTER -> ToolConfig(baseWidth = 16.0, pressureEnabled = false, pressureMinFactor = 1.0, directionStrength = 0.0, highlighterAlpha = 0.50)
@@ -142,7 +159,7 @@ object ToolDefaults {
     }
 
     /** Tools whose config is persisted in settings (spec 09 §2). */
-    val persistedTools = listOf(Tool.PEN, Tool.DASHED, Tool.CALLIGRAPHY, Tool.SPEED, Tool.TAPER, Tool.HIGHLIGHTER, Tool.ERASER, Tool.SELECT, Tool.LASSO, Tool.MARKUP)
+    val persistedTools = listOf(Tool.PEN, Tool.DASHED, Tool.CALLIGRAPHY, Tool.BRUSH, Tool.SPEED, Tool.TAPER, Tool.HIGHLIGHTER, Tool.ERASER, Tool.SELECT, Tool.LASSO, Tool.MARKUP)
 }
 
 /**
@@ -194,8 +211,9 @@ object ToolConversions {
     fun highlighterAlphaToIntensity(a: Double): Double = a * 100.0
 
     /** WIDTH slider range per tool (spec 04 §5): 4..40 for the highlighter, 1..80 for the eraser
-     *  (its radius, default 24), else 1..20. */
+     *  (its radius, default 24), 1..1000 for the 筆 brush, else 1..20. */
     fun widthRange(tool: Tool): ClosedFloatingPointRange<Double> = when (tool) {
+        Tool.BRUSH -> 1.0..1000.0
         Tool.HIGHLIGHTER -> 4.0..40.0
         Tool.ERASER -> 1.0..80.0
         else -> 1.0..20.0

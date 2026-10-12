@@ -329,7 +329,7 @@ class DocumentCodec(
     private fun writeStroke(j: JsonWrite, s: Stroke) {
         // Per-sample time is only meaningful to the speed pen, so it's written as an
         // optional 4th element only then — every other stroke serializes unchanged.
-        val withTime = s.config.speedStrength > 0.0
+        val withTime = s.config.speedStrength > 0.0 || s.tool == Tool.BRUSH
         j.beginObject()
         j.name("kind").value(Stroke.KIND)
         j.name("tool").value(s.tool.id)
@@ -367,6 +367,13 @@ class DocumentCodec(
         if (s.config.pressureLow != DEFAULT_CONFIG.pressureLow) j.name("pressure_low").value(s.config.pressureLow)
         if (s.config.pressureHigh != DEFAULT_CONFIG.pressureHigh) j.name("pressure_high").value(s.config.pressureHigh)
         if (s.config.pressureCurve != DEFAULT_CONFIG.pressureCurve) j.name("pressure_curve").value(s.config.pressureCurve)
+        // The 筆 brush's own response, written only for brush strokes.
+        if (s.tool == Tool.BRUSH) {
+            j.name("brush_gamma").value(s.config.brushGamma)
+            j.name("brush_entry").value(s.config.brushEntry)
+            j.name("brush_harai").value(s.config.brushHarai)
+            j.name("brush_dry").value(s.config.brushDry)
+        }
         j.endObject()
         // Samples are ~97% of a dense manifest's bytes, so they go out through [JsonWrite.samplePoint], which rounds them: 0.01
         // content px (2dp) and 0.001 pressure (3dp) are far below anything visible, and a
@@ -1025,6 +1032,10 @@ class DocumentCodec(
         var pressureLow: Double? = null
         var pressureHigh: Double? = null
         var pressureCurve: Double? = null
+        var brushGamma: Double? = null
+        var brushEntry: Double? = null
+        var brushHarai: Double? = null
+        var brushDry: Double? = null
     }
 
     private fun parseItem(p: JsonPull, items: MutableList<CanvasItem>, pending: MutableList<PendingImage>, glue: GlueRead) {
@@ -1144,6 +1155,10 @@ class DocumentCodec(
             pressureLow = c?.pressureLow ?: def.pressureLow,
             pressureHigh = c?.pressureHigh ?: def.pressureHigh,
             pressureCurve = c?.pressureCurve ?: def.pressureCurve,
+            brushGamma = c?.brushGamma ?: def.brushGamma,
+            brushEntry = c?.brushEntry ?: def.brushEntry,
+            brushHarai = c?.brushHarai ?: def.brushHarai,
+            brushDry = c?.brushDry ?: def.brushDry,
         )
         val stroke = Stroke(tool, config, emptyList(), s.speedScale, s.straight, s.smoothScale)
         s.samples?.let { stroke.setSamples(it.xs, it.ys, it.ps, it.ts, it.n) }
@@ -1345,6 +1360,10 @@ class DocumentCodec(
                 "pressure_low" -> c.pressureLow = doubleOrNull(p)
                 "pressure_high" -> c.pressureHigh = doubleOrNull(p)
                 "pressure_curve" -> c.pressureCurve = doubleOrNull(p)
+                "brush_gamma" -> c.brushGamma = doubleOrNull(p)
+                "brush_entry" -> c.brushEntry = doubleOrNull(p)
+                "brush_harai" -> c.brushHarai = doubleOrNull(p)
+                "brush_dry" -> c.brushDry = doubleOrNull(p)
                 else -> p.skipValue()
             }
         }

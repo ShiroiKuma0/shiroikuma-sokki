@@ -223,6 +223,36 @@ class DocumentCodecTest {
         assertEquals("Intro", back.bookmarks[0].label)
     }
 
+    @Test fun brushStrokeRoundTripsWithItsTimeAndResponse() {
+        val doc = Document()
+        val page = Page(1240.0, 1754.0)
+        val cfg = ToolDefaults.configFor(Tool.BRUSH).copy(baseWidth = 140.0, brushGamma = 2.2, brushEntry = 0.7, brushHarai = 0.9)
+        page.items.add(
+            Stroke(
+                Tool.BRUSH, cfg,
+                mutableListOf(Sample(10.0, 20.0, 0.5, 0.0), Sample(30.0, 40.0, 0.9, 16.0), Sample(60.0, 70.0, 0.7, 33.0)),
+                speedScale = 0.4,
+            ),
+        )
+        doc.pages.add(page)
+        val stroke = roundTrip(doc).pages[0].items[0] as Stroke
+        assertEquals(Tool.BRUSH, stroke.tool)
+        // Every non-taper stroke reloads with the legacy taper tip, which the brush never reads.
+        assertEquals(cfg, stroke.config.copy(taperMinFactor = cfg.taperMinFactor))
+        assertEquals(33.0, stroke.samples[2].t, 1e-9)
+        assertEquals(0.4, stroke.speedScale, 1e-9)
+    }
+
+    @Test fun aPenStrokeWritesNoBrushKeys() {
+        val doc = Document()
+        val page = Page(1240.0, 1754.0)
+        page.items.add(Stroke(Tool.PEN, ToolDefaults.configFor(Tool.PEN), mutableListOf(Sample(1.0, 2.0, 0.5), Sample(3.0, 4.0, 0.5))))
+        doc.pages.add(page)
+        val out = ByteArrayOutputStream()
+        codec.write(doc, out)
+        assertFalse(manifestOf(out.toByteArray()).contains("brush_"))
+    }
+
     @Test fun manifestIsStoredAndDeflatedCorrectly() {
         val doc = Document.blank(count = 1)
         doc.pages[0].items.add(ImageItem(ImageData(imageFile(),10, 10), Rect(0.0, 0.0, 10.0, 10.0)))

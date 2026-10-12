@@ -107,7 +107,14 @@ object ItemMesher {
     private fun meshStroke(stroke: Stroke, tolerance: Double): MeshedItem? {
         if (stroke.isEmpty) return null
         if (stroke.tool == Tool.DASHED) return meshDashed(stroke, tolerance)
-        val mesh = StrokeTessellator.tessellate(stroke.geometry(), tolerance)
+        val strips = if (stroke.tool == Tool.BRUSH && !stroke.config.neon) stroke.hairStrips() else emptyList()
+        val mesh = if (strips.isNotEmpty()) {
+            // The brush paints as translucent hairs, their opacity in the vertex colours: the
+            // batched pass blends, so the hairs build up over each other as they do on paper.
+            StrokeTessellator.hairMesh(strips, stroke.renderColor)
+        } else {
+            StrokeTessellator.tessellate(stroke.geometry(), tolerance, everyDisc = stroke.tool == Tool.BRUSH)
+        }
         if (mesh.isEmpty) return null
         if (stroke.config.neon && stroke.tool != Tool.HIGHLIGHTER) {
             return neonStroke(stroke, mesh, tolerance)

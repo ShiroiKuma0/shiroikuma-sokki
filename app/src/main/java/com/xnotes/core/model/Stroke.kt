@@ -15,6 +15,9 @@ import com.xnotes.core.stroke.WetRibbon
 import com.xnotes.core.tools.Tool
 import com.xnotes.core.tools.ToolConfig
 
+/** Opacity steps a 筆 brush hair is painted in on the paged canvas: fine enough that a fade reads smooth. */
+private const val HAIR_LEVELS = 24
+
 /**
  * The unit of inking (spec 02 §5.1). Holds the raw samples plus a snapshot of
  * the tool style; the ribbon geometry is derived from the samples on demand and
@@ -231,6 +234,28 @@ class Stroke(
             rp[i] = s.pa[i].toDouble()
         }
         val rt = s.ta?.let { src -> DoubleArray(n) { src[it].toDouble() } }
+        if (tool == Tool.BRUSH) {
+            // The texture is laid down at lift: a live stroke draws its plain outline, which keeps
+            // a frame cheap while the whole stroke is rebuilt on every sample.
+            val ink = com.xnotes.core.stroke.BrushEngine.buildInk(
+                rx, ry, rp, rt,
+                config.baseWidth,
+                config.pressureEnabled,
+                config.pressureMinFactor,
+                config.brushGamma,
+                config.brushEntry,
+                config.brushHarai,
+                config.pressureLow,
+                config.pressureHigh,
+                speedScale,
+                smoothScale,
+                finished,
+                dry = config.brushDry,
+                textured = finished,
+            )
+            cachedBrushStrips = ink.strips
+            return ink.outline.also { cachedGeometry = it }
+        }
         return StrokeEngine.build(
             rx, ry, rp, rt,
             config.baseWidth,
@@ -251,8 +276,20 @@ class Stroke(
         ).also { cachedGeometry = it }
     }
 
+    /** The 筆 brush's translucent hair strips, built alongside [geometry]; empty for every other pen
+     *  and for a brush stroke still under the pen. Bounds and hit tests use [geometry]; only painting
+     *  uses these. */
+    fun hairStrips(): List<com.xnotes.core.stroke.HairStrip> {
+        geometry()
+        if (tool != Tool.BRUSH) return emptyList()
+        return cachedBrushStrips.orEmpty()
+    }
+
+    private var cachedBrushStrips: List<com.xnotes.core.stroke.HairStrip>? = null
+
     fun invalidate() {
         wet = null
+        cachedBrushStrips = null
         cachedGeometry = null
         cachedRawBounds = null
         cachedBounds = null
@@ -271,6 +308,7 @@ class Stroke(
             wet = null
         }
         cachedGeometry = null
+        cachedBrushStrips = null
     }
 
     /** True once [geometry] has been built and not since released; lets the canvas skip pages
@@ -312,6 +350,7 @@ class Stroke(
         // hair as the stroke crosses from one to the other.
         ribbon.append(xAt(n), yAt(n), pAt(n), tAt(n))
         cachedGeometry = null
+        cachedBrushStrips = null
         cachedRawBounds = null
         cachedBounds = null
     }
@@ -324,7 +363,9 @@ class Stroke(
      */
     private fun wetOrStart(): WetRibbon? {
         wet?.let { return it }
-        if (finished || !WetRibbon.supports(config.taperEnabled, straight)) return null
+        // The brush lives in time and decides its release at lift, so it is rebuilt whole each
+        // sample, as the taper pen is.
+        if (finished || tool == Tool.BRUSH || !WetRibbon.supports(config.taperEnabled, straight)) return null
         val w = WetRibbon(
             baseWidth = config.baseWidth,
             pressureEnabled = config.pressureEnabled,
@@ -389,7 +430,34 @@ class Stroke(
     // the body bridging them. Round caps and joins come for free on every pen, and the union of
     // convex pieces can't hole the way one self-overlapping outline does at a sharp turn.
     private fun paintFills(r: Renderer, g: StrokeGeometry, color: Rgba) {
+        if (tool == Tool.BRUSH) {
+            val strips = hairStrips()
+            if (strips.isNotEmpty()) {
+                // Each run of a hair at one opacity is one polygon, so it covers once; neighbouring
+                // runs share an edge, and the hairs build up over each other.
+                for (st in strips) paintStrip(r, st, color)
+                return
+            }
+        }
         r.fillDiskRibbon(g.centerline, g.halfWidths, color)
+    }
+
+    /** One hair strip, split where its opacity (quantized) changes, since a polygon fill has one. */
+    private fun paintStrip(r: Renderer, st: com.xnotes.core.stroke.HairStrip, color: Rgba) {
+        val m = st.pointCount
+        var from = 0
+        while (from < m - 1) {
+            val level = Math.round(st.alphas[from] * HAIR_LEVELS)
+            var to = from + 1
+            while (to < m - 1 && Math.round(st.alphas[to] * HAIR_LEVELS) == level) to++
+            if (level > 0) {
+                val pts = ArrayList<com.xnotes.core.geometry.Pt>(2 * (to - from + 1))
+                for (k in from..to) pts += com.xnotes.core.geometry.Pt(st.left[2 * k].toDouble(), st.left[2 * k + 1].toDouble())
+                for (k in to downTo from) pts += com.xnotes.core.geometry.Pt(st.right[2 * k].toDouble(), st.right[2 * k + 1].toDouble())
+                r.fillPolygon(pts, color.scaleAlpha(level.toDouble() / HAIR_LEVELS))
+            }
+            from = to
+        }
     }
 
     /**
@@ -556,6 +624,7 @@ class Stroke(
         pts = Samples(s.ox + dx, s.oy + dy, s.xa, s.ya, s.pa, s.ta, s.n)
         wet = null
         cachedGeometry = null
+        cachedBrushStrips = null
         cachedRawBounds = cachedRawBounds?.translate(dx, dy)
         cachedBounds = cachedBounds?.translate(dx, dy)
     }
@@ -659,7 +728,8 @@ class Stroke(
         val s = pts
         if (s.n == 0) return false
         // Reject against the *raw* sample box (the smoothed geometry lags inward).
-        if (rawBounds().distanceTo(Pt(cx, cy)) > radius) return false
+        if (rawBounds().distanceTo(Pt(cx, cy)) > radius + eraseReach()) return false
+        if (tool == Tool.BRUSH) return brushHits(cx, cy, radius).any { it }
         // A straight stroke carries only its two endpoints, so a mid-line tap falls between
         // samples; test the segments they span (point-to-line) instead of the sample points.
         if (straight) {
@@ -698,20 +768,21 @@ class Stroke(
     fun erasedBy(cx: Double, cy: Double, radius: Double): List<Stroke>? {
         val s = pts
         if (s.n == 0) return null
-        if (rawBounds().distanceTo(Pt(cx, cy)) > radius) return null
+        if (rawBounds().distanceTo(Pt(cx, cy)) > radius + eraseReach()) return null
         // A straight stroke is just two endpoints — it has no mid-line samples to split on, so any
         // contact erases the whole segment (consistent with how the eraser hit-tests it).
         if (straight) return if (intersectsCircle(cx, cy, radius)) emptyList() else null
         val lx = cx - s.ox
         val ly = cy - s.oy
         val r2 = radius * radius
+        val brushHit = if (tool == Tool.BRUSH) brushHits(cx, cy, radius) else null
         var anyErased = false
         var runStart = -1
         val fragments = mutableListOf<Stroke>()
         for (i in 0 until s.n) {
             val dx = s.xa[i] - lx
             val dy = s.ya[i] - ly
-            if (dx * dx + dy * dy <= r2) {
+            if (if (brushHit != null) brushHit[i] else dx * dx + dy * dy <= r2) {
                 anyErased = true
                 if (runStart >= 0) {
                     fragments.add(fragment(s, runStart, i))
@@ -723,6 +794,25 @@ class Stroke(
         }
         if (runStart >= 0) fragments.add(fragment(s, runStart, s.n))
         return if (anyErased) fragments else null
+    }
+
+    /** How far past its samples the ink reaches for the eraser: the 筆 brush is wide enough that
+     *  touching its visible edge must count, so it reaches its full half-width; the fine pens keep
+     *  the centreline test they always had. */
+    private fun eraseReach(): Double = if (tool == Tool.BRUSH) config.baseWidth / 2.0 else 0.0
+
+    /** Per sample of a brush stroke: does the eraser circle touch the ink drawn there — the disc
+     *  of that sample's built half-width around its smoothed centre. */
+    private fun brushHits(cx: Double, cy: Double, radius: Double): BooleanArray {
+        val g = geometry()
+        val n = pts.n
+        return BooleanArray(n) { i ->
+            if (i >= g.halfWidths.size) return@BooleanArray false
+            val r = radius + g.halfWidths[i]
+            val dx = g.centerline[2 * i] - cx
+            val dy = g.centerline[2 * i + 1] - cy
+            dx * dx + dy * dy <= r * r
+        }
     }
 
     /** A new stroke from [src]'s samples `[from, to)`, copied so it shares no backing storage. */

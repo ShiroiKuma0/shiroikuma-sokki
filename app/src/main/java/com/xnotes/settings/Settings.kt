@@ -155,7 +155,9 @@ data class Settings(
             }
             val shape = toolsObj?.optJSONObject("shape")?.let { shapeConfig(it) } ?: ShapeConfig()
 
-            val colors = rgbaList(o.optJSONArray("toolbar_colors")).toMutableList()
+            val colors = rgbaList(o.optJSONArray("toolbar_colors"))
+                .let { if (it == InkPalette.legacyPresets) InkPalette.presets else it }
+                .toMutableList()
             while (colors.size < InkPalette.MAX_SWATCHES) colors.add(InkPalette.presets[colors.size])
 
             return Settings(
@@ -381,6 +383,12 @@ data class Settings(
             .put("pressure_low", c.pressureLow)
             .put("pressure_high", c.pressureHigh)
             .put("pressure_curve", c.pressureCurve)
+            // v2: the response default moved from 0.5 to 1.0 with the footprint brush; the old
+            // key held the old default, so it is left unread.
+            .put("brush_gamma_v3", c.brushGamma)
+            .put("brush_entry", c.brushEntry)
+            .put("brush_harai", c.brushHarai)
+            .put("brush_dry", c.brushDry)
             .put("rgba", rgbaArr(c.rgba))
             .apply { c.colorOverride?.let { put("color_override", rgbaArr(it)) } }
 
@@ -416,6 +424,10 @@ data class Settings(
                 pressureLow = o.optDouble("pressure_low", d.pressureLow),
                 pressureHigh = o.optDouble("pressure_high", d.pressureHigh),
                 pressureCurve = o.optDouble("pressure_curve", d.pressureCurve),
+                brushGamma = o.optDouble("brush_gamma_v3", d.brushGamma),
+                brushEntry = o.optDouble("brush_entry", d.brushEntry),
+                brushHarai = o.optDouble("brush_harai", d.brushHarai),
+                brushDry = o.optDouble("brush_dry", d.brushDry),
                 colorOverride = o.optJSONArray("color_override")
                     ?.let { a -> Rgba.fromList((0 until a.length()).map { i -> a.optInt(i, 0) }) }
                     ?: d.colorOverride,
