@@ -7,6 +7,9 @@ enum class Tool(val id: String) {
     CALLIGRAPHY("calligraphy"),
     SPEED("speed"),
     TAPER("taper"),
+
+    /** 筆: the ink brush for large kanji — press, sweep and release (see [com.xnotes.core.stroke.BrushEngine]). */
+    BRUSH("brush"),
     HIGHLIGHTER("highlighter"),
     ERASER("eraser"),
     PAN("pan"),
@@ -23,7 +26,7 @@ enum class Tool(val id: String) {
 
     /** Tools that produce ink via the stroke engine. */
     val isStroke: Boolean get() = this == PEN || this == DASHED || this == CALLIGRAPHY ||
-        this == SPEED || this == TAPER || this == HIGHLIGHTER
+        this == SPEED || this == TAPER || this == BRUSH || this == HIGHLIGHTER
 
     /**
      * Tools the "draw with finger" gate covers: when finger-draw is off, a finger pans
@@ -44,6 +47,6 @@ enum class Tool(val id: String) {
         val DEFAULT = PAN
 
         /** Quick-tool-wheel order (spec 06 §11 / 10 §7). */
-        val wheelOrder = listOf(PEN, DASHED, CALLIGRAPHY, SPEED, TAPER, HIGHLIGHTER, ERASER, SELECT, LASSO, SCREENSHOT, SHAPE, TEXT, MARKUP, PAN)
+        val wheelOrder = listOf(PEN, DASHED, CALLIGRAPHY, BRUSH, SPEED, TAPER, HIGHLIGHTER, ERASER, SELECT, LASSO, SCREENSHOT, SHAPE, TEXT, MARKUP, PAN)
     }
 }

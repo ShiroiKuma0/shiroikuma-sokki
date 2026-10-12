@@ -100,9 +100,16 @@ fun ToolConfigPopup(editor: ToolPopupHost, tool: Tool, onDismiss: () -> Unit) {
     var light by remember { mutableStateOf(ToolConversions.pressureToPercent(base.pressureLow).toFloat()) }
     var hard by remember { mutableStateOf(ToolConversions.pressureToPercent(base.pressureHigh).toFloat()) }
     var curve by remember { mutableStateOf(base.pressureCurve.toFloat()) }
+    // 筆 brush: thinnest as a percent of full width (the brush goes far finer than the
+    // sensitivity mapping's 10:1 floor), and its own response, landing and release.
+    var thinnest by remember { mutableStateOf((base.pressureMinFactor * 100).toFloat()) }
+    var gamma by remember { mutableStateOf((base.brushGamma * 10).toFloat()) } // shown ×10: the row prints whole numbers
+    var entry by remember { mutableStateOf((base.brushEntry * 100).toFloat()) }
+    var harai by remember { mutableStateOf((base.brushHarai * 100).toFloat()) }
+    var dryness by remember { mutableStateOf((base.brushDry * 100).toFloat()) }
 
     fun emit() {
-        val m = ToolConversions.sensitivityToMinFactor(sensitivity.toDouble())
+        val m = if (tool == Tool.BRUSH) thinnest.toDouble() / 100.0 else ToolConversions.sensitivityToMinFactor(sensitivity.toDouble())
         val ds = if (tool == Tool.CALLIGRAPHY) ToolConversions.multiplierToDirectionStrength(multiplier.toDouble()) else 0.0
         val sp = if (tool == Tool.SPEED) ToolConversions.speedToStrength(speed.toDouble()) else 0.0
         val tmf = if (tool == Tool.TAPER) taperTip.toDouble() / 100.0 else base.taperMinFactor
@@ -128,6 +135,10 @@ fun ToolConfigPopup(editor: ToolPopupHost, tool: Tool, onDismiss: () -> Unit) {
                 pressureLow = ToolConversions.percentToPressure(light.toDouble()),
                 pressureHigh = ToolConversions.percentToPressure(hard.toDouble()),
                 pressureCurve = curve.toDouble(),
+                brushGamma = if (tool == Tool.BRUSH) gamma.toDouble() / 10.0 else base.brushGamma,
+                brushEntry = if (tool == Tool.BRUSH) entry.toDouble() / 100.0 else base.brushEntry,
+                brushHarai = if (tool == Tool.BRUSH) harai.toDouble() / 100.0 else base.brushHarai,
+                brushDry = if (tool == Tool.BRUSH) dryness.toDouble() / 100.0 else base.brushDry,
             ),
         )
     }
@@ -169,10 +180,14 @@ fun ToolConfigPopup(editor: ToolPopupHost, tool: Tool, onDismiss: () -> Unit) {
                 }
             }
             Spacer(Modifier.size(12.dp))
-            val hasPressure = tool == Tool.PEN || tool == Tool.CALLIGRAPHY || tool == Tool.SPEED || tool == Tool.TAPER
+            val hasPressure = tool == Tool.PEN || tool == Tool.CALLIGRAPHY || tool == Tool.BRUSH || tool == Tool.SPEED || tool == Tool.TAPER
             if (hasPressure) {
                 ToggleRow(stringResource(R.string.caption_pressure), pressure) { pressure = it; emit() }
-                SliderRow(stringResource(R.string.caption_sensitivity), sensitivity, 0f..100f, enabled = pressure) { sensitivity = it; emit() }
+                if (tool == Tool.BRUSH) {
+                    SliderRow(stringResource(R.string.caption_thinnest), thinnest, 1f..100f, enabled = pressure) { thinnest = it; emit() }
+                } else {
+                    SliderRow(stringResource(R.string.caption_sensitivity), sensitivity, 0f..100f, enabled = pressure) { sensitivity = it; emit() }
+                }
                 // The input band: which slice of the pen's reported range this tool spreads its
                 // whole thin-to-thick swing over. Calibrate it on the 白い熊 速記 UI page, which can
                 // measure the pen and set all four pressure tools at once; these are the per-tool
@@ -181,11 +196,24 @@ fun ToolConfigPopup(editor: ToolPopupHost, tool: Tool, onDismiss: () -> Unit) {
                 SliderRow(stringResource(R.string.caption_hard), hard, 5f..100f, enabled = pressure) { setHard(it) }
                 // Steepness of the S between them: 0 is a linear ramp, high snaps between hairline
                 // and full width over a small change of press.
-                SliderRow(
-                    stringResource(R.string.caption_curve), curve,
-                    ToolConversions.CURVE_RANGE.start.toFloat()..ToolConversions.CURVE_RANGE.endInclusive.toFloat(),
-                    enabled = pressure,
-                ) { curve = it; emit() }
+                if (tool == Tool.BRUSH) {
+                    // The brush has its own response: a power curve, where higher keeps a light
+                    // touch thin and brings the belly in late.
+                    SliderRow(stringResource(R.string.caption_response), gamma, 2f..35f, enabled = pressure) { gamma = it; emit() }
+                } else {
+                    SliderRow(
+                        stringResource(R.string.caption_curve), curve,
+                        ToolConversions.CURVE_RANGE.start.toFloat()..ToolConversions.CURVE_RANGE.endInclusive.toFloat(),
+                        enabled = pressure,
+                    ) { curve = it; emit() }
+                }
+            }
+            if (tool == Tool.BRUSH) {
+                // 起筆, the press-in at the landing, and 払い, the sweep out when the brush leaves moving.
+                SliderRow(stringResource(R.string.caption_entry_press), entry, 0f..100f, enabled = pressure) { entry = it; emit() }
+                SliderRow(stringResource(R.string.caption_release_sweep), harai, 0f..100f) { harai = it; emit() }
+                // かすれ: how readily the ink breaks into dry streaks.
+                SliderRow(stringResource(R.string.caption_dryness), dryness, 0f..100f) { dryness = it; emit() }
             }
             if (tool == Tool.CALLIGRAPHY) {
                 SliderRow(stringResource(R.string.caption_multiplier), multiplier, 1f..5f) { multiplier = it; emit() }

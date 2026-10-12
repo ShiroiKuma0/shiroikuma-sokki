@@ -115,7 +115,7 @@ fun SokkiUiPane(editor: Editor, onImportFont: () -> Unit, onClosePage: () -> Uni
             NavRow(
                 1, "Export / Import…",
                 if (dirSet) "Back up everything settable as one ZIP, or restore it."
-                else "No backup folder set yet — tap to choose one.",
+                else "No backup directory set yet — tap to choose one.",
                 warn = !dirSet,
             ) { showExim = true }
         }
@@ -725,8 +725,8 @@ private fun weightLabel(w: Int) = when (w) {
     else -> "900 Black"
 }
 
-/** The four tools that read pressure — the ones this page's calibration writes. */
-private val PRESSURE_TOOLS = listOf(Tool.PEN, Tool.CALLIGRAPHY, Tool.SPEED, Tool.TAPER)
+/** The tools that read pressure — the ones this page's calibration writes. */
+private val PRESSURE_TOOLS = listOf(Tool.PEN, Tool.CALLIGRAPHY, Tool.BRUSH, Tool.SPEED, Tool.TAPER)
 
 /**
  * Symptom → slider. Two rules are worth carrying in mind while reading it, because they are what

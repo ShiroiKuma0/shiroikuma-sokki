@@ -7,6 +7,7 @@
     <string name="tool_calligraphy">书法笔</string>
     <string name="tool_speed">速度笔</string>
     <string name="tool_taper">收尖笔</string>
+    <string name="tool_brush">毛笔</string>
     <string name="tool_highlighter">荧光笔</string>
     <string name="tool_eraser">橡皮擦</string>
     <string name="tool_pan">平移</string>

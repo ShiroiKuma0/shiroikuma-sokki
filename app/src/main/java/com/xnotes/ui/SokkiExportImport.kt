@@ -132,7 +132,7 @@ fun SokkiExportImportPanel(editor: Editor, onDismiss: () -> Unit, onFinished: ()
         }
         val treeUri = SokkiBackup.backupDirUri(ctx)
         if (treeUri == null) {
-            result = PanelResult(false, "Export failed", "No backup folder set.")
+            result = PanelResult(false, "Export failed", "No backup directory set.")
             return
         }
         busy = true
@@ -141,14 +141,14 @@ fun SokkiExportImportPanel(editor: Editor, onDismiss: () -> Unit, onFinished: ()
                 runCatching {
                     val json = editor.settingsJson()
                     val name = SokkiBackup.timestampedName()
-                    val dir = DocumentFile.fromTreeUri(ctx, treeUri) ?: error("Backup folder is unavailable.")
+                    val dir = DocumentFile.fromTreeUri(ctx, treeUri) ?: error("Backup directory is unavailable.")
                     dir.findFile("$name.part")?.delete()
                     // Written as .part and renamed only once closed: a killed export must never
                     // leave something a later restore would mistake for a real backup.
                     val part = dir.createFile("application/zip", "$name.part") ?: error("Could not create the file.")
                     try {
                         val count = ctx.contentResolver.openOutputStream(part.uri).use { out ->
-                            requireNotNull(out) { "Could not write to the backup folder." }
+                            requireNotNull(out) { "Could not write to the backup directory." }
                             SokkiBackup.export(ctx, json, cats, out)
                         }
                         if (!part.renameTo(name)) error("Could not finish writing $name.")
@@ -215,13 +215,13 @@ fun SokkiExportImportPanel(editor: Editor, onDismiss: () -> Unit, onFinished: ()
             ) {
                 Column {
                     Text(
-                        "Backup folder",
+                        "Backup directory",
                         fontSize = 10.sp,
                         color = if (dirLabel == null) warn else palette.textDim.toComposeColor(),
                     )
                     Spacer(Modifier.height(2.dp))
                     Text(
-                        dirLabel ?: "Not set — tap to choose a folder",
+                        dirLabel ?: "Not set — tap to choose a directory",
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
                         color = if (dirLabel == null) warn else palette.text.toComposeColor(),
@@ -233,7 +233,7 @@ fun SokkiExportImportPanel(editor: Editor, onDismiss: () -> Unit, onFinished: ()
             Spacer(Modifier.height(4.dp))
             Text(
                 latest?.let { (n, b) -> "Last backup: $n · ${SokkiBackup.humanSize(b)}" }
-                    ?: if (dirLabel == null) "No folder set, so nothing can be exported yet." else "No backup in this folder yet.",
+                    ?: if (dirLabel == null) "No directory set, so nothing can be exported yet." else "No backup in this directory yet.",
                 fontSize = 10.sp,
                 color = if (dirLabel == null) warn else palette.textDim.toComposeColor(),
             )

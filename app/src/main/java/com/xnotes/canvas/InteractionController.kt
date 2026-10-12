@@ -936,7 +936,8 @@ class InteractionController(
         // Shape snap: only solid ink pens (not the highlighter or its straight-line mode) arm the
         // "hold still → shape" timer — and never while the ruler is up (you're drawing straight lines),
         // nor under the wand, whose strokes are ephemeral and must never commit a shape to the page.
-        dwellEligible = detectShapes && drawTool.isStroke && drawTool != Tool.HIGHLIGHTER && !straight &&
+        // The 筆 brush is held still on purpose (止め, the press-in), so it never arms the snap either.
+        dwellEligible = detectShapes && drawTool.isStroke && drawTool != Tool.HIGHLIGHTER && drawTool != Tool.BRUSH && !straight &&
             !ruler.visible && !wandMode
         if (dwellEligible) {
             dwellAnchor = downViewport
@@ -997,8 +998,11 @@ class InteractionController(
         // floor when zoomed out. A fixed content-px gate discarded ever-finer detail the more you
         // zoomed in, so strokes drawn while zoomed faceted into ~zoom-px chords.
         val gate = (MIN_SAMPLE_DIST / state.zoom).coerceAtMost(MIN_SAMPLE_DIST)
-        if (force || last == null || Pt(last.x, last.y).manhattanTo(local) >= gate) {
-            stroke.addSample(Sample(local.x, local.y, pressure.coerceIn(0.0, 1.0), (timeMs - strokeStartTimeMs).toDouble()))
+        val t = (timeMs - strokeStartTimeMs).toDouble()
+        if (force || last == null || Pt(last.x, last.y).manhattanTo(local) >= gate ||
+            (stroke.tool == Tool.BRUSH && brushPressSample(last, pressure, t))
+        ) {
+            stroke.addSample(Sample(local.x, local.y, pressure.coerceIn(0.0, 1.0), t))
         }
         // Real movement restarts the hold-to-snap clock; staying within the slop lets it mature,
         // so the snap fires only once the pen has actually come to rest. (Sub-slop jitter is ignored
@@ -1142,7 +1146,8 @@ class InteractionController(
      *  The stroke's just-built geometry supplies the half-width channel, so pressure/speed width
      *  variation survives the reduction. */
     private fun simplifyForCommit(stroke: Stroke) {
-        if (StrokeSimplify.enabled && !stroke.straight) {
+        // The 筆 brush is built in time, so dropping a sample would move its ink; it keeps them all.
+        if (StrokeSimplify.enabled && !stroke.straight && stroke.tool != Tool.BRUSH) {
             val eps = (SIMPLIFY_EPS / state.zoom).coerceAtMost(SIMPLIFY_EPS)
             val slim = StrokeSimplify.simplify(
                 stroke.samples, stroke.geometry().halfWidths, eps,
@@ -3334,6 +3339,18 @@ class InteractionController(
 
     companion object {
         const val MIN_SAMPLE_DIST = 1.0
+
+        /** 筆 brush: a pen held still still counts once its press has moved this much… */
+        const val BRUSH_PRESS_STEP = 0.02
+
+        /** …and at most this often (ms), so a resting brush doesn't flood the stroke with samples. */
+        const val BRUSH_PRESS_MS = 12.0
+
+        /** Whether a stationary brush sample at [pressure] and elapsed [t] is worth keeping: the
+         *  distance gate drops it, but a press in place (止め, the landing) is exactly what swells
+         *  the brush, so a real change of pressure is recorded even where the pen did not move. */
+        fun brushPressSample(last: Sample, pressure: Double, t: Double): Boolean =
+            t - last.t >= BRUSH_PRESS_MS && kotlin.math.abs(pressure.coerceIn(0.0, 1.0) - last.pressure) >= BRUSH_PRESS_STEP
 
         /** Pen-up reduction tolerance, viewport px at the draw zoom (see [simplifyForCommit]). */
         const val SIMPLIFY_EPS = 0.2

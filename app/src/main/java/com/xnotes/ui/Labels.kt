@@ -30,6 +30,7 @@ val Tool.labelRes: Int
         Tool.PEN -> R.string.tool_pen
         Tool.DASHED -> R.string.tool_dashed
         Tool.CALLIGRAPHY -> R.string.tool_calligraphy
+        Tool.BRUSH -> R.string.tool_brush
         Tool.SPEED -> R.string.tool_speed
         Tool.TAPER -> R.string.tool_taper
         Tool.HIGHLIGHTER -> R.string.tool_highlighter
@@ -64,6 +65,7 @@ val ToolbarItem.labelRes: Int
         ToolbarItem.PEN -> R.string.tool_pen
         ToolbarItem.DASHED -> R.string.tool_dashed
         ToolbarItem.CALLIGRAPHY -> R.string.tool_calligraphy
+        ToolbarItem.BRUSH -> R.string.tool_brush
         ToolbarItem.SPEED -> R.string.tool_speed
         ToolbarItem.TAPER -> R.string.tool_taper
         ToolbarItem.HIGHLIGHTER -> R.string.tool_highlighter

@@ -16,7 +16,7 @@ class SettingsTest {
 
     @Test fun emptyJsonYieldsDefaults() {
         val s = Settings.fromJson(JSONObject())
-        assertEquals(15, s.toolbarColors.size)
+        assertEquals(16, s.toolbarColors.size)
         assertEquals(5, s.toolbarColorCount)
         assertEquals(0, s.activeColor)
         assertEquals(1.0, s.renderScale, 1e-9)
@@ -192,12 +192,34 @@ class SettingsTest {
         assertEquals("system", Settings.fromJson(o).prefs.uiAppearance)
     }
 
-    @Test fun toolbarColorsPaddedToFifteen() {
+    @Test fun toolbarColorsPaddedToSixteen() {
         val o = JSONObject().put(
             "toolbar_colors",
             org.json.JSONArray().put(org.json.JSONArray().put(0).put(0).put(0).put(255)),
         )
-        assertEquals(15, Settings.fromJson(o).toolbarColors.size)
+        assertEquals(16, Settings.fromJson(o).toolbarColors.size)
+    }
+
+    @Test fun anUntouchedUpstreamPaletteLoadsYellowFirst() {
+        val legacy = org.json.JSONArray()
+        com.xnotes.core.tools.InkPalette.legacyPresets.forEach { c ->
+            legacy.put(org.json.JSONArray().put(c.r).put(c.g).put(c.b).put(c.a))
+        }
+        val s = Settings.fromJson(JSONObject().put("toolbar_colors", legacy))
+        assertEquals(com.xnotes.core.tools.InkPalette.presets, s.toolbarColors)
+        assertEquals(Rgba(255, 255, 0, 255), s.toolbarColors.first())
+    }
+
+    @Test fun aCustomisedPaletteIsKept() {
+        val custom = org.json.JSONArray().put(org.json.JSONArray().put(1).put(2).put(3).put(255))
+        assertEquals(Rgba(1, 2, 3, 255), Settings.fromJson(JSONObject().put("toolbar_colors", custom)).toolbarColors.first())
+    }
+
+    @Test fun brushConfigRoundTrips() {
+        val brush = com.xnotes.core.tools.ToolDefaults.configFor(Tool.BRUSH)
+            .copy(baseWidth = 150.0, brushGamma = 2.4, brushEntry = 0.2, brushHarai = 0.9)
+        val s = Settings().let { it.copy(tools = it.tools + (Tool.BRUSH to brush)) }
+        assertEquals(brush, Settings.fromJson(s.toJson()).tools[Tool.BRUSH])
     }
 
     @Test fun toolbarColorCountDefaultsToFive() {
@@ -205,9 +227,9 @@ class SettingsTest {
     }
 
     @Test fun toolbarColorCountRoundTripsAndClamps() {
-        assertEquals(15, Settings.fromJson(Settings(toolbarColorCount = 15).toJson()).toolbarColorCount)
+        assertEquals(16, Settings.fromJson(Settings(toolbarColorCount = 16).toJson()).toolbarColorCount)
         assertEquals(1, Settings.fromJson(Settings(toolbarColorCount = 0).toJson()).toolbarColorCount)
-        assertEquals(15, Settings.fromJson(Settings(toolbarColorCount = 99).toJson()).toolbarColorCount)
+        assertEquals(16, Settings.fromJson(Settings(toolbarColorCount = 99).toJson()).toolbarColorCount)
     }
 
     @Test fun rememberColorDedupesAndCaps() {

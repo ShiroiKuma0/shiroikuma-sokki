@@ -59,6 +59,48 @@ class MeshData(
  * parts are tessellated to a chord tolerance rather than to a fixed segment count.
  */
 object StrokeTessellator {
+    /**
+     * The 筆 brush's hairs as one mesh: each strip a plain quad strip (no discs, so a hair never
+     * overlaps itself), its opacity carried in per-vertex colour. The batched ink pass blends, so
+     * the hairs build up over each other exactly as the paged canvas draws them.
+     */
+    fun hairMesh(strips: List<com.xnotes.core.stroke.HairStrip>, color: com.xnotes.core.model.Rgba): MeshData {
+        var verts = 0
+        var tris = 0
+        for (st in strips) { verts += 2 * st.pointCount; tris += 2 * (st.pointCount - 1) }
+        if (tris <= 0) return MeshData.EMPTY
+        val positions = DoubleArray(2 * verts)
+        val offsets = DoubleArray(2 * verts)
+        val indices = IntArray(3 * tris)
+        val colors = IntArray(verts)
+        var v = 0
+        var k = 0
+        val rgb = (color.r shl 16) or (color.g shl 8) or color.b
+        for (st in strips) {
+            val m = st.pointCount
+            val base = v
+            for (i in 0 until m) {
+                val a = (color.a * st.alphas[i]).toInt().coerceIn(0, 255)
+                val argb = (a shl 24) or rgb
+                positions[2 * v] = st.left[2 * i].toDouble()
+                positions[2 * v + 1] = st.left[2 * i + 1].toDouble()
+                colors[v++] = argb
+                positions[2 * v] = st.right[2 * i].toDouble()
+                positions[2 * v + 1] = st.right[2 * i + 1].toDouble()
+                colors[v++] = argb
+            }
+            for (i in 0 until m - 1) {
+                val l0 = base + 2 * i
+                val r0 = l0 + 1
+                val l1 = l0 + 2
+                val r1 = l0 + 3
+                indices[k++] = l0; indices[k++] = r0; indices[k++] = r1
+                indices[k++] = l0; indices[k++] = r1; indices[k++] = l1
+            }
+        }
+        return MeshData(positions, offsets, indices, colors)
+    }
+
 
     /**
      * Content-space chord error allowed on a round cap or join. Chosen so a curve stays under half
@@ -89,7 +131,8 @@ object StrokeTessellator {
         g: RibbonPoints,
         tolerance: Double = DEFAULT_TOLERANCE,
         widthScale: Double = 1.0,
-    ): MeshData = tessellate(g, 0, g.pointCount, tolerance, widthScale)
+        everyDisc: Boolean = false,
+    ): MeshData = tessellate(g, 0, g.pointCount, tolerance, widthScale, everyDisc)
 
     /**
      * [tessellate] over the [count] points starting at [from]. A stroke still under the pen is
@@ -106,6 +149,7 @@ object StrokeTessellator {
         count: Int,
         tolerance: Double,
         widthScale: Double = 1.0,
+        everyDisc: Boolean = false,
     ): MeshData {
         if (count <= 0) return MeshData.EMPTY
         val end = from + count
@@ -143,7 +187,9 @@ object StrokeTessellator {
         for (i in from + 1 until end - 1) {
             val h = g.hw(i)
             if (h <= MIN_HALF_WIDTH) continue
-            if (turnAngle(g, i) > JOIN_DISC_ANGLE) b.circle(g.cx(i), g.cy(i), h, tolerance)
+            // [everyDisc] (the 筆 brush): a disc at every sample, exactly the paged renderer's sweep.
+            // Its width swings by tens of px between samples, where the rails alone would fold.
+            if (everyDisc || turnAngle(g, i) > JOIN_DISC_ANGLE) b.circle(g.cx(i), g.cy(i), h, tolerance)
         }
         return b.build()
     }
