@@ -104,6 +104,10 @@ data class PageStyle(
         /** How much heavier the band rule is than its hairlines. */
         const val SOKKI_HEAVY_FACTOR = 2.0
 
+        /** A 速記 note's band as a share of its page's width: 白い熊's shorthand paper puts a band
+         *  every 64.07 px down a 650 px wide A4 sheet ("tesnopisny-papir.png"). */
+        const val STENO_BANDS_PER_WIDTH = 64.07 / 650.0
+
         /** The template's own blue, opaque — see [PagePattern.defaultColor]. */
         val SOKKI_RULE_COLOR = Rgba(0, 0, 255, 255)
     }

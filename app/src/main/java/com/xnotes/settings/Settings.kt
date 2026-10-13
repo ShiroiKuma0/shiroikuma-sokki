@@ -365,6 +365,8 @@ data class Settings(
             .put("brush_dry", c.brushDry)
             .put("brush_tilt_width", c.brushTiltWidth)
             .put("brush_tilt_shift", c.brushTiltShift)
+            .put("steno_shade", c.stenoShade)
+            .put("steno_press", c.stenoPress)
             .put("rgba", rgbaArr(c.rgba))
             .apply { c.colorOverride?.let { put("color_override", rgbaArr(it)) } }
 
@@ -405,6 +407,8 @@ data class Settings(
                 brushDry = o.optDouble("brush_dry", d.brushDry),
                 brushTiltWidth = o.optDouble("brush_tilt_width", d.brushTiltWidth),
                 brushTiltShift = o.optDouble("brush_tilt_shift", d.brushTiltShift),
+                stenoShade = o.optDouble("steno_shade", d.stenoShade),
+                stenoPress = o.optDouble("steno_press", d.stenoPress),
                 colorOverride = o.optJSONArray("color_override")
                     ?.let { a -> Rgba.fromList((0 until a.length()).map { i -> a.optInt(i, 0) }) }
                     ?: d.colorOverride,

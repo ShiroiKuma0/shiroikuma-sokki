@@ -941,7 +941,7 @@ class InteractionController(
         // "hold still → shape" timer — and never while the ruler is up (you're drawing straight lines),
         // nor under the wand, whose strokes are ephemeral and must never commit a shape to the page.
         // The 筆 brush is held still on purpose (止め, the press-in), so it never arms the snap either.
-        dwellEligible = detectShapes && drawTool.isStroke && drawTool != Tool.HIGHLIGHTER && drawTool != Tool.BRUSH && !straight &&
+        dwellEligible = detectShapes && drawTool.isStroke && drawTool != Tool.HIGHLIGHTER && drawTool != Tool.BRUSH && drawTool != Tool.STENO && !straight &&
             !ruler.visible && !wandMode
         if (dwellEligible) {
             dwellAnchor = downViewport
@@ -1158,7 +1158,7 @@ class InteractionController(
      *  variation survives the reduction. */
     private fun simplifyForCommit(stroke: Stroke) {
         // The 筆 brush is built in time, so dropping a sample would move its ink; it keeps them all.
-        if (StrokeSimplify.enabled && !stroke.straight && stroke.tool != Tool.BRUSH) {
+        if (StrokeSimplify.enabled && !stroke.straight && stroke.tool != Tool.BRUSH && stroke.tool != Tool.STENO) {
             val eps = (SIMPLIFY_EPS / state.zoom).coerceAtMost(SIMPLIFY_EPS)
             val slim = StrokeSimplify.simplify(
                 stroke.samples, stroke.geometry().halfWidths, eps,

@@ -16,6 +16,9 @@
     <string name="caption_dryness">かすれ</string>
     <string name="caption_tilt_width">傾きで太く</string>
     <string name="caption_tilt_shift">傾きでずらす</string>
+    <string name="tool_steno">速記ペン</string>
+    <string name="caption_press_at">押圧のしきい値</string>
+    <string name="caption_shaded_width">太線の太さ</string>
     <string name="tool_highlighter">蛍光ペン</string>
     <string name="tool_eraser">消しゴム</string>
     <string name="tool_pan">移動</string>
@@ -258,6 +261,8 @@
     <string name="new_canvas">新しいキャンバス</string>
     <string name="about">このアプリについて</string>
     <string name="new_note_menu">新しいノート</string>
+    <string name="new_steno_note_menu">新しい速記ノート</string>
+    <string name="new_steno_note">新しい速記ノート</string>
     <string name="new_canvas_menu">新しいキャンバス</string>
     <string name="import_pdf">PDF を読み込む</string>
     <string name="create_new">新規</string>

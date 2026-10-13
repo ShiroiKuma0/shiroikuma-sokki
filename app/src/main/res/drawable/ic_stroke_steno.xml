@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 白い熊 速記 — the 速記 shorthand pen: a hairline rising into one shaded downstroke, which
+     swells and eases back out, and a hairline leaving it. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <path
+        android:strokeColor="#FF000000"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M12,72 C28,60 46,32 62,12 M38,88 C56,92 74,80 90,66" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M62,12 C47,36 38,62 38,88 C58,66 74,38 62,12 Z" />
+</vector>

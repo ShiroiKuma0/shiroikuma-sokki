@@ -38,6 +38,8 @@ class Document(
      * draws the same on any device. Built-in rulings are never here. Replaced whole, never mutated.
      */
     var templates: Map<String, String> = emptyMap(),
+    /** A stenography note (fork): opens with the 速記 pen armed. Written only when true. */
+    var steno: Boolean = false,
 ) {
     /** Transient: set by the codec when legacy ink was compacted at load (debug overlay readout). */
     var compactedOnLoad = false

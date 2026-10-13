@@ -243,6 +243,7 @@ class DocumentCodec(
         j.name("writer").value(WRITER)
         doc.created?.let { j.name("created").value(java.time.Instant.ofEpochMilli(it).toString()) }
         j.name("dpi").value(doc.dpi)
+        if (doc.steno) j.name("steno").value(true)
         j.name("has_pdf").value(doc.pdfFile != null)
         j.name("bookmarks").beginArray()
         for (b in doc.bookmarks) {
@@ -348,6 +349,11 @@ class DocumentCodec(
             j.name("brush_dry").value(s.config.brushDry)
             j.name("brush_tilt_width").value(s.config.brushTiltWidth)
             j.name("brush_tilt_shift").value(s.config.brushTiltShift)
+        }
+        // The 速記 pen's shading, written only for its strokes.
+        if (s.tool == Tool.STENO) {
+            j.name("steno_shade").value(s.config.stenoShade)
+            j.name("steno_press").value(s.config.stenoPress)
         }
         j.endObject()
         // Samples are ~97% of a dense manifest's bytes, so they go out through [JsonWrite.samplePoint], which rounds them: 0.01
@@ -562,6 +568,7 @@ class DocumentCodec(
 
         val doc = Document(dpi = m.dpi)
         doc.created = m.created
+        doc.steno = m.steno
         doc.templates = templates
         doc.style = m.style
         doc.margins = m.margins
@@ -624,6 +631,7 @@ class DocumentCodec(
         var created: Long? = null
         var dpi = PageSize.DEFAULT_DPI
         var hasPdf = false
+        var steno = false
         var style = PageStyle()
         var margins = PageMargins()
         val bookmarks = ArrayList<Bookmark>()
@@ -703,6 +711,7 @@ class DocumentCodec(
                 "created" -> m.created = stringOrNull(p)?.let { runCatching { java.time.Instant.parse(it).toEpochMilli() }.getOrNull() }
                 "dpi" -> m.dpi = intOr(p, PageSize.DEFAULT_DPI)
                 "has_pdf" -> m.hasPdf = boolOr(p, false)
+                "steno" -> m.steno = boolOr(p, false)
                 "style" -> m.style = parseStyle(p)
                 "margins" -> m.margins = parseMargins(p)
                 "bookmarks" -> parseBookmarks(p, m.bookmarks)
@@ -851,6 +860,8 @@ class DocumentCodec(
         var brushDry: Double? = null
         var brushTiltWidth: Double? = null
         var brushTiltShift: Double? = null
+        var stenoShade: Double? = null
+        var stenoPress: Double? = null
     }
 
     private fun parseItem(p: JsonPull, items: MutableList<CanvasItem>, pending: MutableList<PendingImage>) {
@@ -961,6 +972,8 @@ class DocumentCodec(
             brushDry = c?.brushDry ?: def.brushDry,
             brushTiltWidth = c?.brushTiltWidth ?: def.brushTiltWidth,
             brushTiltShift = c?.brushTiltShift ?: def.brushTiltShift,
+            stenoShade = c?.stenoShade ?: def.stenoShade,
+            stenoPress = c?.stenoPress ?: def.stenoPress,
         )
         val stroke = Stroke(tool, config, emptyList(), s.speedScale, s.straight, s.smoothScale)
         s.samples?.let { stroke.setSamples(it.xs, it.ys, it.ps, it.ts, it.n, it.gs, it.ls) }
@@ -1024,6 +1037,8 @@ class DocumentCodec(
                 "brush_dry" -> c.brushDry = doubleOrNull(p)
                 "brush_tilt_width" -> c.brushTiltWidth = doubleOrNull(p)
                 "brush_tilt_shift" -> c.brushTiltShift = doubleOrNull(p)
+                "steno_shade" -> c.stenoShade = doubleOrNull(p)
+                "steno_press" -> c.stenoPress = doubleOrNull(p)
                 else -> p.skipValue()
             }
         }

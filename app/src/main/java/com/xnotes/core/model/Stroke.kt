@@ -283,6 +283,16 @@ class Stroke(
             cachedBrushStrips = ink.strips
             return ink.outline.also { cachedGeometry = it }
         }
+        if (tool == Tool.STENO) {
+            return com.xnotes.core.stroke.StenoEngine.build(
+                rx, ry, rp,
+                config.baseWidth,
+                config.stenoShade,
+                config.stenoPress,
+                smoothScale,
+                finished,
+            ).also { cachedGeometry = it }
+        }
         return StrokeEngine.build(
             rx, ry, rp, rt,
             config.baseWidth,
@@ -397,9 +407,9 @@ class Stroke(
      */
     private fun wetOrStart(): WetRibbon? {
         wet?.let { return it }
-        // The brush lives in time and decides its release at lift, so it is rebuilt whole each
-        // sample, as the taper pen is.
-        if (finished || tool == Tool.BRUSH || !WetRibbon.supports(config.taperEnabled, straight)) return null
+        // The brush lives in time and decides its release at lift, and the 速記 pen shapes each
+        // shaded run from both its ends, so both are rebuilt whole each sample, as the taper pen is.
+        if (finished || tool == Tool.BRUSH || tool == Tool.STENO || !WetRibbon.supports(config.taperEnabled, straight)) return null
         val w = WetRibbon(
             baseWidth = config.baseWidth,
             pressureEnabled = config.pressureEnabled,

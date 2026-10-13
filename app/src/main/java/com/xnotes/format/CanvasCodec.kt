@@ -228,6 +228,11 @@ class CanvasCodec(private val imageCodec: ImageCodec) {
             j.name("brush_tilt_width").value(s.config.brushTiltWidth)
             j.name("brush_tilt_shift").value(s.config.brushTiltShift)
         }
+        // The 速記 pen's shading, written only for its strokes.
+        if (s.tool == Tool.STENO) {
+            j.name("steno_shade").value(s.config.stenoShade)
+            j.name("steno_press").value(s.config.stenoPress)
+        }
         j.endObject()
         // Samples are almost all of a dense manifest's bytes, so they go out through [JsonWrite.samplePoint], which rounds them: 0.01
         // content px and 0.001 pressure are far below anything visible. Rounding is idempotent,
@@ -556,6 +561,8 @@ class CanvasCodec(private val imageCodec: ImageCodec) {
         var brushDry: Double? = null
         var brushTiltWidth: Double? = null
         var brushTiltShift: Double? = null
+        var stenoShade: Double? = null
+        var stenoPress: Double? = null
     }
 
     private fun parseItem(p: JsonPull, items: MutableList<CanvasItem>, pending: MutableList<PendingImage>) {
@@ -645,6 +652,8 @@ class CanvasCodec(private val imageCodec: ImageCodec) {
             brushDry = c?.brushDry ?: def.brushDry,
             brushTiltWidth = c?.brushTiltWidth ?: def.brushTiltWidth,
             brushTiltShift = c?.brushTiltShift ?: def.brushTiltShift,
+            stenoShade = c?.stenoShade ?: def.stenoShade,
+            stenoPress = c?.stenoPress ?: def.stenoPress,
         )
         val stroke = Stroke(tool, config, emptyList(), s.speedScale, s.straight, s.smoothScale)
         s.samples?.let { stroke.setSamples(it.xs, it.ys, it.ps, it.ts, it.n, it.gs, it.ls) }
@@ -707,6 +716,8 @@ class CanvasCodec(private val imageCodec: ImageCodec) {
                 "brush_dry" -> c.brushDry = doubleOrNull(p)
                 "brush_tilt_width" -> c.brushTiltWidth = doubleOrNull(p)
                 "brush_tilt_shift" -> c.brushTiltShift = doubleOrNull(p)
+                "steno_shade" -> c.stenoShade = doubleOrNull(p)
+                "steno_press" -> c.stenoPress = doubleOrNull(p)
                 else -> p.skipValue()
             }
         }

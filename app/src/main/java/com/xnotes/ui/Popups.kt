@@ -109,6 +109,10 @@ fun ToolConfigPopup(editor: ToolPopupHost, tool: Tool, onDismiss: () -> Unit) {
     var dryness by remember { mutableStateOf((base.brushDry * 100).toFloat()) }
     var tiltWidth by remember { mutableStateOf((base.brushTiltWidth * 100).toFloat()) }
     var tiltShift by remember { mutableStateOf((base.brushTiltShift * 100).toFloat()) }
+    // 速記 pen: the shaded width in the same units as Width (stored as a multiple of it), and the
+    // raw pressure, in percent, that counts as pressed.
+    var shaded by remember { mutableStateOf((base.baseWidth * base.stenoShade).toFloat()) }
+    var pressAt by remember { mutableStateOf((base.stenoPress * 100).toFloat()) }
 
     fun emit() {
         val m = if (tool == Tool.BRUSH) thinnest.toDouble() / 100.0 else ToolConversions.sensitivityToMinFactor(sensitivity.toDouble())
@@ -143,6 +147,8 @@ fun ToolConfigPopup(editor: ToolPopupHost, tool: Tool, onDismiss: () -> Unit) {
                 brushDry = if (tool == Tool.BRUSH) dryness.toDouble() / 100.0 else base.brushDry,
                 brushTiltWidth = if (tool == Tool.BRUSH) tiltWidth.toDouble() / 100.0 else base.brushTiltWidth,
                 brushTiltShift = if (tool == Tool.BRUSH) tiltShift.toDouble() / 100.0 else base.brushTiltShift,
+                stenoShade = if (tool == Tool.STENO) (shaded / width).toDouble().coerceAtLeast(1.0) else base.stenoShade,
+                stenoPress = if (tool == Tool.STENO) pressAt.toDouble() / 100.0 else base.stenoPress,
             ),
         )
     }
@@ -223,6 +229,12 @@ fun ToolConfigPopup(editor: ToolPopupHost, tool: Tool, onDismiss: () -> Unit) {
                 SliderRow(stringResource(R.string.caption_tilt_width), tiltWidth, 0f..100f) { tiltWidth = it; emit() }
                 SliderRow(stringResource(R.string.caption_tilt_shift), tiltShift, 0f..100f) { tiltShift = it; emit() }
             }
+            if (tool == Tool.STENO) {
+                // Shading is on or off: past Press at, a downstroke swells to Shaded width however
+                // hard the pen presses; below it, and on every upstroke, the line stays at Width.
+                SliderRow(stringResource(R.string.caption_press_at), pressAt, 5f..95f) { pressAt = it; emit() }
+                SliderRow(stringResource(R.string.caption_shaded_width), shaded, 2f..60f) { shaded = maxOf(it, width); emit() }
+            }
             if (tool == Tool.CALLIGRAPHY) {
                 SliderRow(stringResource(R.string.caption_multiplier), multiplier, 1f..5f) { multiplier = it; emit() }
             }
@@ -233,7 +245,7 @@ fun ToolConfigPopup(editor: ToolPopupHost, tool: Tool, onDismiss: () -> Unit) {
                 SliderRow(stringResource(R.string.caption_tip_width), taperTip, 0f..100f) { taperTip = it; emit() }
             }
             val range = ToolConversions.widthRange(tool)
-            SliderRow(stringResource(R.string.caption_width), width, range.start.toFloat()..range.endInclusive.toFloat()) { width = it; emit() }
+            SliderRow(stringResource(R.string.caption_width), width, range.start.toFloat()..range.endInclusive.toFloat()) { width = it; shaded = maxOf(shaded, it); emit() }
             // SCALE off: ink keeps a constant on-screen thickness whatever zoom you draw at.
             ToggleRow(stringResource(R.string.caption_scale), scale) { scale = it; emit() }
             if (tool == Tool.DASHED) {
