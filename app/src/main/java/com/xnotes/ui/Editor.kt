@@ -2716,6 +2716,19 @@ class Editor(context: Context, val pane: Pane = Pane.PRIMARY) : ToolPopupHost, S
         return doc
     }
 
+    /**
+     * Rules every page of [doc] as 速記 shorthand paper: the [PagePattern.SOKKI] bands in their own
+     * blue, at the size 白い熊's paper has them — 14⅓ bands down an A4 sheet, so one band is
+     * [PageStyle.STENO_BANDS_PER_WIDTH] of the page's width. Set on the note ("All pages"), so the
+     * styles popup still changes it like any other note's ruling.
+     */
+    private fun stampStenoPaper(doc: Document) {
+        val width = doc.pages.firstOrNull()?.width ?: return
+        val band = (width * PageStyle.STENO_BANDS_PER_WIDTH).coerceIn(PageStyle.MIN_SPACING, PageStyle.MAX_SPACING)
+        doc.style = doc.style.copy(template = PagePattern.SOKKI.id, spacing = band, patternColor = null, params = null, colors = null)
+        doc.steno = true
+    }
+
     /** Replace the document-wide ("All Pages") style override. */
     fun setDocumentStyle(style: PageStyle) {
         val prev = state.document.style
@@ -3897,10 +3910,11 @@ class Editor(context: Context, val pane: Pane = Pane.PRIMARY) : ToolPopupHost, S
         }
     }
 
-    /** Creates a blank `.xnote` under [parentDocId]; returns its URI, or null. IO — call off-thread. */
-    fun createBlankNoteFile(treeUri: String, parentDocId: String, rawName: String): String? {
+    /** Creates a blank `.xnote` under [parentDocId]; returns its URI, or null. IO — call off-thread.
+     *  A [steno] note is ruled as 速記 shorthand paper ([stampStenoPaper]). */
+    fun createBlankNoteFile(treeUri: String, parentDocId: String, rawName: String, steno: Boolean = false): String? {
         val name = uniqueDocumentName(treeUri, parentDocId, rawName, com.xnotes.core.util.DocumentKind.NOTE)
-        val blank = blankDocument().also { stampNewNoteDefaults(it) }
+        val blank = blankDocument().also { stampNewNoteDefaults(it); if (steno) stampStenoPaper(it) }
         return createNoteFile(treeUri, parentDocId, name) { codec.write(blank, it) }
     }
 
@@ -5630,6 +5644,7 @@ class Editor(context: Context, val pane: Pane = Pane.PRIMARY) : ToolPopupHost, S
         state.invalidateAllCaches()
         state.relayout()
         installInitialView(doc.path) // this note's remembered view, or fit width — never the last note's
+        if (doc.steno) selectTool(Tool.STENO) // a stenography note opens ready to write shorthand
         refreshContent()
         view.requestRender()
     }

@@ -102,6 +102,7 @@ fun Toolbar(
         Tool.DASHED to ImageVector.vectorResource(R.drawable.ic_stroke_dashed),
         Tool.CALLIGRAPHY to ImageVector.vectorResource(R.drawable.ic_stroke_calligraphy),
         Tool.BRUSH to ImageVector.vectorResource(R.drawable.ic_stroke_brush),
+        Tool.STENO to ImageVector.vectorResource(R.drawable.ic_stroke_steno),
         Tool.SPEED to ImageVector.vectorResource(R.drawable.ic_stroke_speed),
         Tool.TAPER to ImageVector.vectorResource(R.drawable.ic_stroke_taper),
         Tool.HIGHLIGHTER to ImageVector.vectorResource(R.drawable.ic_stroke_highlighter),
@@ -192,7 +193,7 @@ private fun ToolbarItemView(
         ToolbarItem.SIDEBAR ->
             ToolbarIcon(XnotesIcons.sidebar, stringResource(R.string.side_panel), active = editor.sidebarVisible, shortcut = Keys.SIDEBAR) { editor.toggleSidebar() }
 
-        ToolbarItem.PEN, ToolbarItem.DASHED, ToolbarItem.CALLIGRAPHY, ToolbarItem.BRUSH, ToolbarItem.SPEED,
+        ToolbarItem.PEN, ToolbarItem.DASHED, ToolbarItem.CALLIGRAPHY, ToolbarItem.BRUSH, ToolbarItem.STENO, ToolbarItem.SPEED,
         ToolbarItem.TAPER, ToolbarItem.HIGHLIGHTER, ToolbarItem.ERASER, ToolbarItem.PAN,
         ToolbarItem.SELECT, ToolbarItem.LASSO, ToolbarItem.SCREENSHOT, ToolbarItem.SHAPE,
         ToolbarItem.TEXT, ToolbarItem.TEXT_BOX -> {

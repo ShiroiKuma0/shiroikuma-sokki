@@ -16,6 +16,9 @@
     <string name="caption_dryness">Dryness</string>
     <string name="caption_tilt_width">Tilt width</string>
     <string name="caption_tilt_shift">Tilt shift</string>
+    <string name="tool_steno">Stenography</string>
+    <string name="caption_press_at">Press at</string>
+    <string name="caption_shaded_width">Shaded width</string>
     <string name="tool_highlighter">Highlighter</string>
     <string name="tool_eraser">Eraser</string>
     <string name="tool_pan">Pan</string>
@@ -449,6 +452,8 @@
     <string name="new_canvas">New canvas</string>
     <string name="about">About</string>
     <string name="new_note_menu">New Note</string>
+    <string name="new_steno_note_menu">New Stenography Note</string>
+    <string name="new_steno_note">New stenography note</string>
     <string name="new_canvas_menu">New Canvas</string>
     <string name="import_pdf">Import PDF</string>
     <string name="create_new">New</string>

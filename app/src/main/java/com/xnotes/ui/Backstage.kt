@@ -112,6 +112,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
@@ -167,7 +168,8 @@ import kotlin.math.roundToInt
 enum class BackstageView { HOME, PREFERENCES, SOKKI_UI, ABOUT, TRASH }
 
 /** Whether the Home explorer is awaiting a new file/folder name. */
-private enum class CreateMode { NONE, FILE, CANVAS, FOLDER }
+/** [STENO] is a paged note like [FILE], but on 速記 shorthand paper. */
+private enum class CreateMode { NONE, FILE, STENO, CANVAS, FOLDER }
 
 /** Entries copied or cut in the explorer; each remembers the folder it was listed in. */
 private data class ClipItem(val entries: List<BrowseEntry>, val isCut: Boolean)
@@ -811,6 +813,7 @@ private fun NewItemMenuItems(
         contentPadding = pad,
     )
     item(XnotesIcons.edit, stringResource(R.string.new_note_menu)) { onCreateMode(CreateMode.FILE) }
+    item(ImageVector.vectorResource(R.drawable.ic_stroke_steno), stringResource(R.string.new_steno_note_menu)) { onCreateMode(CreateMode.STENO) }
     item(XnotesIcons.canvas, stringResource(R.string.new_canvas_menu)) { onCreateMode(CreateMode.CANVAS) }
     item(XnotesIcons.importDoc, stringResource(R.string.import_pdf)) { onImportPdf() }
     item(XnotesIcons.newFolder, stringResource(R.string.new_folder_menu)) { onCreateMode(CreateMode.FOLDER) }
@@ -1570,6 +1573,7 @@ private fun ExplorerSection(
                     chipRow(48.dp)
                     EmptyPane(empty.text, empty.art, if (!empty.offersCreate) null else { {
                         PrimaryButton(XnotesIcons.edit, stringResource(R.string.new_note_menu)) { onCreateMode(CreateMode.FILE) }
+                        PrimaryButton(ImageVector.vectorResource(R.drawable.ic_stroke_steno), stringResource(R.string.new_steno_note_menu)) { onCreateMode(CreateMode.STENO) }
                         PrimaryButton(XnotesIcons.canvas, stringResource(R.string.new_canvas_menu)) { onCreateMode(CreateMode.CANVAS) }
                         PrimaryButton(XnotesIcons.importDoc, stringResource(R.string.import_pdf), onClick = calls.importPdf)
                     } })
@@ -1815,7 +1819,7 @@ private fun ExplorerSection(
         val isFolder = pendingImport == null && createMode == CreateMode.FOLDER
         val default = when {
             pendingImport != null -> pendingImport.defaultName // import names default to the source file
-            createMode == CreateMode.FILE || createMode == CreateMode.CANVAS ->
+            createMode == CreateMode.FILE || createMode == CreateMode.STENO || createMode == CreateMode.CANVAS ->
                 nextUntitled(editor, editor.cachedChildren(root, currentDocId))
             else -> "" // new folder
         }
@@ -1824,6 +1828,7 @@ private fun ExplorerSection(
                 pendingImport != null -> stringResource(R.string.import_title)
                 isFolder -> stringResource(R.string.new_folder)
                 createMode == CreateMode.CANVAS -> stringResource(R.string.new_canvas)
+                createMode == CreateMode.STENO -> stringResource(R.string.new_steno_note)
                 else -> stringResource(R.string.new_note)
             },
             initial = default,
@@ -1855,7 +1860,8 @@ private fun ExplorerSection(
                     }
                     else -> scope.launch {
                         // Just create the note in the explorer — it opens only when the user taps it.
-                        val uri = withContext(Dispatchers.IO) { editor.createBlankNoteFile(root, currentDocId, n) }
+                        val steno = createMode == CreateMode.STENO
+                        val uri = withContext(Dispatchers.IO) { editor.createBlankNoteFile(root, currentDocId, n, steno) }
                         if (uri != null) { onCreateMode(CreateMode.NONE); refreshKey++ } else fieldError = context.getString(R.string.err_create_note)
                     }
                 }

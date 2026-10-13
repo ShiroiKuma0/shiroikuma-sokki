@@ -732,7 +732,7 @@ class InfiniteInteraction(
         liveStroke = stroke
         mode = CanvasPointerMode.DRAW
         // Only solid pens arm the snap: a highlighter or a straight-line drag never becomes a shape.
-        dwellEligible = detectShapes() && drawTool.isStroke && drawTool != Tool.HIGHLIGHTER && drawTool != Tool.BRUSH &&
+        dwellEligible = detectShapes() && drawTool.isStroke && drawTool != Tool.HIGHLIGHTER && drawTool != Tool.BRUSH && drawTool != Tool.STENO &&
             !straight && !wandEnabled
         if (dwellEligible) armDwell(Pt(vx, vy))
         onWetStroke(stroke)
@@ -1704,7 +1704,7 @@ class InfiniteInteraction(
 
     /** Shed the samples the ribbon does not need, at the tolerance the draw zoom justifies. */
     private fun simplifyForCommit(stroke: Stroke) {
-        if (StrokeSimplify.enabled && !stroke.straight && stroke.tool != Tool.BRUSH) {
+        if (StrokeSimplify.enabled && !stroke.straight && stroke.tool != Tool.BRUSH && stroke.tool != Tool.STENO) {
             val eps = (InteractionController.SIMPLIFY_EPS / viewport.zoom)
                 .coerceAtMost(InteractionController.SIMPLIFY_EPS)
             val slim = StrokeSimplify.simplify(

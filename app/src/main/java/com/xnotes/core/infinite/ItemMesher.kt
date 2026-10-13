@@ -113,7 +113,7 @@ object ItemMesher {
             // batched pass blends, so the hairs build up over each other as they do on paper.
             StrokeTessellator.hairMesh(strips, stroke.renderColor)
         } else {
-            StrokeTessellator.tessellate(stroke.geometry(), tolerance, everyDisc = stroke.tool == Tool.BRUSH)
+            StrokeTessellator.tessellate(stroke.geometry(), tolerance, everyDisc = stroke.tool == Tool.BRUSH || stroke.tool == Tool.STENO)
         }
         if (mesh.isEmpty) return null
         if (stroke.config.neon && stroke.tool != Tool.HIGHLIGHTER) {

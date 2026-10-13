@@ -45,6 +45,8 @@ class Document(
     var templatePackages: Map<String, java.io.File> = emptyMap(),
     /** The size of each page added from now on, or null to give it the size of the page before it. */
     var newPageSize: PageSizeChoice? = null,
+    /** A stenography note (fork): opens with the 速記 pen armed. Written only when true. */
+    var steno: Boolean = false,
 ) {
     /** Transient: set by the codec when legacy ink was compacted at load (debug overlay readout). */
     var compactedOnLoad = false

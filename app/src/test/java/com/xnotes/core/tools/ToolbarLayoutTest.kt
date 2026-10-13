@@ -18,7 +18,7 @@ class ToolbarLayoutTest {
         assertEquals(listOf(ToolbarItem.HOME, ToolbarItem.TITLE), d.sections[0].entries.map { it.item })
         assertEquals(
             listOf(
-                ToolbarItem.PEN, ToolbarItem.DASHED, ToolbarItem.CALLIGRAPHY, ToolbarItem.BRUSH, ToolbarItem.SPEED,
+                ToolbarItem.PEN, ToolbarItem.DASHED, ToolbarItem.CALLIGRAPHY, ToolbarItem.BRUSH, ToolbarItem.STENO, ToolbarItem.SPEED,
                 ToolbarItem.TAPER, ToolbarItem.HIGHLIGHTER, ToolbarItem.ERASER,
             ),
             d.sections[2].entries.map { it.item },

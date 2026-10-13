@@ -271,6 +271,35 @@ class DocumentCodecTest {
         assertFalse((roundTrip(doc).pages[0].items[0] as Stroke).hasTilt)
     }
 
+    @Test fun aStenoStrokeRoundTripsItsShading() {
+        val doc = Document()
+        val page = Page(1240.0, 1754.0)
+        val cfg = ToolDefaults.configFor(Tool.STENO).copy(stenoShade = 5.5, stenoPress = 0.6)
+        page.items.add(Stroke(Tool.STENO, cfg, mutableListOf(Sample(1.0, 2.0, 0.5), Sample(3.0, 40.0, 0.7))))
+        doc.pages.add(page)
+        val stroke = roundTrip(doc).pages[0].items[0] as Stroke
+        assertEquals(Tool.STENO, stroke.tool)
+        assertEquals(5.5, stroke.config.stenoShade, 1e-9)
+        assertEquals(0.6, stroke.config.stenoPress, 1e-9)
+    }
+
+    @Test fun aStenographyNoteStaysOneThroughASave() {
+        val doc = Document.blank(count = 1)
+        doc.steno = true
+        assertTrue(roundTrip(doc).steno)
+        assertFalse(roundTrip(Document.blank(count = 1)).steno)
+    }
+
+    @Test fun aPenStrokeWritesNoStenoKeys() {
+        val doc = Document()
+        val page = Page(1240.0, 1754.0)
+        page.items.add(Stroke(Tool.PEN, ToolDefaults.configFor(Tool.PEN), mutableListOf(Sample(1.0, 2.0, 0.5), Sample(3.0, 4.0, 0.5))))
+        doc.pages.add(page)
+        val out = ByteArrayOutputStream()
+        codec.write(doc, out)
+        assertFalse(manifestOf(out.toByteArray()).contains("steno_"))
+    }
+
     @Test fun aPenStrokeWritesNoBrushKeys() {
         val doc = Document()
         val page = Page(1240.0, 1754.0)

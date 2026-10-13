@@ -129,6 +129,13 @@ data class ToolConfig(
     /** 筆 brush: how far (0..1) a leaning pen carries the ink off its tip toward the lean, where
      *  the brush's belly lies. Only used by [Tool.BRUSH], as [brushTiltWidth] is. */
     val brushTiltShift: Double = DEFAULT_BRUSH_TILT_SHIFT,
+    /** 速記 pen: the shaded width, as a multiple of the hairline [baseWidth]. Only used by
+     *  [Tool.STENO]. */
+    val stenoShade: Double = DEFAULT_STENO_SHADE,
+    /** 速記 pen: the raw stylus pressure (0..1) at which a downstroke shades. Below it every line is
+     *  a hairline; above it the shading is the same however hard the pen presses. Only used by
+     *  [Tool.STENO]. */
+    val stenoPress: Double = DEFAULT_STENO_PRESS,
 ) {
     companion object {
         const val DEFAULT_MARKUP_INTENSITY = 0.5
@@ -139,6 +146,8 @@ data class ToolConfig(
         const val DEFAULT_BRUSH_DRY = 0.5
         const val DEFAULT_BRUSH_TILT_WIDTH = 0.5
         const val DEFAULT_BRUSH_TILT_SHIFT = 0.3
+        const val DEFAULT_STENO_SHADE = 4.0
+        const val DEFAULT_STENO_PRESS = 0.45
     }
 }
 
@@ -158,6 +167,8 @@ object ToolDefaults {
         Tool.CALLIGRAPHY -> ToolConfig(baseWidth = 6.0, pressureEnabled = true, pressureMinFactor = 0.40, directionStrength = 0.60)
         // 筆: wide, and able to thin to a hair (30:1) for the sweeps.
         Tool.BRUSH -> ToolConfig(baseWidth = 320.0, pressureEnabled = true, pressureMinFactor = 0.03, directionStrength = 0.0)
+        // 速記: a fine hairline, shading only on a pressed downstroke.
+        Tool.STENO -> ToolConfig(baseWidth = 3.0, pressureEnabled = true, pressureMinFactor = 1.0, directionStrength = 0.0)
         Tool.SPEED -> ToolConfig(baseWidth = 4.0, pressureEnabled = true, pressureMinFactor = 0.35, directionStrength = 0.0, speedStrength = 0.8)
         Tool.TAPER -> ToolConfig(baseWidth = 4.0, pressureEnabled = true, pressureMinFactor = 0.45, directionStrength = 0.0, taperEnabled = true, taperMinFactor = DEFAULT_TAPER_TIP)
         Tool.HIGHLIGHTER -> ToolConfig(baseWidth = 16.0, pressureEnabled = false, pressureMinFactor = 1.0, directionStrength = 0.0, highlighterAlpha = 0.50)
@@ -167,7 +178,7 @@ object ToolDefaults {
     }
 
     /** Tools whose config is persisted in settings (spec 09 §2). */
-    val persistedTools = listOf(Tool.PEN, Tool.DASHED, Tool.CALLIGRAPHY, Tool.BRUSH, Tool.SPEED, Tool.TAPER, Tool.HIGHLIGHTER, Tool.ERASER, Tool.SELECT, Tool.LASSO, Tool.MARKUP)
+    val persistedTools = listOf(Tool.PEN, Tool.DASHED, Tool.CALLIGRAPHY, Tool.BRUSH, Tool.STENO, Tool.SPEED, Tool.TAPER, Tool.HIGHLIGHTER, Tool.ERASER, Tool.SELECT, Tool.LASSO, Tool.MARKUP)
 }
 
 /**

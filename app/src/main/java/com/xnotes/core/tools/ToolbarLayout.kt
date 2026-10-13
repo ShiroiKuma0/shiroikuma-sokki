@@ -19,6 +19,9 @@ enum class ToolbarItem(val id: String) {
 
     /** The 筆 brush (fork addition). */
     BRUSH("brush"),
+
+    /** The 速記 shorthand pen (fork addition). */
+    STENO("steno"),
     SPEED("speed"),
     TAPER("taper"),
     HIGHLIGHTER("highlighter"),
@@ -157,6 +160,7 @@ data class ToolbarLayout(val sections: List<ToolbarSection>) {
             ToolbarItem.WAND to ToolbarItem.LASSO,
             ToolbarItem.MARKUP to ToolbarItem.TEXT_BOX,
             ToolbarItem.BRUSH to ToolbarItem.CALLIGRAPHY,
+            ToolbarItem.STENO to ToolbarItem.BRUSH,
         )
 
         /**
@@ -167,7 +171,7 @@ data class ToolbarLayout(val sections: List<ToolbarSection>) {
          */
         val CANVAS_ITEMS: Set<ToolbarItem> = setOf(
             ToolbarItem.HOME, ToolbarItem.TITLE,
-            ToolbarItem.PEN, ToolbarItem.DASHED, ToolbarItem.CALLIGRAPHY, ToolbarItem.BRUSH, ToolbarItem.SPEED,
+            ToolbarItem.PEN, ToolbarItem.DASHED, ToolbarItem.CALLIGRAPHY, ToolbarItem.BRUSH, ToolbarItem.STENO, ToolbarItem.SPEED,
             ToolbarItem.TAPER, ToolbarItem.HIGHLIGHTER, ToolbarItem.ERASER,
             ToolbarItem.PAN, ToolbarItem.SELECT, ToolbarItem.LASSO, ToolbarItem.WAND,
             ToolbarItem.SHAPE,
@@ -185,7 +189,7 @@ data class ToolbarLayout(val sections: List<ToolbarSection>) {
             listOf(ToolbarItem.HOME, ToolbarItem.TITLE),
             listOf(ToolbarItem.SIDEBAR),
             listOf(
-                ToolbarItem.PEN, ToolbarItem.DASHED, ToolbarItem.CALLIGRAPHY, ToolbarItem.BRUSH, ToolbarItem.SPEED,
+                ToolbarItem.PEN, ToolbarItem.DASHED, ToolbarItem.CALLIGRAPHY, ToolbarItem.BRUSH, ToolbarItem.STENO, ToolbarItem.SPEED,
                 ToolbarItem.TAPER, ToolbarItem.HIGHLIGHTER, ToolbarItem.ERASER,
             ),
             listOf(ToolbarItem.PAN, ToolbarItem.SELECT, ToolbarItem.LASSO, ToolbarItem.SCREENSHOT),
@@ -202,7 +206,7 @@ data class ToolbarLayout(val sections: List<ToolbarSection>) {
         val CANVAS_DEFAULT: ToolbarLayout = of(
             listOf(ToolbarItem.HOME, ToolbarItem.TITLE),
             listOf(
-                ToolbarItem.PEN, ToolbarItem.DASHED, ToolbarItem.CALLIGRAPHY, ToolbarItem.BRUSH, ToolbarItem.SPEED,
+                ToolbarItem.PEN, ToolbarItem.DASHED, ToolbarItem.CALLIGRAPHY, ToolbarItem.BRUSH, ToolbarItem.STENO, ToolbarItem.SPEED,
                 ToolbarItem.TAPER, ToolbarItem.HIGHLIGHTER, ToolbarItem.ERASER,
             ),
             listOf(ToolbarItem.PAN, ToolbarItem.SELECT, ToolbarItem.LASSO),
