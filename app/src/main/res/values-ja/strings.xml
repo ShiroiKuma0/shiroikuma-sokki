@@ -1,0 +1,820 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 白い熊 速記 — Japanese captions. The app's one alternative to English. -->
+<resources>
+
+    <!-- Tools and toolbar items -->
+    <string name="tool_pen">ペン</string>
+    <string name="tool_dashed">破線ペン</string>
+    <string name="tool_calligraphy">カリグラフィー</string>
+    <string name="tool_speed">速度ペン</string>
+    <string name="tool_taper">テーパーペン</string>
+    <string name="tool_brush">筆</string>
+    <string name="caption_thinnest">最細</string>
+    <string name="caption_response">反応</string>
+    <string name="caption_entry_press">起筆の押さえ</string>
+    <string name="caption_release_sweep">払い</string>
+    <string name="caption_dryness">かすれ</string>
+    <string name="caption_tilt_width">傾きで太く</string>
+    <string name="caption_tilt_shift">傾きでずらす</string>
+    <string name="tool_highlighter">蛍光ペン</string>
+    <string name="tool_eraser">消しゴム</string>
+    <string name="tool_pan">移動</string>
+    <string name="tool_select">選択</string>
+    <string name="tool_lasso">投げ縄</string>
+    <string name="tool_screenshot">スクリーンショット</string>
+    <string name="tool_wand">消えるインク</string>
+    <string name="tool_shape">図形</string>
+    <string name="tool_ruler">定規</string>
+    <string name="tool_text">テキスト</string>
+    <string name="tool_text_box">テキストボックス</string>
+    <string name="tool_markup">PDF テキスト注釈</string>
+    <string name="markup_highlight">ハイライト</string>
+    <string name="markup_squiggly">波線</string>
+    <string name="markup_colour">色</string>
+    <string name="markup_kind">種類</string>
+    <string name="markup_note">メモ</string>
+    <string name="markup_note_hint">メモを書く</string>
+    <string name="open_link">リンクを開く</string>
+    <string name="tool_image">画像</string>
+    <string name="toolbar_home">ホーム</string>
+    <string name="toolbar_title">タイトル</string>
+    <string name="toolbar_sidebar">サイドバー</string>
+    <string name="undo">元に戻す</string>
+    <string name="redo">やり直す</string>
+    <string name="toolbar_page_nav">ページ移動</string>
+    <string name="toolbar_styles">スタイル</string>
+    <string name="toolbar_margins">余白</string>
+    <string name="toolbar_view">表示</string>
+    <string name="toolbar_zoom">ズーム</string>
+    <string name="toolbar_fit">合わせる</string>
+    <string name="toolbar_zoom_lock">ズーム固定</string>
+    <string name="toolbar_fullscreen">全画面</string>
+    <string name="toolbar_colours">色</string>
+    <string name="toolbar_waypoints">ウェイポイント</string>
+    <string name="toolbar_minimap">ミニマップ</string>
+    <string name="edge_left">左</string>
+    <string name="edge_right">右</string>
+    <string name="edge_top">上</string>
+    <string name="edge_bottom">下</string>
+    <string name="page_size_custom">カスタム</string>
+    <string name="page_size_letter">レター</string>
+    <string name="page_size_legal">リーガル</string>
+    <string name="page_size_slide_16_9">スライド 16:9</string>
+    <string name="page_size_slide_4_3">スライド 4:3</string>
+    <string name="font_sans">ゴシック</string>
+    <string name="font_serif">明朝</string>
+    <string name="font_mono">等幅</string>
+    <string name="font_hand">手書き</string>
+
+    <!-- Tool, style, margin, view and zoom popups -->
+    <string name="caption_colour">色</string>
+    <string name="default_choice">既定</string>
+    <string name="caption_pressure">筆圧</string>
+    <string name="caption_sensitivity">感度</string>
+    <string name="caption_light">弱</string>
+    <string name="caption_hard">強</string>
+    <string name="caption_curve">カーブ</string>
+    <string name="caption_multiplier">倍率</string>
+    <string name="caption_speed">速度</string>
+    <string name="caption_tip_width">先端の太さ（％）</string>
+    <string name="caption_width">太さ</string>
+    <string name="caption_scale">スケール</string>
+    <string name="caption_dash">線</string>
+    <string name="caption_gap">間隔</string>
+    <string name="caption_intensity">強さ</string>
+    <string name="caption_straight_line">直線</string>
+    <string name="caption_inverse">反転</string>
+    <string name="caption_neon">ネオン</string>
+    <string name="title_styles">スタイル</string>
+    <string name="all_pages">全ページ</string>
+    <string name="current_page">現在のページ</string>
+    <string name="caption_page_colour">ページの色</string>
+    <string name="caption_pattern">模様</string>
+    <string name="none">なし</string>
+    <string name="pattern_lines">罫線</string>
+    <string name="pattern_dots">ドット</string>
+    <string name="pattern_grid">方眼</string>
+    <string name="caption_pattern_colour">模様の色</string>
+    <string name="caption_template">テンプレート</string>
+    <string name="caption_accent_colour">アクセント色</string>
+    <string name="customize">カスタマイズ</string>
+    <string name="back_customize">"‹  カスタマイズ"</string>
+    <string name="import_template">読み込む</string>
+    <string name="remove_template">ライブラリから削除</string>
+    <string name="keep_template">ライブラリに追加</string>
+    <string name="template_imported">テンプレート「%1$s」を読み込みました。</string>
+    <string name="err_import_template">テンプレートを読み込めませんでした：%1$s</string>
+    <string name="template_too_large">1 MiB を超えています</string>
+    <string name="default_for_new_notes">新しいノートの既定にする</string>
+    <string name="reset">リセット</string>
+    <string name="title_margins">余白</string>
+    <string name="title_view">表示</string>
+    <string name="caption_viewing_mode">表示モード</string>
+    <string name="view_single">単ページ</string>
+    <string name="view_double">見開き</string>
+    <string name="view_cover">表紙付き見開き</string>
+    <string name="caption_vertical_scrolling">縦スクロール</string>
+    <string name="caption_pdf_filters">PDF カラーフィルター</string>
+    <string name="filter_contrast">コントラスト</string>
+    <string name="filter_invert">反転</string>
+    <string name="filter_brightness">明るさ</string>
+    <string name="filter_sepia">セピア</string>
+    <string name="filter_multiply">乗算</string>
+    <string name="filter_screen">スクリーン</string>
+    <string name="caption_keep_images">画像にはかけない</string>
+    <string name="caption_scrollbar">スクロールバー</string>
+    <string name="default_for_all_notes">全ノートの既定にする</string>
+    <string name="off">オフ</string>
+    <string name="title_go_to_page">ページへ移動</string>
+    <string name="go">移動</string>
+    <string name="title_zoom">ズーム</string>
+    <string name="caption_min_zoom">最小ズーム</string>
+    <string name="caption_max_zoom">最大ズーム</string>
+    <string name="title_eraser">消しゴム</string>
+    <string name="eraser_stroke">ストローク</string>
+    <string name="eraser_area">範囲</string>
+    <string name="caption_size">サイズ</string>
+    <string name="caption_switch_back">元のツールに戻る</string>
+    <string name="caption_erase_markups">PDF テキスト注釈も消す</string>
+    <string name="title_select">選択</string>
+    <string name="title_shape">図形</string>
+    <string name="caption_fill">塗りつぶし</string>
+    <string name="caption_opacity">不透明度</string>
+    <string name="caption_dashed">破線</string>
+    <string name="caption_spacing_px">"間隔  %1$d px"</string>
+    <string name="default_suffix">"  （既定）"</string>
+    <string name="caption_opacity_percent">"不透明度  %1$d%%"</string>
+    <string name="caption_value_percent">"%1$s  %2$d%%"</string>
+    <string name="caption_rotate_degrees">"回転  %1$d°"</string>
+    <string name="caption_glow_intensity">強さ</string>
+
+    <!-- Toolbar -->
+    <string name="side_panel">サイドパネル</string>
+    <string name="previous_page">前のページ</string>
+    <string name="next_page">次のページ</string>
+    <string name="zoom_out">縮小</string>
+    <string name="zoom_in">拡大</string>
+    <string name="rename_note">ノート名を変更</string>
+    <string name="rename">名前を変更</string>
+    <string name="cancel">キャンセル</string>
+    <string name="close_pane">このパネルを閉じる</string>
+    <string name="paste_image">画像を貼り付け</string>
+    <string name="insert_image_ellipsis">画像を挿入…</string>
+    <string name="stickers">ステッカー</string>
+    <string name="add_stickers">ステッカーを追加…</string>
+    <string name="no_stickers">ステッカーはまだありません。</string>
+    <string name="stickers_hint">タップで挿入、長押しで削除</string>
+    <string name="sticker">ステッカー</string>
+    <string name="fit_page">ページ全体に合わせる</string>
+    <string name="fit_width">ページの幅に合わせる</string>
+    <string name="fit_height">ページの高さに合わせる</string>
+    <string name="err_rename_note">ノート名を変更できませんでした。</string>
+    <string name="untitled">無題</string>
+    <string name="insert_image">画像を挿入</string>
+    <string name="fit_all">全体を表示</string>
+    <string name="gl_unavailable">GL を使用できません</string>
+    <string name="canvas_out_of_memory">メモリ不足のため一部のインクを非表示にしています</string>
+
+    <!-- Toolbar customizer -->
+    <string name="drop_here">ここにドロップ</string>
+    <string name="delete_section">セクションを削除</string>
+    <string name="add_section">セクションを追加</string>
+
+    <!-- Preferences -->
+    <string name="back_to_home">ホームに戻る</string>
+    <string name="show_sidebar">サイドバーを表示</string>
+    <string name="preferences">設定</string>
+    <string name="reset_to_defaults">既定に戻す</string>
+    <string name="pref_general">全般</string>
+    <string name="pref_ui_theme">UI テーマ</string>
+    <string name="theme_system">システム</string>
+    <string name="theme_dark">ダーク</string>
+    <string name="theme_light">ライト</string>
+    <string name="theme_oled">OLED</string>
+    <string name="pref_accent_colour">アクセント色</string>
+    <string name="pref_start_fullscreen">全画面で起動</string>
+    <string name="pref_input">入力</string>
+    <string name="pref_finger_draws">指で描く（オフ＝指で移動）</string>
+    <string name="pref_zoom_lock_pan">ズーム固定中の移動</string>
+    <string name="pan_single">1本指で移動</string>
+    <string name="pan_two">2本指で移動</string>
+    <string name="pan_none">移動しない</string>
+    <string name="pref_detect_shapes">止めたストロークを図形に補正（ペンを静止させる）</string>
+    <string name="pref_pen_button_hold">スタイラス／ペンのサイドボタン（長押し）</string>
+    <string name="pref_pen_button_hover">ホバー中も有効（画面に触れなくてよい）</string>
+    <string name="pref_two_finger_tap">2本指タップ</string>
+    <string name="pref_three_finger_tap">3本指タップ</string>
+    <string name="pref_stylus_double_tap">スタイラスのダブルタップ</string>
+    <string name="pref_stylus_button_tap">スタイラスのサイドボタン（タップ）</string>
+    <string name="pref_redmi_buttons">Redmi Smart Pen のサイドボタン（タップ）</string>
+    <string name="pen_button_1">ボタン 1</string>
+    <string name="pen_button_2">ボタン 2</string>
+    <string name="pref_new_notes">新しいノート</string>
+    <string name="pref_filename_template">ファイル名テンプレート</string>
+    <string name="pref_page">ページ</string>
+    <string name="pref_default_page_size">既定のページサイズ</string>
+    <string name="width_mm">幅（mm）</string>
+    <string name="height_mm">高さ（mm）</string>
+    <string name="pref_orientation">向き</string>
+    <string name="orientation_portrait">縦</string>
+    <string name="orientation_landscape">横</string>
+    <string name="pref_hide_page_borders">ページの境界を隠す</string>
+    <string name="pref_page_colour">ページの色</string>
+    <string name="pref_page_colour_follows_theme">ページの色をテーマに合わせる</string>
+    <string name="pref_pdf_export">PDF 書き出し</string>
+    <string name="pref_pdf_heading_bookmarks">見出しからしおりを作る</string>
+    <string name="pref_performance">パフォーマンス</string>
+    <string name="pref_cache_help">高くすると移動やズームが滑らかになりますが、メモリを多く使います。インクや PDF の鮮明さはどちらでも変わりません。</string>
+    <string name="pref_disable_front_buffering">フロントバッファリングを無効にする</string>
+    <string name="pref_front_buffering_help">フロントバッファリングは、ペンのインクを画面に表示中のフレームへ直接描くことで、書いた瞬間に線が出るようにします。一部のパネルではこれがうまく受け渡されず、インクがちらついたりペン先に遅れたりします。そのような端末ではオフにすると、すべてのストロークが通常のキャンバスを通ります。</string>
+    <string name="pref_code_highlighting">コードのハイライト</string>
+    <string name="pref_default_code_language">既定のコード言語</string>
+    <string name="pref_code_language_help">「コードとして貼り付け」は、貼り付けたブロックをこの言語でハイライトします。</string>
+    <string name="code_plain">プレーン（ハイライトなし）</string>
+    <string name="pref_code_theme">コードテーマ</string>
+    <string name="pref_code_theme_help">Helix エディターのテーマ（.toml）を読み込んでコードの配色を変えます。</string>
+    <string name="custom_theme">カスタムテーマ</string>
+    <string name="import_theme">テーマを読み込む…</string>
+    <string name="pref_fonts">フォント</string>
+    <string name="pref_fonts_help">.ttf または .otf を読み込むと、テキストのフォント選択に表示されます。</string>
+    <string name="import_font">フォントを読み込む…</string>
+    <string name="mono_suffix">"  等幅"</string>
+    <string name="remove">削除</string>
+    <string name="pref_toolbar">ツールバー</string>
+    <string name="pref_toolbar_help">ツールをタップすると表示／非表示が切り替わります。長押しでセクション内や別のセクションへドラッグできます。セクションの上端を長押しするとセクションごと移動します。</string>
+    <string name="toggle_pan">移動に切り替え</string>
+    <string name="toggle_eraser">消しゴムに切り替え</string>
+    <string name="toggle_previous">前のツールに切り替え</string>
+    <string name="pref_filename_template_help">YYYY YY MM DD HH mm ss は作成日時に置き換わります。# はディレクトリ内で名前が重ならない番号になります。</string>
+    <string name="pref_next_note_named">次のノートの名前：%1$s</string>
+    <string name="pref_side_margin_px">"左右の余白  %1$d px"</string>
+    <string name="pref_max_cache_px">"キャッシュの最大解像度  %1$d px"</string>
+    <string name="pref_toolbar_colours_n">"ツールバーの色の数  %1$d"</string>
+
+    <!-- Home screen and explorer -->
+    <string name="collapse_sidebar">サイドバーを折りたたむ</string>
+    <string name="home">ホーム</string>
+    <string name="new_note">新しいノート</string>
+    <string name="new_canvas">新しいキャンバス</string>
+    <string name="about">このアプリについて</string>
+    <string name="new_note_menu">新しいノート</string>
+    <string name="new_canvas_menu">新しいキャンバス</string>
+    <string name="import_pdf">PDF を読み込む</string>
+    <string name="create_new">新規</string>
+    <string name="choose_folder_hint">ノートを保存して閲覧するディレクトリを選んでください。</string>
+    <string name="choose_folder">ディレクトリを選ぶ</string>
+    <string name="use_app_storage">アプリのストレージを使う</string>
+    <string name="new_folder">新しいディレクトリ</string>
+    <string name="paste">貼り付け</string>
+    <string name="clear_clipboard">クリップボードを空にする</string>
+    <string name="more">その他</string>
+    <string name="sort_by">並べ替え</string>
+    <string name="sort_name">名前</string>
+    <string name="sort_modified">更新日時</string>
+    <string name="sort_size">サイズ</string>
+    <string name="change_folder">ディレクトリを変更</string>
+    <string name="forget_folder">ディレクトリの登録を解除</string>
+    <string name="open_side_by_side">横に並べて開く</string>
+    <string name="copy">コピー</string>
+    <string name="cut">切り取り</string>
+    <string name="delete">削除</string>
+    <string name="searching">検索中…</string>
+    <string name="loading">読み込み中…</string>
+    <string name="folder_empty">このディレクトリにはノートがありません。</string>
+    <string name="import_title">読み込み</string>
+    <string name="folder_name">ディレクトリ名</string>
+    <string name="delete_confirm_title">削除しますか？</string>
+    <string name="search_notes">ノートを検索</string>
+    <string name="clear_search">検索をクリア</string>
+    <string name="search">検索</string>
+    <string name="find_in_note">ノート内を検索</string>
+    <string name="match_case">大文字と小文字を区別</string>
+    <string name="whole_words">単語単位</string>
+    <string name="previous_match">前の一致</string>
+    <string name="next_match">次の一致</string>
+    <string name="no_matches">一致なし</string>
+    <string name="search_position">%1$s / %2$s</string>
+    <string name="share">共有</string>
+    <string name="save_copy_ellipsis">コピーを保存…</string>
+    <string name="export_pdf">PDF に書き出す</string>
+    <string name="sort_descending">降順</string>
+    <string name="sort_ascending">昇順</string>
+    <string name="folder">ディレクトリ</string>
+    <string name="err_paste_some">一部の項目をここに貼り付けられませんでした。</string>
+    <string name="err_move_some">一部の項目を移動できませんでした。</string>
+    <string name="no_notes_match">「%1$s」に一致するノートはありません。</string>
+    <string name="save">保存</string>
+    <string name="create">作成</string>
+    <string name="err_save_that_note">そのノートを保存できませんでした。</string>
+    <string name="err_pdf_password">この PDF はパスワードで保護されているため、白い熊 速記では開けません。</string>
+    <string name="err_create_folder">そのディレクトリを作成できませんでした。</string>
+    <string name="err_create_canvas">キャンバスを作成できませんでした。</string>
+    <string name="err_create_note">ノートを作成できませんでした。</string>
+    <string name="rename_folder">ディレクトリ名を変更</string>
+    <string name="delete_one_confirm">「%1$s」を削除しますか？元に戻せません。</string>
+    <string name="err_delete_some">一部の項目を削除できませんでした。</string>
+    <plurals name="delete_items_confirm">
+        <item quantity="other">%d 件の項目を削除しますか？元に戻せません。</item>
+    </plurals>
+    <string name="expand_sidebar">サイドバーを展開</string>
+    <string name="unpin_from_sidebar">サイドバーから固定解除</string>
+    <string name="remove_name">名前を削除</string>
+    <string name="name_this_colour">この色に名前を付ける</string>
+    <string name="colour_name_placeholder">例：重要</string>
+    <string name="new_folder_menu">新しいディレクトリ</string>
+    <string name="finding">検索中…</string>
+    <string name="nothing_this_colour">この色の項目はありません。</string>
+    <string name="recent_empty">まだ何も開いていません。開いたノートやキャンバスがここに表示されます。</string>
+    <string name="nothing_to_show">表示するものはありません。</string>
+    <string name="no_pdf_notes_here">ここには PDF ノートがありません。</string>
+    <string name="include_subfolders">サブディレクトリを含める</string>
+    <string name="opened_on_device">この端末で開いたもの</string>
+    <string name="clear">クリア</string>
+    <string name="in_every_folder">すべてのディレクトリ</string>
+    <string name="clear_colour_filter">色フィルターを解除</string>
+    <string name="top_folder">最上位ディレクトリ</string>
+    <string name="view_options">表示オプション</string>
+    <string name="move_to_folder">ディレクトリへ移動</string>
+    <string name="move_here">ここへ移動</string>
+    <string name="preview">プレビュー</string>
+    <string name="move_to_folder_ellipsis">ディレクトリへ移動…</string>
+    <string name="name_colour_ellipsis">色に名前を付ける…</string>
+    <string name="err_open_folder">そのディレクトリを開けませんでした。</string>
+    <string name="moved_one_to_trash">「%1$s」をゴミ箱に移動しました</string>
+    <string name="move_to_trash">ゴミ箱に移動</string>
+    <string name="nothing_here_yet">まだ何もありません。</string>
+    <string name="kind_no_folders">ここにはディレクトリがありません。</string>
+    <string name="kind_no_notes">ここにはノートがありません。</string>
+    <string name="kind_no_canvases">ここにはキャンバスがありません。</string>
+    <string name="all_kinds">すべての種類</string>
+    <string name="move_one_to">「%1$s」の移動先</string>
+    <string name="pin_to_sidebar">サイドバーに固定</string>
+    <plurals name="moved_items_to_trash">
+        <item quantity="other">%d 件の項目をゴミ箱に移動しました</item>
+    </plurals>
+    <plurals name="err_move_items_to_trash">
+        <item quantity="other">%d 件の項目をゴミ箱に移動できませんでした。</item>
+    </plurals>
+    <plurals name="paste_items">
+        <item quantity="other">%d 件の項目を貼り付け</item>
+    </plurals>
+    <plurals name="paste_items_here">
+        <item quantity="other">%d 件の項目をここに貼り付け</item>
+    </plurals>
+    <plurals name="notes_created_in">
+        <item quantity="other">%2$s に作成したノート %1$d 件</item>
+    </plurals>
+    <plurals name="notes_saved_in">
+        <item quantity="other">%2$s に保存したノート %1$d 件</item>
+    </plurals>
+    <plurals name="move_items_to">
+        <item quantity="other">%d 件の項目の移動先</item>
+    </plurals>
+
+    <!-- Messages, sharing and export -->
+    <string name="exporting_pdf">PDF に書き出し中…</string>
+    <string name="may_take_moment">少し時間がかかることがあります。</string>
+    <string name="saving_notes">ノートを保存中…</string>
+    <string name="opening_note">ノートを開いています…</string>
+    <string name="share_note">ノートを共有</string>
+    <string name="unsaved_changes">未保存の変更</string>
+    <string name="discard">破棄</string>
+    <string name="err_save_note">ノートを保存できませんでした。</string>
+    <string name="exported_pdf">PDF に書き出しました。</string>
+    <string name="err_export_pdf">PDF に書き出せませんでした。</string>
+    <string name="err_save_copy">コピーを保存できませんでした。</string>
+    <string name="err_save_image">画像を保存できませんでした。</string>
+    <string name="err_save_images">画像を保存できませんでした。</string>
+    <string name="err_read_image">画像を読み込めませんでした。</string>
+    <string name="err_read_file">ファイルを読み込めませんでした。</string>
+    <string name="err_open_second">2つ目のノートを開けませんでした。</string>
+    <string name="share_named">%1$s を共有</string>
+    <string name="err_share_note">ノートを共有できませんでした。</string>
+    <string name="err_share_pages">ページを共有できませんでした。</string>
+    <string name="share_as">「%1$s」を共有する形式：</string>
+    <string name="file_of_kind">%1$s ファイル</string>
+    <string name="unsaved_changes_prompt">続ける前に「%1$s」の変更を保存しますか？</string>
+    <string name="writing_pdf">PDF を書き出し中…</string>
+    <string name="preparing">準備中…</string>
+    <string name="export_page_progress">ページ %1$d / %2$d</string>
+    <string name="export_item_progress">項目 %1$d / %2$d</string>
+    <!-- What a screen reader says for the handwriting and for each image in an exported PDF -->
+    <string name="pdf_alt_drawing">手書きのメモと絵</string>
+    <string name="pdf_alt_image">画像</string>
+    <string name="importing_pdf">PDF を読み込み中…</string>
+    <string name="importing_pdfs">PDF を読み込み中…</string>
+    <string name="import_progress">%2$d 件中 %1$d 件を読み込みました</string>
+    <plurals name="imported_pdfs">
+        <item quantity="other">%d 件の PDF を読み込みました</item>
+    </plurals>
+    <string name="unlock_zoom">ズーム固定を解除</string>
+    <string name="lock_zoom_fit_width">幅に合わせてズームを固定</string>
+    <string name="lock_zoom">ズームを固定</string>
+    <plurals name="saved_images">
+        <item quantity="other">%d 枚の画像を保存しました。</item>
+    </plurals>
+    <plurals name="export_writing_pages">
+        <item quantity="other">%d ページを書き出し中…</item>
+    </plurals>
+    <plurals name="export_writing_items">
+        <item quantity="other">%d 件の項目を書き出し中…</item>
+    </plurals>
+    <string name="image_copied">画像をコピーしました。どこにでも貼り付けられます。</string>
+    <string name="err_copy_image">画像をコピーできませんでした。</string>
+    <string name="err_clipboard_no_image">クリップボードに貼り付けられる画像がありません。</string>
+    <string name="err_read_sticker">ステッカーを読み込めませんでした。</string>
+    <string name="err_open_that_note">そのノートを開けませんでした。</string>
+    <string name="err_not_xnotes">白い熊 速記 の文書ではありません。</string>
+    <string name="err_open_note">ノートを開けませんでした。</string>
+    <string name="note_forked">このノートは別の場所で変更されました。あなたの編集は「%1$s」に保存されています。</string>
+    <string name="canvas_forked">このキャンバスは別の場所で変更されました。あなたの編集は「%1$s」に保存されています。</string>
+    <string name="err_keep_one_page">ノートには少なくとも1ページが必要です。</string>
+    <string name="page_already_empty">そのページはすでに空です。</string>
+    <string name="err_helix_theme">使用できる Helix テーマではありません（単体で完結した .toml が必要です）。</string>
+    <string name="err_store_theme">テーマファイルを保存できませんでした。</string>
+    <string name="code_theme_imported">コードテーマを読み込みました。</string>
+    <string name="font_imported">フォント「%1$s」を読み込みました。</string>
+    <string name="err_import_font">そのフォントを読み込めませんでした。</string>
+    <string name="font_err_unavailable">フォントを使用できません。</string>
+    <string name="font_err_unnamed">このフォントの名前を取得できませんでした。</string>
+    <string name="font_err_built_in">「%1$s」はすでに内蔵されています。</string>
+    <string name="font_err_unreadable">読み込める .ttf／.otf フォントではありません。</string>
+    <string name="err_share_notes">ノートを共有できませんでした。</string>
+    <plurals name="share_n_notes">
+        <item quantity="other">%d 件のノートを共有</item>
+    </plurals>
+
+    <!-- Side panel -->
+    <string name="pages">ページ</string>
+    <string name="contents">目次</string>
+    <string name="bookmarks">しおり</string>
+    <string name="selected">選択中</string>
+    <string name="page_options">ページのオプション</string>
+    <string name="back_share_as">"‹  共有形式"</string>
+    <string name="image_png">画像（PNG）</string>
+    <string name="back_save_as">"‹  保存形式"</string>
+    <string name="add_page">ページを追加</string>
+    <string name="erase_page">ページを消去</string>
+    <string name="share_ellipsis">共有…</string>
+    <string name="save_as_ellipsis">形式を選んで保存…</string>
+    <string name="clear_selection">選択を解除</string>
+    <string name="save_as">形式を選んで保存</string>
+    <string name="no_contents">— 目次なし —</string>
+    <string name="add_bookmark">しおりを追加</string>
+    <string name="no_bookmarks">— しおりなし —</string>
+    <string name="add">追加</string>
+    <string name="page_n">%1$d ページ</string>
+    <string name="bookmark_entry">%1$s · %2$d ページ</string>
+
+    <!-- Selection and long-press menus -->
+    <string name="bring_to_front">最前面へ</string>
+    <string name="duplicate">複製</string>
+    <string name="change_style">スタイルを変更</string>
+    <string name="lock">ロック</string>
+    <string name="title_change_style">スタイルを変更</string>
+    <string name="caption_thickness">太さ</string>
+    <string name="change_style_hint">選択したストロークと図形に適用されます。</string>
+    <string name="copy_as_image">画像としてコピー</string>
+    <string name="unlock">ロック解除</string>
+    <string name="paste_here">ここに貼り付け</string>
+    <string name="paste_markdown">Markdown として貼り付け</string>
+    <string name="paste_code">コードとして貼り付け</string>
+
+    <!-- About -->
+    <string name="app_tagline">Android 用の手書きノート＆スケッチアプリ</string>
+    <string name="copy_version">バージョンをコピー</string>
+    <string name="help_make_better">白い熊 速記 の改善に協力する</string>
+    <string name="report_bug">不具合を報告</string>
+    <string name="request_feature">機能をリクエスト</string>
+    <string name="sponsor">スポンサー</string>
+    <string name="enjoying_xnotes">"白い熊 速記 を気に入りましたか？ "</string>
+    <string name="star_on_github">GitHub でスターを付ける</string>
+    <string name="mit_license">MIT ライセンス</string>
+    <string name="version_n">バージョン %1$s</string>
+    <string name="version_copied">バージョンをコピーしました</string>
+
+    <!-- Text formatting -->
+    <string name="checkbox_item">チェックボックス</string>
+    <string name="bold">太字</string>
+    <string name="italic">斜体</string>
+    <string name="underline">下線</string>
+    <string name="strikethrough">取り消し線</string>
+    <string name="ordered_list">番号付きリスト</string>
+    <string name="bullet_list">箇条書き</string>
+    <string name="alignment">配置</string>
+    <string name="indent">インデント</string>
+    <string name="outdent">インデント解除</string>
+    <string name="code_block">コードブロック</string>
+    <string name="heading">見出し</string>
+    <string name="body_text">本文</string>
+    <string name="heading_n">見出し %1$d</string>
+    <string name="smaller">小さく</string>
+    <string name="larger">大きく</string>
+    <string name="font">フォント</string>
+    <string name="mono_font">等幅フォント</string>
+    <string name="size_pt">サイズ（pt）</string>
+    <string name="colour">色</string>
+    <string name="auto">自動</string>
+    <string name="margins_mm">余白（mm）</string>
+    <string name="markdown_shortcuts">Markdown ショートカット</string>
+    <string name="slash_commands">スラッシュコマンド</string>
+    <string name="equation">数式</string>
+    <string name="select_latex_first">数式にする LaTeX を選択してください</string>
+    <string name="insert_date">日付</string>
+    <string name="insert_time">時刻</string>
+    <string name="done">完了</string>
+
+    <!-- Tables -->
+    <string name="insert_table">表を挿入</string>
+    <string name="table_style">表のスタイル</string>
+    <string name="edit_table">表を編集</string>
+    <string name="fit_columns">列幅を合わせる</string>
+    <string name="delete_table">表を削除</string>
+    <string name="table_rows">行</string>
+    <string name="table_columns">列</string>
+    <string name="table_padding">内側の余白</string>
+    <string name="table_lines">罫線</string>
+    <string name="table_line_colour">罫線の色</string>
+    <string name="table_header_row">見出し行</string>
+    <string name="table_banded_rows">縞模様の行</string>
+    <string name="table_tint">色合い</string>
+    <string name="default_for_new_tables">新しい表の既定にする</string>
+    <string name="table_borders_all">すべて</string>
+    <string name="table_borders_outer">外枠</string>
+    <string name="table_borders_rows">行</string>
+    <string name="table_borders_none">なし</string>
+    <string name="table_pt_value">%1$s pt</string>
+    <string name="insert">挿入</string>
+    <string name="move">移動</string>
+
+    <!-- Canvas styles and waypoints -->
+    <string name="caption_spacing">間隔</string>
+    <string name="caption_paper">用紙</string>
+    <string name="paper_theme">テーマ</string>
+    <string name="default_for_new_canvases">新しいキャンバスの既定にする</string>
+    <string name="title_waypoints">ウェイポイント</string>
+    <string name="no_waypoints">保存した表示位置はまだありません。</string>
+    <string name="caption_save_view">この表示位置を保存</string>
+
+    <!-- Colour picker -->
+    <string name="swatches">スウォッチ</string>
+    <string name="spectrum">スペクトル</string>
+    <string name="caption_recent">最近</string>
+
+    <!-- Canvas and storage -->
+    <string name="pull_to_add_page">引っ張ってページを追加</string>
+    <string name="release_to_add_page">離してページを追加</string>
+    <string name="app_storage">アプリのストレージ</string>
+
+    <!-- Explorer: dates, counts and kinds -->
+    <string name="today">今日</string>
+    <string name="yesterday">昨日</string>
+    <string name="earlier_this_week">今週</string>
+    <string name="last_week">先週</string>
+    <string name="earlier_in">%1$s の前半</string>
+    <string name="month_year">%2$d年%1$s</string>
+    <string name="just_now">たった今</string>
+    <string name="minutes_ago">%1$d 分前</string>
+    <string name="hours_ago">%1$d 時間前</string>
+    <string name="day_month">%2$s%1$d日</string>
+    <string name="day_month_year">%3$d年%2$s%1$d日</string>
+    <string name="date_with_time">%1$s %2$s</string>
+    <string name="clock_12h">%3$s%1$d:%2$02d</string>
+    <string name="am">午前</string>
+    <string name="pm">午後</string>
+    <string name="opened_ago">%1$sに開いた</string>
+    <string name="kind_folders">ディレクトリ</string>
+    <string name="kind_notes">ノート</string>
+    <string name="kind_pdf_notes">PDF ノート</string>
+    <string name="kind_canvases">キャンバス</string>
+    <string name="hue_black">黒</string>
+    <string name="hue_white">白</string>
+    <string name="hue_grey">灰</string>
+    <string name="hue_red">赤</string>
+    <string name="hue_orange">橙</string>
+    <string name="hue_yellow">黄</string>
+    <string name="hue_green">緑</string>
+    <string name="hue_teal">青緑</string>
+    <string name="hue_blue">青</string>
+    <string name="hue_purple">紫</string>
+    <string name="hue_pink">桃</string>
+    <string name="no_colour">色なし</string>
+    <string name="layout_grid">グリッド</string>
+    <string name="layout_gallery">ギャラリー</string>
+    <string name="layout_list">リスト</string>
+    <string name="layout_columns">カラム</string>
+    <string name="layout_timeline">タイムライン</string>
+    <string name="group_date">日付</string>
+    <string name="group_kind">種類</string>
+    <string name="no_grouping">グループ化しない</string>
+    <string name="grouped_by_date">日付でグループ化</string>
+    <string name="grouped_by_kind">種類でグループ化</string>
+    <string name="grouped_by_colour">色でグループ化</string>
+    <string name="folders_on_top">先頭</string>
+    <string name="folders_mixed">混在</string>
+    <string name="folders_hidden">非表示</string>
+    <string-array name="months">
+        <item>1月</item>
+        <item>2月</item>
+        <item>3月</item>
+        <item>4月</item>
+        <item>5月</item>
+        <item>6月</item>
+        <item>7月</item>
+        <item>8月</item>
+        <item>9月</item>
+        <item>10月</item>
+        <item>11月</item>
+        <item>12月</item>
+    </string-array>
+    <string-array name="months_short">
+        <item>1月</item>
+        <item>2月</item>
+        <item>3月</item>
+        <item>4月</item>
+        <item>5月</item>
+        <item>6月</item>
+        <item>7月</item>
+        <item>8月</item>
+        <item>9月</item>
+        <item>10月</item>
+        <item>11月</item>
+        <item>12月</item>
+    </string-array>
+    <string-array name="weekdays_short">
+        <item>月</item>
+        <item>火</item>
+        <item>水</item>
+        <item>木</item>
+        <item>金</item>
+        <item>土</item>
+        <item>日</item>
+    </string-array>
+    <plurals name="days_ago">
+        <item quantity="other">%d 日前</item>
+    </plurals>
+    <plurals name="folders_count">
+        <item quantity="other">%d 個のディレクトリ</item>
+    </plurals>
+    <plurals name="files_count">
+        <item quantity="other">%d 個のファイル</item>
+    </plurals>
+    <plurals name="items_count">
+        <item quantity="other">%d 件</item>
+    </plurals>
+
+    <!-- Explorer -->
+    <string name="sort_created">作成日時</string>
+    <string name="select_all">すべて選択</string>
+    <string name="close_view_options">表示オプションを閉じる</string>
+    <string name="opt_layout">レイアウト</string>
+    <string name="opt_rows">行</string>
+    <string name="rows_comfortable">ゆったり</string>
+    <string name="rows_compact">コンパクト</string>
+    <string name="opt_tile_size">タイルのサイズ</string>
+    <string name="pinch_hint">グリッドをピンチしてもタイルのサイズを変えられます</string>
+    <string name="opt_place_by">ファイルの配置</string>
+    <string name="opt_thumbnail">サムネイル</string>
+    <string name="thumb_top">ページの上部</string>
+    <string name="thumb_page">ページ全体</string>
+    <string name="opt_show_on_tiles">タイルに表示</string>
+    <string name="show_page_count">ページ数</string>
+    <string name="show_time">時刻</string>
+    <string name="colour_code">カラーコード</string>
+    <string name="opt_group_by">グループ化</string>
+    <string name="view_every_folder">この表示をすべてのディレクトリで使う</string>
+    <string name="view_every_folder_hint">オフ：ディレクトリごとに表示を記憶します</string>
+    <string name="sort_z_to_a">Z → A</string>
+    <string name="sort_a_to_z">A → Z</string>
+    <string name="largest_first">大きい順</string>
+    <string name="smallest_first">小さい順</string>
+    <string name="newest_first">新しい順</string>
+    <string name="oldest_first">古い順</string>
+    <string name="n_selected">%1$d 件選択中</string>
+    <string name="modified">更新</string>
+    <string name="created">作成</string>
+    <string name="kind_note">ノート</string>
+    <string name="kind_pdf_note">PDF ノート</string>
+    <string name="kind_canvas">キャンバス</string>
+    <string name="more_for">%1$s のその他の操作</string>
+    <string name="pinned_to_sidebar">サイドバーに固定しました</string>
+    <string name="recent">最近</string>
+    <string name="see_all">すべて表示</string>
+    <string name="pinned">固定済み</string>
+    <string name="in_folder">%1$s 内</string>
+    <plurals name="pages_count">
+        <item quantity="other">%d ページ</item>
+    </plurals>
+    <string name="pick_note_hint">ノートを選ぶとここに表示されます</string>
+    <string name="previous_month">前の月</string>
+    <string name="next_month">次の月</string>
+    <string name="nothing_created_in">%1$s に作成されたものはありません。</string>
+    <string name="nothing_saved_in">%1$s に保存されたものはありません。</string>
+    <string name="open">開く</string>
+    <string name="close_preview">プレビューを閉じる</string>
+    <string name="where_label">場所</string>
+    <string name="no_folders_here">ここにはディレクトリがありません。</string>
+
+    <!-- Trash -->
+    <string name="trash">ゴミ箱</string>
+    <string name="empty_trash">ゴミ箱を空にする</string>
+    <string name="trash_off_hint">ゴミ箱はオフです。削除すると完全に消去されます。すでにここにある項目は、ゴミ箱を空にするまで残ります。</string>
+    <string name="trash_forever_hint">項目はゴミ箱を空にするまでここに残ります。</string>
+    <string name="change">変更</string>
+    <string name="trash_no_root">先にノートを保存するディレクトリを選んでください。</string>
+    <string name="trash_empty">ゴミ箱は空です。</string>
+    <string name="trash_was_in">元の場所</string>
+    <string name="trash_deleted">削除日</string>
+    <string name="trash_removed_in">完全削除まで</string>
+    <string name="empty_trash_confirm">ゴミ箱を空にしますか？</string>
+    <string name="empty_trash_body">ゴミ箱の中身はすべて完全に削除されます。元に戻せません。</string>
+    <string name="delete_permanently_confirm">完全に削除しますか？</string>
+    <string name="restore">復元</string>
+    <string name="delete_permanently">完全に削除</string>
+    <string name="trash_no_match">ゴミ箱に「%1$s」に一致するものはありません。</string>
+    <string name="the_top_folder">最上位ディレクトリ</string>
+    <string name="restored_item">「%1$s」を復元しました</string>
+    <string name="err_restore_item">「%1$s」を復元できませんでした</string>
+    <string name="restore_hint">復元すると、項目は元のディレクトリに戻ります。そのディレクトリがなくなっている場合は %1$s に戻ります。</string>
+    <string name="delete_permanently_body">「%1$s」は完全に削除されます。元に戻せません。</string>
+    <string name="trash_row_sub">%1$s · %2$s から · %3$s</string>
+    <string name="never">しない</string>
+    <plurals name="trash_deleted_after">
+        <item quantity="other">項目は %d 日後に完全に削除されます。</item>
+    </plurals>
+    <plurals name="days_count">
+        <item quantity="other">%d 日</item>
+    </plurals>
+
+    <!-- Preferences: home and explorer -->
+    <string name="pref_home_explorer">ホームとエクスプローラー</string>
+    <string name="pref_home_explorer_help">ホーム画面とファイルエクスプローラーの見た目と動作です。レイアウトはエクスプローラーからディレクトリごとに切り替えることもできます。</string>
+    <string name="pref_default_layout">既定のレイアウト</string>
+    <string name="pref_switcher_layouts">切り替えに表示するレイアウト</string>
+    <string name="pref_sidebar_sections">サイドバーのセクション</string>
+    <string name="pref_home_opens_to">ホームを開いたときの表示</string>
+    <string name="last_folder">最後に開いたディレクトリ</string>
+    <string name="recent_and_pinned">最近と固定済み</string>
+    <string name="pref_tapping_file">ファイルをタップしたとき</string>
+    <string name="tap_opens">開く</string>
+    <string name="tap_previews">プレビューを表示</string>
+    <string name="pref_keep_deleted">削除した項目の保持期間</string>
+    <string name="until_emptied">空にするまで</string>
+    <string name="pref_colour_names">色の名前</string>
+    <string name="name_a_colour">色に名前を付ける</string>
+    <string name="pref_per_folder_views">ディレクトリごとに表示を記憶</string>
+    <string name="pref_show_create_button">クイック作成ボタンを表示</string>
+    <string name="pref_show_folder_counts">ディレクトリに項目数を表示</string>
+    <string name="pref_show_extensions">ファイルの拡張子を表示（.xnote、.xcanvas）</string>
+    <string name="pref_dates">日付</string>
+    <string name="material_system_colours">システムの色</string>
+    <string name="material_system_fallback">この端末では既定のアクセント色を使います。</string>
+    <string name="material_custom_colour">カスタムの色を選ぶ</string>
+    <string name="material_style">スタイル</string>
+    <string name="material_tone">カラーモード</string>
+    <string name="material_single_tone">単色</string>
+    <string name="material_dual_tone">2色</string>
+    <string name="material_surface_colour">背景の色</string>
+    <string name="material_colour_presets">色のプリセット</string>
+    <string name="material_custom">カスタム</string>
+    <string name="material_indigo">藍</string>
+    <string name="material_amber">琥珀</string>
+    <string name="material_morning">朝</string>
+    <string name="material_evening">夕</string>
+    <string name="material_sea">海</string>
+    <string name="material_forest">森</string>
+    <string name="material_earth">土</string>
+    <string name="material_lavender">ラベンダー</string>
+    <string name="material_lake">湖</string>
+    <string name="material_desert">砂漠</string>
+    <string name="material_untinted_surfaces">このスタイルは色付けなしの背景を使います。背景の色は他のスタイル用に保持されます。</string>
+    <string name="material_style_soft">ソフト</string>
+    <string name="material_style_vivid">ビビッド</string>
+    <string name="material_style_original">オリジナル</string>
+    <string name="material_style_playful">プレイフル</string>
+    <string name="material_style_fresh">フレッシュ</string>
+    <string name="material_style_clean">クリーン</string>
+    <string name="material_style_muted">落ち着いた</string>
+    <string name="material_style_grayscale">グレースケール</string>
+    <string name="material_style_soft_description">穏やかな色のアクセント。</string>
+    <string name="material_style_vivid_description">強めの色のアクセント。</string>
+    <string name="material_style_original_description">選んだ色により忠実に、読みやすさに合わせて調整します。</string>
+    <string name="material_style_playful_description">選んだ色から生まれる意外なアクセント色。</string>
+    <string name="material_style_fresh_description">ずらしたアクセントと、ほのかに色付いた背景。</string>
+    <string name="material_style_clean_description">色鮮やかなアクセントと、色付けなしの中間色の背景。</string>
+    <string name="material_style_muted_description">控えめな色と中間色の背景。</string>
+    <string name="material_style_grayscale_description">色付けなし。選んだ色は他のスタイル用に保持されます。</string>
+    <string name="material_contrast">"コントラスト  %1$s"</string>
+    <string name="pref_corners">角</string>
+    <string name="corners_sharp">角張った</string>
+    <string name="corners_rounded">丸み</string>
+    <string name="corners_soft">柔らか</string>
+    <string name="pref_toolbar_style">スタイル</string>
+    <string name="toolbar_docked">固定</string>
+    <string name="toolbar_floating">フローティング</string>
+    <string name="pref_toolbar_position">位置</string>
+    <string name="pref_toolbar_size">サイズ</string>
+    <string name="toolbar_size_compact">コンパクト</string>
+    <string name="toolbar_size_regular">標準</string>
+    <string name="toolbar_size_comfortable">ゆったり</string>
+</resources>

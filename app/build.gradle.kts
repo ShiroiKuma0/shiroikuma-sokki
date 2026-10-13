@@ -130,6 +130,9 @@ android {
     // Lists every values-* translation in the manifest so Android 13+ offers a per-app language.
     androidResources {
         generateLocaleConfig = true
+        // Fork: Japanese is the one alternative to English. Upstream's Chinese stays in the tree
+        // (deleting it would conflict on every sync) but is filtered out of the APK.
+        localeFilters += listOf("en", "ja")
     }
 }
 
