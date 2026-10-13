@@ -179,7 +179,7 @@ private const val SIDECAR_FILE = "colors.json"
 /** In the root folder's sidecar only: the names given to colour codes, so they sync with the notes. */
 private const val COLOR_NAMES_FILE = "color-names.json"
 
-/** Inside the top folder's sidecar: deleted items, each in a folder of its own with a [TRASH_INFO] beside it. */
+/** Upstream kept Trash here, inside the top folder's sidecar; only read now, to move it into internal storage. */
 private const val TRASH_DIR = "trash"
 private const val TRASH_INFO = "trash.json"
 
@@ -5065,19 +5065,74 @@ class Editor(context: Context, val pane: Pane = Pane.PRIMARY) : ToolPopupHost, S
         return out.sortedWith(explorerComparator(explorerView.sortKey, explorerView.descending) { it.created })
     }
 
-    // --- Trash (a hidden folder in the top folder's sidecar, so it travels with the notes) ---
+    // --- Trash (fork: in the app's internal storage, so deleting leaves nothing in the notes folder) ---
+    //
+    // Trash is its own tree in AppStorageDocumentsProvider ("trash", under filesDir), read with the same
+    // DocumentsContract calls as the notes. A user's folder and app storage are different providers, so an
+    // item goes in by copying and then deleting the original, and comes back the same way.
 
-    /** The Trash folder under [treeUri]'s top folder, made on demand when [create]; null when there is none. */
-    private fun trashDir(treeUri: String, create: Boolean): String? {
+    private val trashTree: android.net.Uri get() = com.xnotes.platform.AppStorageDocumentsProvider.trashTreeUri(appContext)
+    private val trashRoot: String get() = com.xnotes.platform.AppStorageDocumentsProvider.TRASH_DOC_ID
+
+    /** The Trash folder the upstream app kept in [treeUri]'s top-folder sidecar, if one is still there. */
+    private fun legacyTrashDir(treeUri: String): String? {
         val tree = android.net.Uri.parse(treeUri)
-        val side = sidecarDir(tree, browseRootDocId(treeUri), create) ?: return null
-        findChildDocId(tree, side, TRASH_DIR, dir = true)?.let { return it }
-        if (!create) return null
+        val side = sidecarDir(tree, browseRootDocId(treeUri), create = false) ?: return null
+        return findChildDocId(tree, side, TRASH_DIR, dir = true)
+    }
+
+    /**
+     * Moves whatever waits in [treeUri]'s old in-folder Trash into the internal one, then removes the old
+     * Trash folder, and the hidden sidecar too when that leaves it empty. A wrapper that won't copy stays
+     * where it is, to be tried again next time. IO.
+     */
+    private fun migrateLegacyTrash(treeUri: String) {
+        val tree = android.net.Uri.parse(treeUri)
+        val legacy = legacyTrashDir(treeUri) ?: return
+        val resolver = appContext.contentResolver
+        var kept = 0
+        for ((wrapperId, wrapperName, isDir) in childRows(tree, legacy)) {
+            val copied = runCatching { copyDocTree(tree, wrapperId, isDir, wrapperName, trashTree, trashRoot) }.getOrNull()
+            if (copied == null) { kept++; continue }
+            runCatching { android.provider.DocumentsContract.deleteDocument(resolver, android.provider.DocumentsContract.buildDocumentUriUsingTree(tree, wrapperId)) }
+        }
+        if (kept > 0) return
+        runCatching { android.provider.DocumentsContract.deleteDocument(resolver, android.provider.DocumentsContract.buildDocumentUriUsingTree(tree, legacy)) }
+        val side = sidecarDir(tree, browseRootDocId(treeUri), create = false) ?: return
+        if (childRows(tree, side).isEmpty()) {
+            runCatching { android.provider.DocumentsContract.deleteDocument(resolver, android.provider.DocumentsContract.buildDocumentUriUsingTree(tree, side)) }
+        }
+    }
+
+    /**
+     * Copies document [srcId] (named [name], a folder when [isDir]) from [srcTree] into [dstParent] of
+     * [dstTree], folders with everything in them; returns the copy's id, or null — leaving no half copy
+     * behind — when any part fails. IO.
+     */
+    private fun copyDocTree(
+        srcTree: android.net.Uri, srcId: String, isDir: Boolean, name: String,
+        dstTree: android.net.Uri, dstParent: String,
+    ): String? {
+        val resolver = appContext.contentResolver
         val made = android.provider.DocumentsContract.createDocument(
-            appContext.contentResolver, android.provider.DocumentsContract.buildDocumentUriUsingTree(tree, side),
-            android.provider.DocumentsContract.Document.MIME_TYPE_DIR, TRASH_DIR,
+            resolver, android.provider.DocumentsContract.buildDocumentUriUsingTree(dstTree, dstParent),
+            if (isDir) android.provider.DocumentsContract.Document.MIME_TYPE_DIR else "application/octet-stream", name,
         ) ?: return null
-        return android.provider.DocumentsContract.getDocumentId(made)
+        val madeId = android.provider.DocumentsContract.getDocumentId(made)
+        val ok = runCatching {
+            if (isDir) {
+                childRows(srcTree, srcId).all { (id, n, d) -> copyDocTree(srcTree, id, d, n, dstTree, madeId) != null }
+            } else {
+                resolver.openInputStream(android.provider.DocumentsContract.buildDocumentUriUsingTree(srcTree, srcId))?.use { input ->
+                    resolver.openOutputStream(made, "wt")?.use { input.copyTo(it); true }
+                } ?: false
+            }
+        }.getOrDefault(false)
+        if (!ok) {
+            runCatching { android.provider.DocumentsContract.deleteDocument(resolver, made) }
+            return null
+        }
+        return madeId
     }
 
     /** The folder names from the top folder down to [folderDocId], or null when the provider can't say. IO. */
@@ -5111,12 +5166,11 @@ class Editor(context: Context, val pane: Pane = Pane.PRIMARY) : ToolPopupHost, S
 
     /**
      * Moves [entries] into Trash, each into a folder of its own with a note of where it was, when and in what
-     * colour. Returns what went in, for an undo, and what couldn't (a provider that can't move, say). IO.
+     * colour. Returns what went in, for an undo, and what couldn't (a provider that can't delete, say). IO.
      */
     fun trashEntries(treeUri: String, entries: List<BrowseEntry>): Pair<List<TrashItem>, List<BrowseEntry>> {
         val tree = android.net.Uri.parse(treeUri)
         val resolver = appContext.contentResolver
-        val trash = runCatching { trashDir(treeUri, create = true) }.getOrNull() ?: return emptyList<TrashItem>() to entries
         val trashed = ArrayList<TrashItem>()
         val failed = ArrayList<BrowseEntry>()
         val cleared = HashMap<String, HashMap<String, Rgba?>>()
@@ -5124,7 +5178,7 @@ class Editor(context: Context, val pane: Pane = Pane.PRIMARY) : ToolPopupHost, S
             val item = runCatching {
                 val now = System.currentTimeMillis()
                 val wrapper = android.provider.DocumentsContract.createDocument(
-                    resolver, android.provider.DocumentsContract.buildDocumentUriUsingTree(tree, trash),
+                    resolver, android.provider.DocumentsContract.buildDocumentUriUsingTree(trashTree, trashRoot),
                     android.provider.DocumentsContract.Document.MIME_TYPE_DIR, "$now-${java.util.UUID.randomUUID().toString().take(6)}",
                 ) ?: return@runCatching null
                 val wrapperId = android.provider.DocumentsContract.getDocumentId(wrapper)
@@ -5135,18 +5189,18 @@ class Editor(context: Context, val pane: Pane = Pane.PRIMARY) : ToolPopupHost, S
                     .put("path", org.json.JSONArray(path))
                     .put("deleted", java.time.Instant.ofEpochMilli(now).toString())
                     .apply { e.color?.let { put("colour", Rgba.toHex(it)) } }
-                val moved = if (writeSidecarJson(tree, wrapperId, TRASH_INFO, info)) {
-                    runCatching {
-                        android.provider.DocumentsContract.moveDocument(
-                            resolver, android.net.Uri.parse(e.documentUri),
-                            android.provider.DocumentsContract.buildDocumentUriUsingTree(tree, e.parentDocId), wrapper,
-                        )
-                    }.getOrNull()
+                val srcId = android.provider.DocumentsContract.getDocumentId(android.net.Uri.parse(e.documentUri))
+                val copiedId = if (writeSidecarJson(trashTree, wrapperId, TRASH_INFO, info)) {
+                    runCatching { copyDocTree(tree, srcId, e.isDir, e.name, trashTree, wrapperId) }.getOrNull()
                 } else null
-                if (moved == null) {
+                // Only a copy that is whole lets the original go; one that can't be deleted takes its copy back out.
+                val gone = copiedId != null &&
+                    runCatching { android.provider.DocumentsContract.deleteDocument(resolver, android.net.Uri.parse(e.documentUri)) }.getOrDefault(false)
+                if (!gone) {
                     runCatching { android.provider.DocumentsContract.deleteDocument(resolver, wrapper) }
                     return@runCatching null
                 }
+                val moved = android.provider.DocumentsContract.buildDocumentUriUsingTree(trashTree, copiedId!!)
                 // The open note stops writing to where it was; what's keyed by its identity follows it in.
                 detachIfOpen(e.documentUri)
                 onDocumentMoved(e.documentUri, moved.toString())
@@ -5168,10 +5222,10 @@ class Editor(context: Context, val pane: Pane = Pane.PRIMARY) : ToolPopupHost, S
 
     /** What waits in Trash, newest first. A wrapper whose item has gone is cleared away. IO. */
     fun listTrash(treeUri: String): List<TrashItem> {
-        val tree = android.net.Uri.parse(treeUri)
-        val trash = trashDir(treeUri, create = false) ?: run { trashCount = 0; return emptyList() }
+        runCatching { migrateLegacyTrash(treeUri) }
+        val tree = trashTree
         val out = ArrayList<TrashItem>()
-        for ((wrapperId, wrapperName, isDir) in childRows(tree, trash)) {
+        for ((wrapperId, wrapperName, isDir) in childRows(tree, trashRoot)) {
             if (!isDir) continue
             val children = childRows(tree, wrapperId)
             val info = children.firstOrNull { !it.third && it.second == TRASH_INFO }?.let { (id, _, _) ->
@@ -5202,9 +5256,8 @@ class Editor(context: Context, val pane: Pane = Pane.PRIMARY) : ToolPopupHost, S
     }
 
     /** Recount Trash for the sidebar. IO. */
-    fun refreshTrashCount(treeUri: String) {
-        val trash = trashDir(treeUri, create = false)
-        trashCount = if (trash == null) 0 else childRows(android.net.Uri.parse(treeUri), trash).count { it.third }
+    fun refreshTrashCount(@Suppress("UNUSED_PARAMETER") treeUri: String) {
+        trashCount = childRows(trashTree, trashRoot).count { it.third }
     }
 
     /**
@@ -5216,20 +5269,15 @@ class Editor(context: Context, val pane: Pane = Pane.PRIMARY) : ToolPopupHost, S
         val resolver = appContext.contentResolver
         val rootId = browseRootDocId(treeUri)
         val dest = item.path.fold<String, String?>(rootId) { at, name -> at?.let { findChildDocId(tree, it, name, dir = true) } } ?: rootId
-        var uri = android.net.Uri.parse(item.entry.documentUri)
         var name = item.entry.name
         val taken = childRows(tree, dest).mapTo(HashSet()) { it.second.lowercase() }
-        if (name.lowercase() in taken) {
-            name = freeName(name, taken, splitExtension = !item.entry.isDir)
-            uri = android.provider.DocumentsContract.renameDocument(resolver, uri, name) ?: return@runCatching false
-        }
-        val moved = android.provider.DocumentsContract.moveDocument(
-            resolver, uri, android.provider.DocumentsContract.buildDocumentUriUsingTree(tree, item.wrapperDocId),
-            android.provider.DocumentsContract.buildDocumentUriUsingTree(tree, dest),
-        ) ?: return@runCatching false
-        onDocumentMoved(item.entry.documentUri, moved.toString(), name.takeIf { it != item.entry.name })
+        if (name.lowercase() in taken) name = freeName(name, taken, splitExtension = !item.entry.isDir)
+        val itemId = android.provider.DocumentsContract.getDocumentId(android.net.Uri.parse(item.entry.documentUri))
+        val copiedId = copyDocTree(trashTree, itemId, item.entry.isDir, name, tree, dest) ?: return@runCatching false
+        val restored = android.provider.DocumentsContract.buildDocumentUriUsingTree(tree, copiedId)
+        onDocumentMoved(item.entry.documentUri, restored.toString(), name.takeIf { it != item.entry.name })
         item.entry.color?.let { setItemColor(treeUri, dest, name, it) }
-        runCatching { android.provider.DocumentsContract.deleteDocument(resolver, android.provider.DocumentsContract.buildDocumentUriUsingTree(tree, item.wrapperDocId)) }
+        runCatching { android.provider.DocumentsContract.deleteDocument(resolver, android.provider.DocumentsContract.buildDocumentUriUsingTree(trashTree, item.wrapperDocId)) }
         refreshTrashCount(treeUri)
         true
     }.getOrDefault(false)
@@ -5255,7 +5303,7 @@ class Editor(context: Context, val pane: Pane = Pane.PRIMARY) : ToolPopupHost, S
 
     /** Deletes [item] for good. IO. */
     fun deleteTrash(treeUri: String, item: TrashItem, recount: Boolean = true): Boolean = runCatching {
-        val wrapper = android.provider.DocumentsContract.buildDocumentUriUsingTree(android.net.Uri.parse(treeUri), item.wrapperDocId)
+        val wrapper = android.provider.DocumentsContract.buildDocumentUriUsingTree(trashTree, item.wrapperDocId)
         val ok = android.provider.DocumentsContract.deleteDocument(appContext.contentResolver, wrapper)
         if (ok) purgeDeleted(item.entry.documentUri)
         if (recount) refreshTrashCount(treeUri)
@@ -5271,6 +5319,7 @@ class Editor(context: Context, val pane: Pane = Pane.PRIMARY) : ToolPopupHost, S
 
     /** Deletes for good whatever has waited in Trash longer than [days]; nothing when Trash keeps things until emptied. IO. */
     fun purgeExpiredTrash(treeUri: String, days: Int) {
+        runCatching { migrateLegacyTrash(treeUri) }
         if (days <= 0) { refreshTrashCount(treeUri); return }
         val cutoff = System.currentTimeMillis() - days * 86_400_000L
         listTrash(treeUri).filter { it.deleted in 1 until cutoff }.forEach { deleteTrash(treeUri, it, recount = false) }
