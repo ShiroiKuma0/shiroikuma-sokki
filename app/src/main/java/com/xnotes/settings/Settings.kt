@@ -363,6 +363,8 @@ data class Settings(
             .put("brush_entry", c.brushEntry)
             .put("brush_harai", c.brushHarai)
             .put("brush_dry", c.brushDry)
+            .put("brush_tilt_width", c.brushTiltWidth)
+            .put("brush_tilt_shift", c.brushTiltShift)
             .put("rgba", rgbaArr(c.rgba))
             .apply { c.colorOverride?.let { put("color_override", rgbaArr(it)) } }
 
@@ -401,6 +403,8 @@ data class Settings(
                 brushEntry = o.optDouble("brush_entry", d.brushEntry),
                 brushHarai = o.optDouble("brush_harai", d.brushHarai),
                 brushDry = o.optDouble("brush_dry", d.brushDry),
+                brushTiltWidth = o.optDouble("brush_tilt_width", d.brushTiltWidth),
+                brushTiltShift = o.optDouble("brush_tilt_shift", d.brushTiltShift),
                 colorOverride = o.optJSONArray("color_override")
                     ?.let { a -> Rgba.fromList((0 until a.length()).map { i -> a.optInt(i, 0) }) }
                     ?: d.colorOverride,

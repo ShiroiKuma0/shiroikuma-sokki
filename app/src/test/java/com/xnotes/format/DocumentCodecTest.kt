@@ -229,6 +229,34 @@ class DocumentCodecTest {
         assertEquals(0.4, stroke.speedScale, 1e-9)
     }
 
+    @Test fun brushStrokeRoundTripsThePensTilt() {
+        val doc = Document()
+        val page = Page(1240.0, 1754.0)
+        val cfg = ToolDefaults.configFor(Tool.BRUSH).copy(brushTiltWidth = 0.8, brushTiltShift = 0.25)
+        page.items.add(
+            Stroke(
+                Tool.BRUSH, cfg,
+                mutableListOf(Sample(10.0, 20.0, 0.5, 0.0, 0.6, -1.2), Sample(30.0, 40.0, 0.9, 16.0, 0.75, 2.5)),
+            ),
+        )
+        doc.pages.add(page)
+        val stroke = roundTrip(doc).pages[0].items[0] as Stroke
+        assertTrue(stroke.hasTilt)
+        assertEquals(0.75, stroke.samples[1].tilt, 1e-3)
+        assertEquals(-1.2, stroke.samples[0].lean, 1e-3)
+        assertEquals(2.5, stroke.samples[1].lean, 1e-3)
+        assertEquals(0.8, stroke.config.brushTiltWidth, 1e-9)
+        assertEquals(0.25, stroke.config.brushTiltShift, 1e-9)
+    }
+
+    @Test fun aBrushStrokeWithoutTiltReloadsWithout() {
+        val doc = Document()
+        val page = Page(1240.0, 1754.0)
+        page.items.add(Stroke(Tool.BRUSH, ToolDefaults.configFor(Tool.BRUSH), mutableListOf(Sample(1.0, 2.0, 0.5, 0.0), Sample(3.0, 4.0, 0.5, 9.0))))
+        doc.pages.add(page)
+        assertFalse((roundTrip(doc).pages[0].items[0] as Stroke).hasTilt)
+    }
+
     @Test fun aPenStrokeWritesNoBrushKeys() {
         val doc = Document()
         val page = Page(1240.0, 1754.0)

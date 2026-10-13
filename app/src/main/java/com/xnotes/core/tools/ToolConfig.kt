@@ -121,6 +121,12 @@ data class ToolConfig(
     /** 筆 brush: how readily (0..1) the ink runs dry into かすれ streaks — at speed, along long
      *  strokes and in the tails. 0 keeps it wet and solid. Only used by [Tool.BRUSH]. */
     val brushDry: Double = DEFAULT_BRUSH_DRY,
+    /** 筆 brush: how much (0..1) a leaning pen widens the ink, pressing the brush's side down.
+     *  Only used by [Tool.BRUSH], and only on strokes written with a pen that reports its tilt. */
+    val brushTiltWidth: Double = DEFAULT_BRUSH_TILT_WIDTH,
+    /** 筆 brush: how far (0..1) a leaning pen carries the ink off its tip toward the lean, where
+     *  the brush's belly lies. Only used by [Tool.BRUSH], as [brushTiltWidth] is. */
+    val brushTiltShift: Double = DEFAULT_BRUSH_TILT_SHIFT,
 ) {
     companion object {
         const val DEFAULT_MARKUP_INTENSITY = 0.5
@@ -129,6 +135,8 @@ data class ToolConfig(
         const val DEFAULT_BRUSH_ENTRY = 0.5
         const val DEFAULT_BRUSH_HARAI = 0.5
         const val DEFAULT_BRUSH_DRY = 0.5
+        const val DEFAULT_BRUSH_TILT_WIDTH = 0.5
+        const val DEFAULT_BRUSH_TILT_SHIFT = 0.3
     }
 }
 

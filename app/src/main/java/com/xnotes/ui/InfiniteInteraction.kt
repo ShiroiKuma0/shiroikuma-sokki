@@ -513,7 +513,8 @@ class InfiniteInteraction(
         setInteractive(false, false)
         strokeStartTimeMs = e.eventTime
         val p = viewport.viewportToContent(Pt(vx, vy))
-        stroke.addSample(Sample(p.x, p.y, pressureOf(e, 0)))
+        readTilt(e, 0, -1)
+        stroke.addSample(withTilt(Sample(p.x, p.y, pressureOf(e, 0)), drawTool, Pt(vx, vy)))
         liveStroke = stroke
         mode = CanvasPointerMode.DRAW
         // Only solid pens arm the snap: a highlighter or a straight-line drag never becomes a shape.
@@ -530,6 +531,7 @@ class InfiniteInteraction(
         // Historical points first: the digitizer batches several samples into one event, and
         // dropping them coarsens a fast stroke into visible chords.
         for (h in 0 until e.historySize) {
+            readTilt(e, idx, h)
             addStrokePoint(
                 e.getHistoricalX(idx, h).toDouble(),
                 e.getHistoricalY(idx, h).toDouble(),
@@ -538,6 +540,7 @@ class InfiniteInteraction(
                 force = false,
             )
         }
+        readTilt(e, idx, -1)
         addStrokePoint(
             e.getX(idx).toDouble(), e.getY(idx).toDouble(),
             pressureOf(e, idx), e.eventTime, force = false,
@@ -568,7 +571,7 @@ class InfiniteInteraction(
         if (force || last == null || Pt(last.x, last.y).manhattanTo(p) >= gate ||
             (stroke.tool == Tool.BRUSH && InteractionController.brushPressSample(last, pressure, t))
         ) {
-            stroke.addSample(Sample(p.x, p.y, pressure.coerceIn(0.0, 1.0), t))
+            stroke.addSample(withTilt(Sample(p.x, p.y, pressure.coerceIn(0.0, 1.0), t), stroke.tool, Pt(vx, vy)))
         }
     }
 
@@ -576,6 +579,7 @@ class InfiniteInteraction(
         cancelDwell()
         dwellEligible = false
         val idx = e.findPointerIndex(drawingPointerId).coerceAtLeast(0)
+        readTilt(e, idx, -1)
         addStrokePoint(
             e.getX(idx).toDouble(), e.getY(idx).toDouble(),
             pressureOf(e, idx), e.eventTime, force = true,
@@ -1054,6 +1058,30 @@ class InfiniteInteraction(
         }
         // Nothing was dropped, so the stroke still carries the slack capture doubling left behind.
         stroke.trimToSize()
+    }
+
+    /** The pen's tilt off upright (radians) and its orientation as Android reports it, at the
+     *  sample being added. */
+    private var penTilt = 0.0
+    private var penOrientation = 0.0
+
+    /** Reads the pen's tilt at pointer [idx], history entry [h] (or the current one when negative). */
+    private fun readTilt(e: MotionEvent, idx: Int, h: Int) {
+        if (!drawingIsStylus) {
+            penTilt = 0.0
+            return
+        }
+        penTilt = (if (h < 0) e.getAxisValue(MotionEvent.AXIS_TILT, idx) else e.getHistoricalAxisValue(MotionEvent.AXIS_TILT, idx, h)).toDouble()
+        penOrientation = (if (h < 0) e.getAxisValue(MotionEvent.AXIS_ORIENTATION, idx) else e.getHistoricalAxisValue(MotionEvent.AXIS_ORIENTATION, idx, h)).toDouble()
+    }
+
+    /** [s] carrying the pen's tilt and the way it leans in content space, when [tool] is the 筆
+     *  brush, the only one that reads them; [vp] is where the sample is on screen. */
+    private fun withTilt(s: Sample, tool: Tool, vp: Pt): Sample {
+        if (tool != Tool.BRUSH || penTilt <= 0.0) return s
+        val a = viewport.viewportToContent(vp)
+        val b = viewport.viewportToContent(InteractionController.leanPoint(vp, penOrientation))
+        return s.copy(tilt = penTilt, lean = atan2(b.y - a.y, b.x - a.x))
     }
 
     private fun pressureOf(e: MotionEvent, index: Int): Double =

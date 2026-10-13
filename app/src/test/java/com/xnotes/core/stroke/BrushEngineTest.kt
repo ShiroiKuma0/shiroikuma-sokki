@@ -197,6 +197,49 @@ class BrushEngineTest {
         }
     }
 
+    /** A stroke along x at constant press, with the pen leaning [tilt] radians toward [lean]. */
+    private fun leaning(tilt: Double, lean: Double, widen: Double, shift: Double): StrokeGeometry {
+        val (xs, ys, ps, ts) = line(120, 0.3)
+        return BrushEngine.build(
+            xs, ys, ps, ts,
+            baseWidth = 80.0, pressureEnabled = true, m = 0.03, gamma = 1.0, entry = 0.0, harai = 0.5,
+            pressureLow = 0.0, pressureHigh = 1.0, speedScale = 1.0, smoothScale = 1.0, finished = true,
+            rawTilt = DoubleArray(xs.size) { tilt }, rawLean = DoubleArray(xs.size) { lean },
+            tiltWidth = widen, tiltShift = shift,
+        )
+    }
+
+    @Test fun anUprightPenChangesNothing() {
+        val (xs, ys, ps, ts) = line(120, 0.3)
+        val plain = BrushEngine.build(
+            xs, ys, ps, ts,
+            baseWidth = 80.0, pressureEnabled = true, m = 0.03, gamma = 1.0, entry = 0.0, harai = 0.5,
+            pressureLow = 0.0, pressureHigh = 1.0, speedScale = 1.0, smoothScale = 1.0, finished = true,
+        )
+        val upright = leaning(0.1, 1.0, 1.0, 1.0)
+        assertArrayEquals(plain.halfWidths, upright.halfWidths, 0f)
+        assertArrayEquals(plain.centerline, upright.centerline, 0f)
+    }
+
+    @Test fun aLeaningPenWidensTheInk() {
+        val upright = leaning(0.0, 0.0, 1.0, 0.0)
+        val slanted = leaning(1.0, 0.0, 1.0, 0.0)
+        assertTrue(widthNear(slanted, 120.0, 0.0, 4.0) > widthNear(upright, 120.0, 0.0, 4.0) * 1.5f)
+        // …only as much as the dial asks: at 0 the lean leaves the width alone.
+        assertEquals(widthNear(upright, 120.0, 0.0, 4.0), widthNear(leaning(1.0, 0.0, 0.0, 0.0), 120.0, 0.0, 4.0), 1e-3f)
+    }
+
+    @Test fun aLeaningPenCarriesTheInkTowardTheLean() {
+        // Leaning toward +y (down the page): the ink's body lies below the line the tip draws.
+        val g = leaning(1.0, kotlin.math.PI / 2, 0.0, 1.0)
+        var mid = 0f
+        var count = 0
+        for (i in 0 until g.pointCount) {
+            if (g.centerline[2 * i] in 100f..140f) { mid += g.centerline[2 * i + 1]; count++ }
+        }
+        assertTrue(mid / count > 5f)
+    }
+
     @Test fun theLandingOpensFromItsTip() {
         // Setting straight off, the brush lands on its tip and spreads as it travels.
         val (xs, ys, ps, ts) = line(120, 0.8, pressure = 0.9)

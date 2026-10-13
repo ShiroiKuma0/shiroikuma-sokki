@@ -2,6 +2,7 @@ package com.xnotes.core.stroke
 
 import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.cos
 import kotlin.math.exp
 import kotlin.math.hypot
 import kotlin.math.max
@@ -138,6 +139,18 @@ object BrushEngine {
     /** Points the outline carries on over a lift-off drag. */
     const val DRAG_COVER = 4
 
+    /** Tilt off upright (radians) at which a leaning pen starts to press the brush's side, and at
+     *  which it has fully; and how quickly the lean is followed (ms). A pen held "upright" reads
+     *  4–17°. */
+    const val TILT_UPRIGHT = 0.26
+    const val TILT_FLAT = 0.96
+    const val TILT_TAU_MS = 40.0
+
+    /** At full lean and full strength the ink is this much wider, and its body this share of its
+     *  half-width off the tip. */
+    const val TILT_WIDEN = 1.0
+    const val TILT_SHIFT = 0.6
+
     /** Thinnest the brush goes, in content px. */
     const val TIP_HALF_WIDTH = 0.35
 
@@ -168,10 +181,15 @@ object BrushEngine {
         speedScale: Double,
         smoothScale: Double,
         finished: Boolean,
+        rawTilt: DoubleArray? = null,
+        rawLean: DoubleArray? = null,
+        tiltWidth: Double = 0.0,
+        tiltShift: Double = 0.0,
     ): StrokeGeometry = buildInk(
         rawX, rawY, rawP, rawT, baseWidth, pressureEnabled, m, gamma, entry, harai,
         pressureLow, pressureHigh, speedScale, smoothScale, finished,
         dry = 0.0, textured = false,
+        rawTilt = rawTilt, rawLean = rawLean, tiltWidth = tiltWidth, tiltShift = tiltShift,
     ).outline
 
     /**
@@ -179,6 +197,12 @@ object BrushEngine {
      * everything that asks where the stroke *is*) and the translucent strips that actually paint
      * it, a core and the hairs laid across it ([BrushTexture]). [dry] (0..1) is how readily the brush runs
      * dry into streaks.
+     *
+     * [rawTilt] is the pen's tilt off upright per sample (radians, 0..π/2) and [rawLean] the way it
+     * leans, as an angle in content space (radians, the direction from the tip toward the pen's top),
+     * both absent for a stroke written without them. A leaning pen presses the brush's side down:
+     * [tiltWidth] (0..1) is how much wider that makes the ink, and [tiltShift] (0..1) how far the
+     * ink spreads off the tip toward the lean, where the belly lies.
      */
     fun buildInk(
         rawX: DoubleArray,
@@ -198,6 +222,10 @@ object BrushEngine {
         finished: Boolean,
         dry: Double,
         textured: Boolean,
+        rawTilt: DoubleArray? = null,
+        rawLean: DoubleArray? = null,
+        tiltWidth: Double = 0.0,
+        tiltShift: Double = 0.0,
     ): BrushInk {
         val n = rawX.size
         if (n == 0) return BrushInk(StrokeGeometry.EMPTY, emptyList())
@@ -241,7 +269,34 @@ object BrushEngine {
             }
         }
 
-        // The width asked for: the press, narrowed by speed.
+        // How far the pen leans past upright (0..1), and which way (a unit vector), eased over time:
+        // the pen reports its tilt only when it changes, in whole degrees, so taken raw it steps.
+        val lean = DoubleArray(n)
+        val leanX = DoubleArray(n)
+        val leanY = DoubleArray(n)
+        val widen = tiltWidth.coerceIn(0.0, 1.0)
+        val shift = tiltShift.coerceIn(0.0, 1.0)
+        if (rawTilt != null && rawLean != null && rawTilt.size >= n && rawLean.size >= n && (widen > 0.0 || shift > 0.0)) {
+            for (i in 0 until n) {
+                val k = StrokeEngine.smoothstep(TILT_UPRIGHT, TILT_FLAT, rawTilt[i])
+                var vx = cos(rawLean[i])
+                var vy = sin(rawLean[i])
+                if (i > 0) {
+                    val e = 1.0 - exp(-max(times[i] - times[i - 1], 0.0) / TILT_TAU_MS)
+                    lean[i] = lean[i - 1] + (k - lean[i - 1]) * e
+                    vx = leanX[i - 1] + (vx - leanX[i - 1]) * e
+                    vy = leanY[i - 1] + (vy - leanY[i - 1]) * e
+                    val vl = hypot(vx, vy)
+                    if (vl > 1e-9) { vx /= vl; vy /= vl } else { vx = leanX[i - 1]; vy = leanY[i - 1] }
+                } else {
+                    lean[i] = k
+                }
+                leanX[i] = vx
+                leanY[i] = vy
+            }
+        }
+
+        // The width asked for: the press, narrowed by speed, widened by the pen's lean.
         val half = baseWidth / 2.0
         val floor = m.coerceIn(0.0, 1.0)
         val g = gamma.coerceIn(0.3, 4.0)
@@ -249,7 +304,8 @@ object BrushEngine {
         val speed = DoubleArray(n) { rate[it] * speedScale }
         val target = DoubleArray(n) { i ->
             half * (floor + (1.0 - floor) * q[i].pow(g)) *
-                (1.0 - SPEED_THIN * StrokeEngine.smoothstep(SPEED_LO, SPEED_HI, speed[i]))
+                (1.0 - SPEED_THIN * StrokeEngine.smoothstep(SPEED_LO, SPEED_HI, speed[i])) *
+                (1.0 + TILT_WIDEN * widen * lean[i])
         }
 
         // The width laid down: it reaches for the target over time — spreading slowly where the
@@ -309,6 +365,16 @@ object BrushEngine {
             h[i] = max(minHalf, next)
         }
 
+        if (shift > 0.0) {
+            // The belly lies off the tip toward the lean: the ink is carried that way by a share of
+            // its own width, so a slanted brush lays its body beside the line the tip draws.
+            for (i in 0 until n) {
+                val d = TILT_SHIFT * shift * lean[i] * h[i]
+                sx[i] += leanX[i] * d
+                sy[i] += leanY[i] * d
+            }
+        }
+
         if (n == 1) {
             val dot = StrokeGeometry(floatArrayOf(sx[0].toFloat(), sy[0].toFloat()), floatArrayOf(h[0].toFloat()))
             return BrushInk(dot, emptyList())
@@ -323,7 +389,6 @@ object BrushEngine {
         var py = sy
         var ph = h
         var pv = speed
-        var poolStart = -1
         var poolEnd = -1
         var tailStart = -1
         var flick = false
@@ -332,10 +397,6 @@ object BrushEngine {
             for (i in 1 until n) arc[i] = arc[i - 1] + hypot(sx[i] - sx[i - 1], sy[i] - sy[i - 1])
             val total = arc[n - 1]
             val reach = min(TAIL_REACH * baseWidth, 0.5 * total)
-
-            var s0 = 0
-            for (i in 0 until n) { if (arc[i] > reach) break; if (h[i] > h[s0]) s0 = i }
-            if (speed[s0] < POOL_SPEED) poolStart = s0
 
             var e0 = n - 1
             var hPool = 0.0
@@ -464,11 +525,9 @@ object BrushEngine {
         if (poolEnd >= 0 && tailStart < 0) {
             val m = poolEnd + 1
             px = px.copyOf(m); py = py.copyOf(m); ph = ph.copyOf(m); pv = pv.copyOf(m)
-            poolEnd = -1
         }
         // A landing is the brush's first footprint: it opens from its tip as it travels and as it
         // rests, never filled out to the width it reaches later.
-        poolStart = -1
         if (px.size >= 3) {
             // Footprints blend into each other: wherever the brush is wider than the stroke just
             // before or after it — the ball of a stop, a press mid-stroke — the stroke widens toward it
@@ -507,8 +566,6 @@ object BrushEngine {
             straighten(px, py, px.size - 1, -1, ph[px.size - 1])
             straighten(px, py, 0, 1, ph[0])
         }
-        // No end is drawn as a disc any more: every stop, a flick's included, is its footprints.
-        poolEnd = -1
         if (finished && tailStart < 0 && px.size >= 2) run {
             // A dot — a 丶 dabbed and lifted — is one round blot, however the hand slid while it
             // pressed: the ink it covers, gathered into the circle of the same area about its middle.
@@ -587,7 +644,7 @@ object BrushEngine {
         val outline = StrokeGeometry(centerline, halfWidths, leftRail, rightRail)
         if (!textured) return BrushInk(outline, emptyList())
         val seed = BrushTexture.seedOf(rawX[0], rawY[0])
-        return BrushInk(outline, BrushTexture.strips(px, py, tx, ty, ph, pv, baseWidth, dry, seed, poolStart, poolEnd, tailStart, flick, drag))
+        return BrushInk(outline, BrushTexture.strips(px, py, tx, ty, ph, pv, baseWidth, dry, seed, tailStart, flick, drag))
     }
 
     /** The lift's half-width at fraction [t] (0..1) of the way along it from a pool of [hPool]: it
