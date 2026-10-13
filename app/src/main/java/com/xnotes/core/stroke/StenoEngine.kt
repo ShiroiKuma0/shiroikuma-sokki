@@ -60,10 +60,10 @@ object StenoEngine {
     const val DOT_TURN_MAX = 2.3 * PI
 
     /** A pressed knot's oval, in shaded widths: half its length and half its breadth along the
-     *  path the pen swept, which the ink's own width rounds out to a solid oval about 1.6 × 1.3
+     *  path the pen swept, which the ink's own width rounds out to a solid oval about 1.9 × 1.5
      *  shaded widths — the 太い結び of the textbook (žula). */
-    const val KNOT_A = 0.3
-    const val KNOT_B = 0.15
+    const val KNOT_A = 0.45
+    const val KNOT_B = 0.25
 
     /** The flattest a light knot's eye may be, as its breadth over its length. */
     const val KNOT_ROUND = 0.55

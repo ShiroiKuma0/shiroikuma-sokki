@@ -99,10 +99,19 @@ class AppStorageDocumentsProvider : DocumentsProvider() {
         return docIdFor(dest)
     }
 
-    private fun fileFor(documentId: String): File =
-        if (documentId == ROOT_DOC_ID) baseDir else File(baseDir, documentId.removePrefix("$ROOT_DOC_ID/"))
+    private fun fileFor(documentId: String): File = when {
+        documentId == TRASH_DOC_ID -> trashDir(context!!)
+        documentId.startsWith("$TRASH_DOC_ID/") -> File(trashDir(context!!), documentId.removePrefix("$TRASH_DOC_ID/"))
+        documentId == ROOT_DOC_ID -> baseDir
+        else -> File(baseDir, documentId.removePrefix("$ROOT_DOC_ID/"))
+    }
 
     private fun docIdFor(file: File): String {
+        val trash = trashDir(context!!)
+        if (file == trash) return TRASH_DOC_ID
+        if (file.absolutePath.startsWith(trash.absolutePath + File.separator)) {
+            return "$TRASH_DOC_ID/" + file.absolutePath.removePrefix(trash.absolutePath + File.separator)
+        }
         if (file == baseDir) return ROOT_DOC_ID
         return "$ROOT_DOC_ID/" + file.absolutePath.removePrefix(baseDir.absolutePath + File.separator)
     }
@@ -110,7 +119,7 @@ class AppStorageDocumentsProvider : DocumentsProvider() {
     private fun includeFile(cursor: MatrixCursor, documentId: String, file: File) {
         val isDir = file.isDirectory
         var flags = if (isDir) Document.FLAG_DIR_SUPPORTS_CREATE else Document.FLAG_SUPPORTS_WRITE
-        if (documentId != ROOT_DOC_ID) {
+        if (documentId != ROOT_DOC_ID && documentId != TRASH_DOC_ID) {
             flags = flags or Document.FLAG_SUPPORTS_DELETE or Document.FLAG_SUPPORTS_RENAME or
                 Document.FLAG_SUPPORTS_MOVE or Document.FLAG_SUPPORTS_COPY
         }
@@ -150,6 +159,10 @@ class AppStorageDocumentsProvider : DocumentsProvider() {
 
     companion object {
         private const val ROOT_DOC_ID = "root"
+
+        /** The id of Trash's own tree (fork): the app's internal storage, apart from the notes, so
+         *  deleting never leaves a folder behind in the notes directory. */
+        const val TRASH_DOC_ID = "trash"
         private const val DIR_NAME = "Notes"
 
         private val DEFAULT_ROOT_PROJECTION = arrayOf(
@@ -166,6 +179,15 @@ class AppStorageDocumentsProvider : DocumentsProvider() {
         fun rootDir(context: Context): File {
             val base = context.getExternalFilesDir(null) ?: context.filesDir
             return File(base, DIR_NAME).apply { if (!exists()) mkdirs() }
+        }
+
+        /** Where Trash keeps deleted items: internal storage, never shown in a file manager. */
+        fun trashDir(context: Context): File = File(context.filesDir, "trash").apply { if (!exists()) mkdirs() }
+
+        /** The SAF tree uri for [trashDir], so Trash reads its items with the same calls as the notes. */
+        fun trashTreeUri(context: Context): Uri {
+            trashDir(context)
+            return DocumentsContract.buildTreeDocumentUri(authority(context), TRASH_DOC_ID)
         }
 
         /** The SAF tree uri for that directory, usable as an explorer browse root. */
