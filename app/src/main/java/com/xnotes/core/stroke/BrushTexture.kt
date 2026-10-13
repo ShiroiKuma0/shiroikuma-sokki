@@ -37,9 +37,9 @@ class HairStrip(
  * hairs are dark and merge into solid black; fast, they go light and the stroke turns grey and
  * streaked with them, edges first. The [dry] dial sets how far that goes.
  *
- * Where the brush slows into a stop, or rests as it lands, ink pools into a round blob. Hairs can't
- * draw that — they run along the stroke — so the ends get **caps**: a few stacked translucent discs
- * with ragged rims, solid in the middle and fuzzy at the edge, at the widest point near each end.
+ * The edges, and the round ends, break up into fine grain: toward the edge the hairs break into
+ * short lengths and stop, and short fibres stipple the outer part, standing radially out of a round
+ * end — so a ball the brush stopped in is solid inside and grainy outward, never a disc.
  *
  * The hairs are laid along a **lagged direction** — the way the brush body points, trailing the
  * hand — so a dab or a wiggle can't swing them round an end. Everything is a pure function of the
@@ -64,33 +64,7 @@ object BrushTexture {
     const val STRAY_ALPHA_SPREAD = 0.2
     const val STRAY_GAPS = 0.35
 
-    /** How far a lifted-out-of pool's teardrop lobe reaches past its radius, as a share of it. */
-    const val TEAR = 1.2
-
-    /** A lift shorter than [LEAN_MIN] of the pool's radius leaves it round; at [LEAN_FULL] it leans fully. */
-    const val LEAN_MIN = 0.3
-
-    /** A stroke shorter than this (brush widths) is a dot, all pool. */
-    const val DOT_WIDTHS = 0.6
-
-    /** How much further than an end's a dot's teardrop reaches. */
-    const val DOT_LEAN = 1.6
-    const val LEAN_FULL = 1.2
-
-    /** How narrowly that lobe gathers to its point (higher: a slimmer, sharper teardrop). */
-    const val TEAR_SHARPNESS = 6.0
-
-    /** A pool the brush lifts straight out of keeps its thick round end, with only a small, narrow
-     *  lift-off point on the way it was moving: how far that reaches past the rim (a share of the
-     *  radius) and how narrow it is. */
-    const val LIFTOFF_REACH = 0.35
-    const val LIFTOFF_SHARPNESS = 16.0
-
-    /** Corners: turns sharper than [CORNER_COS] (cosine) measured over [CORNER_SPAN] brush widths each side. */
-    const val CORNER_SPAN = 0.12
-    const val CORNER_COS = 0.55
-
-    /** A pool's cap radius, as a share of the width there: a little inside, under the hairs. */
+    /** Round the stop a lift leaves from, the hairs that stay behind end within this share of its width. */
     const val CAP_SHARE = 0.9
 
     /** Share of the hairs that drag on into a lift, and their strength there. */
@@ -147,30 +121,6 @@ object BrushTexture {
 
     /** Direction lag, in brush widths of travel. */
     const val LAG = 0.06
-
-    /** Cap discs: radii as shares of the cap radius, each disc's opacity, and the rim's raggedness. */
-    /** A pool's rings, outer rim to heart, as shares of its radius; the last is the opaque heart. */
-    private val CAP_RINGS = doubleArrayOf(1.02, 0.98, 0.94, 0.9, 0.86, 0.82, 0.78)
-    const val CAP_RIM = 0.2
-
-    /** A pool's rim strands: how many per px of radius, how far out they reach as a share of the
-     *  radius, how much they bend, how many points describe each, and their (faint) opacity. */
-    const val STRANDS_PER_PX = 2.5
-    const val STRANDS_MIN = 60
-    const val STRANDS_MAX = 500
-    const val STRAND_MIN = 0.98
-    const val STRAND_SPAN = 0.1
-    const val STRAND_BEND = 0.25
-    const val STRAND_POINTS = 5
-    const val STRAND_ALPHA = 0.08
-    const val STRAND_ALPHA_SPREAD = 0.14
-
-    /** How far (radians, either way) a strand slants off the radial, so the rim tangles. */
-    const val STRAND_SLANT = 0.6
-
-    /** The heart's opacity, and how ragged the rings' edges are. */
-    const val CAP_HEART = 1.0
-    const val CAP_RAGGED = 0.025
 
     /** Edge grain: one fibre per [FIBRE_STEP] brush widths along each edge (at least [FIBRE_STEP_MIN]
      *  px), each a short tip [FIBRE_LEN] plus up to [FIBRE_LEN_SPREAD] of the half-width long, lying
@@ -251,13 +201,11 @@ object BrushTexture {
         baseWidth: Double,
         dry: Double,
         seed: Int,
-        poolStart: Int,
-        poolEnd: Int,
         tailStart: Int,
         flick: Boolean = false,
         drag: DoubleArray? = null,
     ): List<HairStrip> {
-        val out = ArrayList(stripsOf(sx, sy, tx, ty, h, speed, baseWidth, dry, seed, poolStart, poolEnd, tailStart, flick))
+        val out = ArrayList(stripsOf(sx, sy, tx, ty, h, speed, baseWidth, dry, seed, tailStart, flick))
         if (drag != null) drag(drag[0], drag[1], drag[2], drag[3], drag[4], seed + 12007, out)
         return out
     }
@@ -314,8 +262,6 @@ object BrushTexture {
         baseWidth: Double,
         dry: Double,
         seed: Int,
-        poolStart: Int,
-        poolEnd: Int,
         tailStart: Int,
         flick: Boolean,
     ): List<HairStrip> {
@@ -431,57 +377,7 @@ object BrushTexture {
         var hMax = 0.0
         for (v in h) hMax = max(hMax, v)
 
-        // The pools go down first, a little inside the ink, so the hairs fray over their rims and they
-        // read as ink gathered under the brush, not as discs laid on the stroke.
-        val out = ArrayList<HairStrip>(HAIRS + 2 * FRINGE + 2 * STRANDS_MAX)
-        // Sharp turns need nothing of their own: the brush's footprints already fill the corner.
-        // The end pools go on last, over the hair ends there, so an end is one piece of ink: an
-        // opaque heart covering where the hairs stop, softening out through a graded rim.
-        val ends = ArrayList<HairStrip>()
-        if (poolStart in 0 until n) cap(sx[poolStart], sy[poolStart], h[poolStart] * CAP_SHARE, rho[poolStart], seed + 7001, ends)
-        if (poolEnd in 0 until n) {
-            // A pool the brush lifts out of is a teardrop leaning the way it left.
-            var ex = 0.0
-            var ey = 0.0
-            if (!tipped && total < DOT_WIDTHS * w) {
-                // A stroke that is all pool — a 丶 — leans the way it was dragged.
-                val dx = sx[n - 1] - sx[0]
-                val dy = sy[n - 1] - sy[0]
-                val dl = hypot(dx, dy)
-                val r = max(h[poolEnd], 1e-6)
-                if (dl >= LEAN_MIN * 0.5 * r) {
-                    // A dot is all teardrop: it leans hard, further than any end does.
-                    val lean = DOT_LEAN * min(1.0, dl / (0.5 * LEAN_FULL * r))
-                    ex = dx / dl * lean
-                    ey = dy / dl * lean
-                }
-            }
-            if (tipped && !flick) {
-                val lx = sx[n - 1] - sx[poolEnd]
-                val ly = sy[n - 1] - sy[poolEnd]
-                val ll = hypot(lx, ly)
-                // Lean only as far as the lift is long against the pool: a small wiggle stays round.
-                val r = max(h[poolEnd], 1e-6)
-                val lean = min(1.0, ll / (LEAN_FULL * r))
-                if (ll > 1e-6 && ll >= LEAN_MIN * r) { ex = lx / ll * lean; ey = ly / ll * lean }
-            }
-            var sharp = TEAR_SHARPNESS
-            if (ex == 0.0 && ey == 0.0 && !tipped) {
-                // The way the brush arrived, over about the pool's radius.
-                val reach = max(h[poolEnd], 1.0)
-                var a = poolEnd
-                while (a > 0 && arc[poolEnd] - arc[a] < reach) a--
-                val dx = sx[poolEnd] - sx[a]
-                val dy = sy[poolEnd] - sy[a]
-                val dl = hypot(dx, dy)
-                if (dl > 1e-6) {
-                    ex = dx / dl * LIFTOFF_REACH / TEAR
-                    ey = dy / dl * LIFTOFF_REACH / TEAR
-                    sharp = LIFTOFF_SHARPNESS
-                }
-            }
-            cap(sx[poolEnd], sy[poolEnd], h[poolEnd] * CAP_SHARE, rho[poolEnd], seed + 9001, ends, ex, ey, sharp)
-        }
+        val out = ArrayList<HairStrip>(HAIRS + 2 * FRINGE + 2 * STRAY)
 
         // The round ends: the footprint each belongs to — the first point whose disc reaches the tip —
         // and which way it faces. Inside them the hairs stop at a ragged core well short of the rim,
@@ -714,7 +610,6 @@ object BrushTexture {
             rim(sx[c], sy[c], endDx[e], endDy[e], h[c], rho[c], w, seed + 7919 * (e + 1), out)
         }
 
-        out += ends
         return out
     }
 
@@ -754,99 +649,6 @@ object BrushTexture {
                 left[2 * j] = (x + uy * ww).toFloat(); left[2 * j + 1] = (y - ux * ww).toFloat()
                 right[2 * j] = (x - uy * ww).toFloat(); right[2 * j + 1] = (y + ux * ww).toFloat()
                 a[j] = (alpha0 * (1.0 - 0.7 * j)).toFloat()
-            }
-            out += HairStrip(left, right, a)
-        }
-    }
-
-    /** A pooled end: stacked translucent discs with ragged rims, solid in the middle, fuzzy outside. */
-    private fun cap(
-        cx: Double,
-        cy: Double,
-        r: Double,
-        density: Double,
-        seed: Int,
-        out: MutableList<HairStrip>,
-        leanX: Double = 0.0,
-        leanY: Double = 0.0,
-        sharpness: Double = TEAR_SHARPNESS,
-    ) {
-        val leans = leanX != 0.0 || leanY != 0.0
-        // Teardrop: the radius swells toward the lean, a narrowing lobe the tail's hairs carry on from;
-        // the lean's length (0..1) scales how far.
-        val leanLen = hypot(leanX, leanY)
-        fun lobe(ax: Double, ay: Double): Double {
-            if (!leans) return 1.0
-            val c = ((ax * leanX + ay * leanY) / leanLen).coerceAtLeast(0.0)
-            return 1.0 + TEAR * leanLen * c.pow(sharpness)
-        }
-        if (r < 1.0) return
-        val segs = (r * 1.2).toInt().coerceIn(32, 240)
-
-        // Rings from the outer rim in to the heart: faint and ragged outside, opaque at the heart.
-        for ((layer, share) in CAP_RINGS.withIndex()) {
-            val heart = layer == CAP_RINGS.lastIndex
-            val alpha = (if (heart) CAP_HEART * (0.75 + 0.25 * density) else CAP_RIM * (0.5 + 0.5 * density)).toFloat()
-            val ragged = if (heart) CAP_RAGGED * 0.5 else CAP_RAGGED * 1.6
-            val left = FloatArray(2 * (segs + 1))
-            val right = FloatArray(2 * (segs + 1))
-            for (k in 0..segs) {
-                val th = PI * k / segs // left edge along the top half, right edge along the bottom
-                val freq = if (heart) 0.4 else 1.3
-                val ragTop = 1.0 + ragged * (2.0 * noise(seed + layer * 53, k * freq) - 1.0)
-                val ragBot = 1.0 + ragged * (2.0 * noise(seed + layer * 53 + 1, k * freq) - 1.0)
-                val rr = r * share
-                val c = cos(th)
-                val sn = sin(th)
-                val rt = rr * ragTop * lobe(c, -sn)
-                val rb = rr * ragBot * lobe(c, sn)
-                left[2 * k] = (cx + rt * c).toFloat()
-                left[2 * k + 1] = (cy - rt * sn).toFloat()
-                right[2 * k] = (cx + rb * c).toFloat()
-                right[2 * k + 1] = (cy + rb * sn).toFloat()
-            }
-            out += HairStrip(left, right, FloatArray(segs + 1) { alpha })
-        }
-
-        // A faint fuzz of short, curling strands round the rim — a haze, never spikes.
-        val count = (r * STRANDS_PER_PX).toInt().coerceIn(STRANDS_MIN, STRANDS_MAX)
-        val pts = STRAND_POINTS
-        for (k in 0 until count) {
-            val q1 = unit(seed + 31, k * 5 + 1)
-            val q2 = unit(seed + 31, k * 5 + 2)
-            val q3 = unit(seed + 31, k * 5 + 3)
-            val q4 = unit(seed + 31, k * 5 + 4)
-            val q5 = unit(seed + 31, k * 5 + 5)
-            val th = 2.0 * PI * (k + q1) / count
-            val rx = cos(th)
-            val ry = sin(th)
-            val slant = (q4 - 0.5) * 2.0 * STRAND_SLANT
-            val dx = rx * cos(slant) - ry * sin(slant)
-            val dy = rx * sin(slant) + ry * cos(slant)
-            val lb = lobe(rx, ry)
-            val from = r * lb * (0.82 + 0.08 * q3)
-            val reach = r * lb * (STRAND_MIN + STRAND_SPAN * q2)
-            if (reach <= from) continue
-            val bend = (q4 - 0.5) * STRAND_BEND
-            val hw = max(MIN_HAIR, r * (0.002 + 0.003 * q5))
-            val alpha = ((STRAND_ALPHA + STRAND_ALPHA_SPREAD * q1) * (0.5 + 0.5 * density)).toFloat()
-            val left = FloatArray(2 * pts)
-            val right = FloatArray(2 * pts)
-            val a = FloatArray(pts)
-            for (m in 0 until pts) {
-                val t = m.toDouble() / (pts - 1)
-                val rootX = cx + rx * from
-                val rootY = cy + ry * from
-                val len = (reach - from) * t
-                val side = bend * t * t * r
-                val px = rootX + dx * len - dy * side
-                val py = rootY + dy * len + dx * side
-                val w = hw * (1.0 - 0.8 * t)
-                left[2 * m] = (px + dy * w).toFloat()
-                left[2 * m + 1] = (py - dx * w).toFloat()
-                right[2 * m] = (px - dy * w).toFloat()
-                right[2 * m + 1] = (py + dx * w).toFloat()
-                a[m] = (alpha * (1.0 - t)).toFloat()
             }
             out += HairStrip(left, right, a)
         }

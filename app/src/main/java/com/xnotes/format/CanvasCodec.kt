@@ -200,6 +200,8 @@ class CanvasCodec(private val imageCodec: ImageCodec, private val textMeasurer: 
         // Per-sample time is only meaningful to the speed pen, so it's written as an optional
         // 4th element only then; every other stroke serializes without it.
         val withTime = s.config.speedStrength > 0.0 || s.tool == Tool.BRUSH
+        // The pen's tilt and lean, as a 5th and 6th element, only on a brush stroke written with them.
+        val withTilt = s.tool == Tool.BRUSH && s.hasTilt
         j.beginObject()
         j.name("kind").value(Stroke.KIND)
         j.name("tool").value(s.tool.id)
@@ -240,13 +242,15 @@ class CanvasCodec(private val imageCodec: ImageCodec, private val textMeasurer: 
             j.name("brush_entry").value(s.config.brushEntry)
             j.name("brush_harai").value(s.config.brushHarai)
             j.name("brush_dry").value(s.config.brushDry)
+            j.name("brush_tilt_width").value(s.config.brushTiltWidth)
+            j.name("brush_tilt_shift").value(s.config.brushTiltShift)
         }
         j.endObject()
         // Samples are almost all of a dense manifest's bytes, so they go out through [JsonWrite.samplePoint], which rounds them: 0.01
         // content px and 0.001 pressure are far below anything visible. Rounding is idempotent,
         // so re-saving an untouched canvas stays byte-stable.
         j.name("samples").beginArray()
-        for (sm in s.samples) j.samplePoint(sm.x, sm.y, sm.pressure, if (withTime) sm.t else null)
+        for (sm in s.samples) j.samplePoint(sm.x, sm.y, sm.pressure, if (withTime) sm.t else null, if (withTilt) sm.tilt else null, if (withTilt) sm.lean else null)
         j.endArray()
         if (withTime) j.name("speed_scale").value(s.speedScale)
         // The zoom the stroke was drawn at, as the scale on the ink low-pass lengths, so it
@@ -699,6 +703,8 @@ class CanvasCodec(private val imageCodec: ImageCodec, private val textMeasurer: 
         var brushEntry: Double? = null
         var brushHarai: Double? = null
         var brushDry: Double? = null
+        var brushTiltWidth: Double? = null
+        var brushTiltShift: Double? = null
     }
 
     private fun parseItem(p: JsonPull, items: MutableList<CanvasItem>, pending: MutableList<PendingImage>, glue: GlueRead) {
@@ -801,9 +807,11 @@ class CanvasCodec(private val imageCodec: ImageCodec, private val textMeasurer: 
             brushEntry = c?.brushEntry ?: def.brushEntry,
             brushHarai = c?.brushHarai ?: def.brushHarai,
             brushDry = c?.brushDry ?: def.brushDry,
+            brushTiltWidth = c?.brushTiltWidth ?: def.brushTiltWidth,
+            brushTiltShift = c?.brushTiltShift ?: def.brushTiltShift,
         )
         val stroke = Stroke(tool, config, emptyList(), s.speedScale, s.straight, s.smoothScale)
-        s.samples?.let { stroke.setSamples(it.xs, it.ys, it.ps, it.ts, it.n) }
+        s.samples?.let { stroke.setSamples(it.xs, it.ys, it.ps, it.ts, it.n, it.gs, it.ls) }
         return stroke
     }
 
@@ -1005,6 +1013,8 @@ class CanvasCodec(private val imageCodec: ImageCodec, private val textMeasurer: 
                 "brush_entry" -> c.brushEntry = doubleOrNull(p)
                 "brush_harai" -> c.brushHarai = doubleOrNull(p)
                 "brush_dry" -> c.brushDry = doubleOrNull(p)
+                "brush_tilt_width" -> c.brushTiltWidth = doubleOrNull(p)
+                "brush_tilt_shift" -> c.brushTiltShift = doubleOrNull(p)
                 else -> p.skipValue()
             }
         }
@@ -1018,7 +1028,7 @@ class CanvasCodec(private val imageCodec: ImageCodec, private val textMeasurer: 
             return null
         }
         val out = RawSamples()
-        val tuple = DoubleArray(4)
+        val tuple = DoubleArray(6)
         p.beginArray()
         while (p.hasNext()) {
             if (p.peek() != JsonPull.Token.BEGIN_ARRAY) {
@@ -1027,13 +1037,16 @@ class CanvasCodec(private val imageCodec: ImageCodec, private val textMeasurer: 
             }
             // NaN back from [JsonPull.nextSample] means the slot held nothing readable, which is
             // not the same as a zero: pressure then defaults to full, and the 4th element
-            // (relative ms, only speed-pen strokes carry it) to none.
+            // (relative ms, only speed-pen and brush strokes carry it) to none, as do the 5th and 6th
+            // (the pen's tilt and lean, only on brush strokes written with a pen that reports them).
             p.nextSample(tuple)
             out.add(
                 if (tuple[0].isNaN()) 0.0 else tuple[0],
                 if (tuple[1].isNaN()) 0.0 else tuple[1],
                 if (tuple[2].isNaN()) 1.0 else tuple[2],
                 if (tuple[3].isNaN()) 0.0 else tuple[3],
+                if (tuple[4].isNaN()) 0.0 else tuple[4],
+                if (tuple[5].isNaN()) 0.0 else tuple[5],
             )
         }
         p.endArray()

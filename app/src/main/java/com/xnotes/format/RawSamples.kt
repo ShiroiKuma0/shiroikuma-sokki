@@ -21,22 +21,33 @@ internal class RawSamples {
     var ts: DoubleArray? = null
         private set
 
+    /** The pen's tilt and lean, allocated together only once a sample carries a tilt. */
+    var gs: DoubleArray? = null
+        private set
+    var ls: DoubleArray? = null
+        private set
+
     var n = 0
         private set
 
-    fun add(x: Double, y: Double, pressure: Double, time: Double) {
+    fun add(x: Double, y: Double, pressure: Double, time: Double, tilt: Double = 0.0, lean: Double = 0.0) {
         if (n == xs.size) {
             val c = n * 2
             xs = xs.copyOf(c)
             ys = ys.copyOf(c)
             ps = ps.copyOf(c)
             ts = ts?.copyOf(c)
+            gs = gs?.copyOf(c)
+            ls = ls?.copyOf(c)
         }
         xs[n] = x
         ys[n] = y
         ps[n] = pressure
         if (time != 0.0 && ts == null) ts = DoubleArray(xs.size) // earlier samples were zero
         ts?.set(n, time)
+        if (tilt != 0.0 && gs == null) { gs = DoubleArray(xs.size); ls = DoubleArray(xs.size) }
+        gs?.set(n, tilt)
+        ls?.set(n, lean)
         n++
     }
 

@@ -825,7 +825,10 @@ class InteractionController(
         }
         when {
             effectiveTool == Tool.PAN -> beginPan(vx, vy, fromPenButton = buttonHeld && penButtonTool == Tool.PAN)
-            effectiveTool.isStroke -> beginDraw(content, resolvePressure(e, 0, toolType), effectiveTool, e.eventTime, Pt(vx, vy))
+            effectiveTool.isStroke -> {
+                readTilt(e, 0, -1)
+                beginDraw(content, resolvePressure(e, 0, toolType), effectiveTool, e.eventTime, Pt(vx, vy))
+            }
             effectiveTool == Tool.ERASER -> {
                 clearSelection()
                 erasingWithFinger = toolType == MotionEvent.TOOL_TYPE_FINGER
@@ -1079,8 +1082,9 @@ class InteractionController(
         snapRunStartEdge = null
         snapCurrentEdge = null
         snapPenViewport = null
-        val first = state.toPageSpace(pageIndex, state.viewportToContent(magnetize(downViewport)))
-        stroke.addSample(Sample(first.x, first.y, pressure)) // first sample: t = 0
+        val firstViewport = magnetize(downViewport)
+        val first = state.toPageSpace(pageIndex, state.viewportToContent(firstViewport))
+        stroke.addSample(withTilt(Sample(first.x, first.y, pressure), drawTool, firstViewport, pageIndex)) // first sample: t = 0
         liveStroke = stroke
         strokePageIndex = pageIndex
         mode = PointerMode.DRAW
@@ -1102,6 +1106,7 @@ class InteractionController(
         val idx = e.findPointerIndex(drawingPointerId)
         if (idx < 0) return
         for (h in 0 until e.historySize) {
+            readTilt(e, idx, h)
             addStrokePoint(
                 e.getHistoricalX(idx, h).toDouble(),
                 e.getHistoricalY(idx, h).toDouble(),
@@ -1110,6 +1115,7 @@ class InteractionController(
                 force = false,
             )
         }
+        readTilt(e, idx, -1)
         addStrokePoint(
             e.getX(idx).toDouble(), e.getY(idx).toDouble(),
             if (drawingIsStylus) e.getPressure(idx).toDouble() else 1.0, e.eventTime, force = false,
@@ -1129,7 +1135,7 @@ class InteractionController(
         if (!stroke.straight) {
             val onPage = state.pageIndexAtContent(content)
             if (onPage != null && onPage != pi) {
-                handOverStroke(stroke, pi, onPage, content, pressure, timeMs)
+                handOverStroke(stroke, pi, onPage, content, vp, pressure, timeMs)
                 return
             }
         }
@@ -1153,7 +1159,7 @@ class InteractionController(
         if (force || last == null || Pt(last.x, last.y).manhattanTo(local) >= gate ||
             (stroke.tool == Tool.BRUSH && brushPressSample(last, pressure, t))
         ) {
-            stroke.addSample(Sample(local.x, local.y, pressure.coerceIn(0.0, 1.0), t))
+            stroke.addSample(withTilt(Sample(local.x, local.y, pressure.coerceIn(0.0, 1.0), t), stroke.tool, vp, pi))
         }
         // Real movement restarts the hold-to-snap clock; staying within the slop lets it mature,
         // so the snap fires only once the pen has actually come to rest. (Sub-slop jitter is ignored
@@ -1178,6 +1184,7 @@ class InteractionController(
         fromPage: Int,
         toPage: Int,
         content: Pt,
+        viewport: Pt,
         pressure: Double,
         timeMs: Long,
     ) {
@@ -1195,11 +1202,14 @@ class InteractionController(
         next.finished = false
         if (last != null) {
             val bridge = state.toPageSpace(toPage, state.fromPageSpace(fromPage, Pt(last.x, last.y)))
-            next.addSample(Sample(bridge.x, bridge.y, last.pressure, last.t))
+            next.addSample(last.copy(x = bridge.x, y = bridge.y))
         }
         val local = state.toPageSpace(toPage, content)
         next.addSample(
-            Sample(local.x, local.y, pressure.coerceIn(0.0, 1.0), (timeMs - strokeStartTimeMs).toDouble()),
+            withTilt(
+                Sample(local.x, local.y, pressure.coerceIn(0.0, 1.0), (timeMs - strokeStartTimeMs).toDouble()),
+                next.tool, viewport, toPage,
+            ),
         )
         liveStroke = next
         strokePageIndex = toPage
@@ -1245,6 +1255,7 @@ class InteractionController(
         cancelDwell()
         dwellEligible = false
         val idx = e.findPointerIndex(drawingPointerId).coerceAtLeast(0)
+        readTilt(e, idx, -1)
         addStrokePoint(
             e.getX(idx).toDouble(), e.getY(idx).toDouble(),
             if (drawingIsStylus) e.getPressure(idx).toDouble() else 1.0, e.eventTime, force = true,
@@ -4132,6 +4143,30 @@ class InteractionController(
         mode = PointerMode.IDLE
     }
 
+    /** The pen's tilt off upright (radians) and its orientation as Android reports it (radians,
+     *  clockwise from screen-up, the way the pen points), at the sample being added. */
+    private var penTilt = 0.0
+    private var penOrientation = 0.0
+
+    /** Reads the pen's tilt at pointer [idx], history entry [h] (or the current one when negative). */
+    private fun readTilt(e: MotionEvent, idx: Int, h: Int) {
+        if (!drawingIsStylus) {
+            penTilt = 0.0
+            return
+        }
+        penTilt = (if (h < 0) e.getAxisValue(MotionEvent.AXIS_TILT, idx) else e.getHistoricalAxisValue(MotionEvent.AXIS_TILT, idx, h)).toDouble()
+        penOrientation = (if (h < 0) e.getAxisValue(MotionEvent.AXIS_ORIENTATION, idx) else e.getHistoricalAxisValue(MotionEvent.AXIS_ORIENTATION, idx, h)).toDouble()
+    }
+
+    /** [s] carrying the pen's tilt and the way it leans in page [pi]'s space, when [tool] is the 筆
+     *  brush, the only one that reads them; [vp] is where the sample is on screen. */
+    private fun withTilt(s: Sample, tool: Tool, vp: Pt, pi: Int): Sample {
+        if (tool != Tool.BRUSH || penTilt <= 0.0) return s
+        val a = state.toPageSpace(pi, state.viewportToContent(vp))
+        val b = state.toPageSpace(pi, state.viewportToContent(leanPoint(vp, penOrientation)))
+        return s.copy(tilt = penTilt, lean = atan2(b.y - a.y, b.x - a.x))
+    }
+
     private fun resolvePressure(e: MotionEvent, pointerIndex: Int, toolType: Int): Double =
         if (toolType == MotionEvent.TOOL_TYPE_STYLUS) e.getPressure(pointerIndex).toDouble().coerceIn(0.0, 1.0) else 1.0
 
@@ -4522,6 +4557,13 @@ class InteractionController(
     }
 
     companion object {
+        /**
+         * A point on screen from [vp] toward the pen's top, given its [orientation] as Android
+         * reports it — clockwise from screen-up, the way the pen points, tip-ward — so mapping both
+         * into a page gives the lean there, however the view is zoomed or turned.
+         */
+        fun leanPoint(vp: Pt, orientation: Double): Pt = Pt(vp.x - sin(orientation) * 64.0, vp.y + cos(orientation) * 64.0)
+
         const val MIN_SAMPLE_DIST = 1.0
 
         /** 筆 brush: a pen held still still counts once its press has moved this much… */

@@ -113,6 +113,8 @@ fun ToolConfigPopup(editor: ToolPopupHost, tool: Tool, onDismiss: () -> Unit) {
     var entry by remember { mutableStateOf((base.brushEntry * 100).toFloat()) }
     var harai by remember { mutableStateOf((base.brushHarai * 100).toFloat()) }
     var dryness by remember { mutableStateOf((base.brushDry * 100).toFloat()) }
+    var tiltWidth by remember { mutableStateOf((base.brushTiltWidth * 100).toFloat()) }
+    var tiltShift by remember { mutableStateOf((base.brushTiltShift * 100).toFloat()) }
 
     fun emit() {
         val m = if (tool == Tool.BRUSH) thinnest.toDouble() / 100.0 else ToolConversions.sensitivityToMinFactor(sensitivity.toDouble())
@@ -145,6 +147,8 @@ fun ToolConfigPopup(editor: ToolPopupHost, tool: Tool, onDismiss: () -> Unit) {
                 brushEntry = if (tool == Tool.BRUSH) entry.toDouble() / 100.0 else base.brushEntry,
                 brushHarai = if (tool == Tool.BRUSH) harai.toDouble() / 100.0 else base.brushHarai,
                 brushDry = if (tool == Tool.BRUSH) dryness.toDouble() / 100.0 else base.brushDry,
+                brushTiltWidth = if (tool == Tool.BRUSH) tiltWidth.toDouble() / 100.0 else base.brushTiltWidth,
+                brushTiltShift = if (tool == Tool.BRUSH) tiltShift.toDouble() / 100.0 else base.brushTiltShift,
             ),
         )
     }
@@ -220,6 +224,10 @@ fun ToolConfigPopup(editor: ToolPopupHost, tool: Tool, onDismiss: () -> Unit) {
                 SliderRow(stringResource(R.string.caption_release_sweep), harai, 0f..100f) { harai = it; emit() }
                 // かすれ: how readily the ink breaks into dry streaks.
                 SliderRow(stringResource(R.string.caption_dryness), dryness, 0f..100f) { dryness = it; emit() }
+                // A leaning pen presses the brush's side down: how much wider that makes the ink, and
+                // how far the ink's body lies off the tip toward the lean.
+                SliderRow(stringResource(R.string.caption_tilt_width), tiltWidth, 0f..100f) { tiltWidth = it; emit() }
+                SliderRow(stringResource(R.string.caption_tilt_shift), tiltShift, 0f..100f) { tiltShift = it; emit() }
             }
             if (tool == Tool.CALLIGRAPHY) {
                 SliderRow(stringResource(R.string.caption_multiplier), multiplier, 1f..5f) { multiplier = it; emit() }

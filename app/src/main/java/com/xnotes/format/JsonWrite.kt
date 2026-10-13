@@ -15,7 +15,7 @@ internal class JsonWrite(private val out: Writer) {
     private var depth = 0
     private var afterName = false
 
-    /** Scratch for [samplePoint]; big enough for four numbers, their separators and the brackets. */
+    /** Scratch for [samplePoint]; big enough for six numbers, their separators and the brackets. */
     private val buf = CharArray(128)
 
     fun beginObject(): JsonWrite {
@@ -93,22 +93,27 @@ internal class JsonWrite(private val out: Writer) {
      * fixed-point form cannot reproduce: a magnitude where [Double.toString] turns to scientific
      * notation, or a fractional time.
      */
-    fun samplePoint(x: Double, y: Double, pressure: Double, time: Double?): JsonWrite {
+    fun samplePoint(x: Double, y: Double, pressure: Double, time: Double?, tilt: Double? = null, lean: Double? = null): JsonWrite {
+        // Tilt and lean ride in the 5th and 6th slots, which need the 4th: a tilted sample always has a time.
+        val t = if (tilt != null && time == null) 0.0 else time
         var n = 0
         n = fixed(n, x, 100L)
         if (n >= 0) n = fixed(n, y, 100L)
         if (n >= 0) n = fixed(n, pressure, 1000L)
-        if (n >= 0 && time != null) n = whole(n, time)
-        if (n < 0) return samplePointSlow(x, y, pressure, time)
+        if (n >= 0 && t != null) n = whole(n, t)
+        if (n >= 0 && tilt != null) n = fixed(n, tilt, 1000L)
+        if (n >= 0 && tilt != null) n = fixed(n, lean ?: 0.0, 1000L)
+        if (n < 0) return samplePointSlow(x, y, pressure, t, tilt, lean)
         element()
         buf[n++] = ']'
         out.write(buf, 0, n)
         return this
     }
 
-    private fun samplePointSlow(x: Double, y: Double, pressure: Double, time: Double?): JsonWrite {
+    private fun samplePointSlow(x: Double, y: Double, pressure: Double, time: Double?, tilt: Double?, lean: Double?): JsonWrite {
         beginArray().value(round(x, 100.0)).value(round(y, 100.0)).value(round(pressure, 1000.0))
         if (time != null) value(time)
+        if (tilt != null) value(round(tilt, 1000.0)).value(round(lean ?: 0.0, 1000.0))
         return endArray()
     }
 

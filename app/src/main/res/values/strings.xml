@@ -14,6 +14,8 @@
     <string name="caption_entry_press">Entry press</string>
     <string name="caption_release_sweep">Release sweep</string>
     <string name="caption_dryness">Dryness</string>
+    <string name="caption_tilt_width">Tilt width</string>
+    <string name="caption_tilt_shift">Tilt shift</string>
     <string name="tool_highlighter">Highlighter</string>
     <string name="tool_eraser">Eraser</string>
     <string name="tool_pan">Pan</string>
