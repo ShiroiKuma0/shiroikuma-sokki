@@ -6,18 +6,57 @@
 
 **A handwriting-first notebook for pen and stylus, tuned for shorthand.**
 
-A fork of [xnotes](https://github.com/shardulvs/xnotes-android) with **major additions**: 速記
-shorthand paper as a page ruling, a measurable pen-pressure response, a fully settable house theme,
-and an eight-category backup with identity-checked sister-app automation.
+A fork of [xnotes](https://github.com/shardulvs/xnotes-android) with **major additions**: a Czech
+shorthand pen that corrects what it reads into textbook form, 速記 shorthand paper as a page ruling,
+a Japanese ink brush, a measurable pen-pressure response, a fully settable house theme, and a
+nine-category backup with identity-checked sister-app automation.
 
 Installs **side-by-side** with upstream (app id `shiroikuma.sokki`).
 
-**📥 Latest release: [`0.9.0+002`](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases)
+**📥 Latest release: [`0.9.0+059`](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases)
 
 <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-orange?style=flat-square" alt="License" /></a>
 <img src="https://img.shields.io/badge/Android-8.0%2B-3ddc84?style=flat-square&logo=android&logoColor=white" alt="Android 8.0+" />
 
 </div>
+
+---
+
+## ✒️ A shorthand pen that reads what you write
+
+The **速記 pen** writes Czech (Herout–Mikulík) shorthand the way the textbook draws it: hairlines,
+and a shaded swell only on a pressed downstroke — shading means *a*, so it is a switch, not a
+gradient. Knots come out as clean ovals. **New Stenography Note** opens a page of 速記 paper with
+the pen armed.
+
+At every pen-up the stroke is **steadied** (tremor out, the slant set to the book's, extremes
+snapped to the lines) and then **read**: an element the recognizer is *certain* of is redrawn in
+its textbook form, in its own span only, so nothing else on the line moves. Your writing is never
+overwritten — the correction is a layer over it, and any element can be flipped back to how you
+wrote it.
+
+- **A catalogue of 104 elements**, traced from the textbook over their scans, each with its
+  reading, category and form; browse, inspect, edit, merge and split them, and try them on a test
+  pad that reads exactly as a note does.
+- **It learns your hand.** A drill takes you through the elements one by one; a review steps
+  through what was left uncorrected, where one tap says what a stretch is, makes it a new element,
+  or replaces it — and every answer is used at the very next pen-up.
+- **Element marks** show the whole page at a glance: cyan under every corrected element,
+  red-orange under everything that stands as written, a ring at each element's ends. The note
+  remembers whether they are on.
+- **It is held to a test.** A corpus of real recorded writing is scored element by element on
+  every build: a wrong element costs far more than a missed one, and nothing outside a recognized
+  element may move.
+
+---
+
+## 🖌 筆 — a Japanese ink brush
+
+A stroke tool for kanji written large. Width comes from the press and the hand's speed over time,
+so a stroke lands on its tip, swells into round stops, flicks out of はね and sweeps out in 払い.
+The ink is drawn as translucent hair strips that break into specks at the edge, and the pen's tilt
+widens the ink and shifts it toward the lean. Every stroke is a pure function of its samples, so a
+note reopens exactly as written.
 
 ---
 
@@ -107,8 +146,8 @@ dividers.
 
 ## 💾 Backup, restore, and 保存復元 automation
 
-Eight logically split categories — theme, preferences, tools and toolbars, view defaults, text
-defaults, explorer, imported fonts, imported code theme — exported as one ZIP,
+Nine logically split categories — theme, preferences, tools and toolbars, view defaults, text
+defaults, explorer, imported fonts, the 速記 elements, imported code theme — exported as one ZIP,
 written `.part` and renamed only once complete, so a killed export can never leave something a
 restore would trust.
 

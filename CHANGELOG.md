@@ -3,6 +3,96 @@
 All notable fork changes on top of upstream [xnotes](https://github.com/shardulvs/xnotes-android).
 Versions read `<upstream version>+NNN`, where `NNN` counts our builds on that upstream base.
 
+## 0.9.0+059 — 2026-10-20
+
+Built on upstream **v0.9.0** (`versionCode` 61), as 0.9.0+002.
+
+### 速記 — a Czech shorthand pen
+
+- **The Stenography pen** draws hairlines and shades only a pressed downstroke: past *Press at* a
+  downstroke swells to one shaded width however hard the pen presses, upstrokes and sideways
+  strokes stay hairlines, and each shaded run is a spindle that eases in and out. A run too short
+  to be a real downstroke never shades.
+- **Knots** are redrawn in their textbook form: a small loop becomes an even oval eye, or a solid
+  oval (now about 1.9 × 1.5 shaded widths) when the press peaks in it. The turning is measured
+  over a fixed chord, so it holds at any zoom.
+- **New Stenography Note** in the + menu: a paged note on 速記 paper sized like 白い熊's sheet
+  (14⅓ bands down A4), opening with the pen armed. A note ruled as 速記 paper is always treated as
+  a stenography note.
+
+### 速記 correction
+
+- **Layer 1, the clean-up, at every pen-up:** tremor smoothed with corners kept, the slant sheared
+  (never rotated) from the hand's habit to the book's 24°, and extremes snapped to the meaningful
+  heights. The hand's slant and size are read afresh in each note, and trusted only after enough
+  writing.
+- **Layer 2, recognition:** cuts at real corners and turns, DTW against every element's form and
+  your own examples, read at its absolute height on the lines; an element is redrawn only when it
+  beats every other reading — and plain writing — by an absolute margin. A recognized element
+  replaces only its own span; everything else stays exactly the cleaned hand.
+- **The correction is a layer, never an edit:** a new `"steno_fix"` key per stroke holds each
+  sample's move and the stretches (clean / element / replaced, shown corrected or as written).
+  Older builds skip it and show the writing as written. It rides along with moves, rotations,
+  resizes, partial erases and undo.
+- **Original view** (toolbar): tap an element to flip it between corrected and as written. The
+  correction popup turns auto-correction on or off, sets the clean-up strengths, and shows a whole
+  page as written.
+- **Element marks** (toolbar): cyan mist under every corrected element, red-orange under all
+  writing that stands as written (an element switched back, writing no element was read in, a
+  stroke never corrected), and a ring at each element's ends. Saved in the note
+  (`"steno_marks"`); drawn only on screen, never in exports, thumbnails or prints. The icon's
+  long-press card carries a colour key.
+
+### 速記 catalogue, review and drill
+
+- **104 built-in elements** (`assets/glyphs`), traced from the textbook over its scans, with
+  readings, categories, heights on the lines and the scan crop each came from. Untouched built-ins
+  follow later corrections of the shipped set.
+- **The catalogue page:** every element on its paper, grouped and searchable; a detail view with
+  stroke direction, the scan underneath (as a negative), and your examples overlaid; one-tap shape
+  fixes, rename, recategorise, delete or move examples, merge and split; a test pad that reads
+  exactly like pen-up; and a studio for tracing new elements over a scan.
+- **The review:** steps through the writing the correction left alone, or any writing tapped on
+  the page; handles snap to cuts and every 0.05 u between them. Answer *Is…* (becomes an example),
+  *New element*, *Not an element*, or *Replace* (write it right in a pad) — each taught to the
+  catalogue at once.
+- **The drill:** one element at a time on pinch-zoomable 速記 paper; each writing is read as pen-up
+  reads it, shown right or wrong, and filed as an example. Examples keep their height on the lines
+  and where they came from.
+- **All 速記 surfaces on our paper:** black, the blue ruling, yellow ink.
+- **Backup:** a new *速記 elements* category carries the catalogue through Export/Import.
+- **A corpus gate test** scores recognition on recorded writing at every build (right / wrong /
+  missed, joins cut, damage outside recognized elements) and fails on a wrong element in writing
+  never tuned on.
+
+### 筆 — a Japanese ink brush
+
+- **A new stroke tool, BRUSH (筆):** width from the press and the hand's speed over time, round
+  stops, はね and 払い, and one round dot for a short dab; translucent hair-strip texture with
+  speckled edges and dragged hairs on the lift. Width 1–1000; popup settings for response, entry
+  press, harai length and dryness. Older builds open a brush stroke as a pen of the same width.
+- **Tilt:** the pen's tilt and lean direction are recorded per sample (the fifth and sixth sample
+  numbers, skipped by older builds) and kept through undo, copy, move, partial erase, page crossing
+  and rotation. *Tilt width* widens a leaning pen's ink, *Tilt shift* moves it toward the lean.
+
+### Language
+
+- **Japanese captions** for every caption (`values-ja`), and an app-language choice (System /
+  English / 日本語) atop the 白い熊 速記 UI page. Upstream's Chinese stays in the tree for clean
+  syncs but is filtered out of the APK and the per-app language list.
+
+### Fixes & behaviour
+
+- **The save copy dropped the note's 速記 flags**: autosave writes a snapshot of the note, and
+  both it and the deep copy left out the stenography flag (and now the marks setting), so a note
+  could lose being a stenography note after a restart. Both copies carry them.
+- **Trash lives in internal storage**, its own tree in the app-storage documents provider, so
+  deleting no longer leaves a hidden `.xnote/trash` folder in the notes directory. Items move by
+  copy-then-delete (only once the copy is whole); an old in-folder Trash is moved in on first
+  listing.
+- **Toolbar long-press hints:** every button names itself and says what it does; a long press on
+  the hamburger opens the 白い熊 速記 UI page.
+
 ## 0.9.0+002 — 2026-10-08
 
 A fix release on the same upstream **v0.9.0** base (`versionCode` 61) as 0.9.0+001.
