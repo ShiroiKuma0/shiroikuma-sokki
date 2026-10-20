@@ -91,7 +91,7 @@ carries `pressureLow` / `pressureHigh` (the band, stretched back over 0..1 by
 
 ### Backup, and the 保存復元 contract
 
-`SokkiBackup` is the one export engine: eight categories, `manifest.json` + `<id>.json` per category
+`SokkiBackup` is the one export engine: nine categories, `manifest.json` + `<id>.json` per category
 plus the font/code-theme file stores, written `.part` and renamed only when complete. The panel and
 `automation/StateExportReceiver` are both thin callers of it — **never duplicate export logic into
 the receiver**. The receiver gates on `AutomationAuth` and hands off to `StateExportService`
