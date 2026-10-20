@@ -60,6 +60,7 @@ import com.xnotes.core.model.deepCopy
 import com.xnotes.core.model.snapshot
 import com.xnotes.core.model.insets
 import com.xnotes.core.model.resolvedPageColor
+import com.xnotes.core.model.resolvedTemplate
 import com.xnotes.core.text.CellIndex
 import com.xnotes.core.text.CharStyle
 import com.xnotes.core.text.DeadKeyLatch
@@ -238,6 +239,21 @@ enum class Pane { PRIMARY, SECONDARY }
 
 @Stable
 class Editor(context: Context, val pane: Pane = Pane.PRIMARY) : ToolPopupHost, SelectionMenuHost, LongPressMenuHost, TextEditHost, SwatchStore {
+
+    // 速記 recognition (fork): the reviewed catalogue, rebuilt only when the catalogue changes.
+    private var stenoCatalogueKey: List<Pair<String, Long>>? = null
+    private var stenoCatalogueCache: com.xnotes.core.steno.glyph.StenoCorrection.Catalogue? = null
+
+    private fun stenoCatalogue(): com.xnotes.core.steno.glyph.StenoCorrection.Catalogue? {
+        val glyphs = com.xnotes.platform.GlyphLibrary.items.toList().filter { it.reviewed }
+        val key = glyphs.map { it.id to it.modified }
+        if (key != stenoCatalogueKey) {
+            stenoCatalogueKey = key
+            stenoCatalogueCache = if (glyphs.isEmpty()) null else com.xnotes.core.steno.glyph.StenoCorrection.Catalogue(glyphs)
+        }
+        return stenoCatalogueCache
+    }
+
 
     private val appContext = context.applicationContext
 
@@ -2309,6 +2325,9 @@ class Editor(context: Context, val pane: Pane = Pane.PRIMARY) : ToolPopupHost, S
         controller.fingerDraws = p.fingerDraws
         controller.zoomLockPan = p.zoomLockPan
         controller.detectShapes = p.detectShapes
+        controller.stenoCorrect = p.stenoCorrect
+        controller.stenoParams = com.xnotes.core.steno.HandCleanup.Params(p.stenoSteady, p.stenoSlant, p.stenoSlantDegrees)
+        controller.stenoCatalogue = { stenoCatalogue() }
         flowText.markdownInput = p.markdownInput
         flowText.slashCommands = p.slashCommands
         controller.penButtonTool = if (p.penButtonTool == "none") null else (Tool.fromId(p.penButtonTool) ?: Tool.ERASER)
@@ -2336,6 +2355,230 @@ class Editor(context: Context, val pane: Pane = Pane.PRIMARY) : ToolPopupHost, S
             editor.flowText.markdownInput = on
         }
     }
+
+    // --- 速記 correction (fork) ---
+
+    /** Whether 速記 writing in a stenography note is corrected as it is written. */
+    var stenoCorrect by mutableStateOf(settings.prefs.stenoCorrect)
+        private set
+
+    /** Whether the open note is a stenography note, where the correction items show. */
+    var stenoNote by mutableStateOf(false)
+        private set
+
+    /** Original view: taps flip corrected 速記 writing between corrected and as written. */
+    var stenoViewMode by mutableStateOf(false)
+        private set
+
+    /** The correction settings now in force. */
+    val stenoPrefs: Preferences get() = settings.prefs
+
+    /** Sets the correction preferences, applying them to both panes and persisting them. */
+    fun setStenoPrefs(correct: Boolean, steady: Double, slant: Double, slantDegrees: Double) {
+        settings = settings.copy(
+            prefs = settings.prefs.copy(
+                stenoCorrect = correct, stenoSteady = steady, stenoSlant = slant,
+                stenoSlantDegrees = slantDegrees,
+            ),
+        )
+        settingsRepo.save(settings)
+        for (editor in listOfNotNull(this, sibling)) {
+            editor.stenoCorrect = correct
+            editor.controller.stenoCorrect = correct
+            editor.controller.stenoParams = com.xnotes.core.steno.HandCleanup.Params(steady, slant, slantDegrees)
+        }
+    }
+
+    /** Whether the page shows its 速記 marks: a mist under every element, corrected or as written. */
+    var stenoMarks by mutableStateOf(false)
+        private set
+
+    /**
+     * Turns the page's 速記 marks on or off. Only what is drawn changes, so it is no undo step; the
+     * note keeps the setting and reopens with it.
+     */
+    fun toggleStenoMarks() {
+        val doc = state.document
+        doc.stenoMarks = !doc.stenoMarks
+        stenoMarks = doc.stenoMarks
+        doc.dirty = true
+        state.invalidateAllCaches()
+        refreshContent()
+        view.requestRender()
+    }
+
+    /** Turns original view on or off. */
+    fun toggleStenoView() {
+        stenoViewMode = !stenoViewMode
+        controller.stenoViewMode = stenoViewMode
+    }
+
+    // --- 速記 review (fork): stepping through the writing correction left alone, and fixing it ---
+
+    /** One stretch of 速記 writing on a page, as the review lists it. */
+    class StenoReviewItem(
+        val pageIndex: Int,
+        val stroke: com.xnotes.core.model.Stroke,
+        val from: Int,
+        val to: Int,
+        val kind: com.xnotes.core.steno.FixKind,
+        val glyph: String?,
+        val reading: String?,
+    )
+
+    /**
+     * The current page's 速記 stretches, in writing order: with [onlyUnfixed], those not recognized
+     * and not yet reviewed (and long enough to matter); otherwise every segment of every stroke.
+     */
+    fun stenoReviewItems(onlyUnfixed: Boolean): List<StenoReviewItem> {
+        val pi = state.currentPageIndex()
+        val page = state.document.pages.getOrNull(pi) ?: return emptyList()
+        val out = ArrayList<StenoReviewItem>()
+        for (item in page.items) {
+            val s = item as? com.xnotes.core.model.Stroke ?: continue
+            if (s.tool != com.xnotes.core.tools.Tool.STENO || s.locked || s.sampleCount < 4) continue
+            val fix = s.stenoFix
+            val segs = fix?.segments ?: listOf(com.xnotes.core.steno.FixSegment(0, s.sampleCount - 1))
+            for (seg in segs) {
+                if (onlyUnfixed) {
+                    if (seg.kind != com.xnotes.core.steno.FixKind.CLEAN || seg.checked) continue
+                    if (seg.to - seg.from < 3) continue
+                }
+                out += StenoReviewItem(pi, s, seg.from, seg.to, seg.kind, seg.glyph, seg.reading)
+            }
+        }
+        return out
+    }
+
+    /** The stretch last tapped on the page while the review was open; the panel turns to it. */
+    var stenoPicked by mutableStateOf<StenoReviewItem?>(null)
+
+    /** While the review is open, a tap on 速記 writing picks it (presses pan instead of drawing). */
+    fun setStenoPickMode(on: Boolean) {
+        controller.stenoPickMode = on
+        controller.onStenoPick = if (!on) null else { pageIndex, stroke, sample ->
+            val fix = stroke.stenoFix?.takeIf { it.size == stroke.sampleCount }
+            val seg = fix?.segments?.getOrNull(fix.segmentIndexAt(sample))
+                ?: com.xnotes.core.steno.FixSegment(0, stroke.sampleCount - 1)
+            stenoPicked = StenoReviewItem(pageIndex, stroke, seg.from, seg.to, seg.kind, seg.glyph, seg.reading)
+        }
+        if (!on) stenoPicked = null
+    }
+
+    /**
+     * The element a form written in the review's pad ([x]/[y], units) most looks like, when it is
+     * close enough to suggest — a suggestion the user confirms, so looser than the pen-up match.
+     */
+    fun stenoMatchForm(x: DoubleArray, y: DoubleArray): com.xnotes.core.steno.glyph.Glyph? {
+        val cat = stenoCatalogue() ?: return null
+        if (x.size < 3) return null
+        val best = cat.recognizer.rank(x, y, 0, x.size - 1, 2).firstOrNull() ?: return null
+        return if (best.error <= 2 * com.xnotes.core.steno.glyph.Recognizer.SURE_ERROR && best.margin > 0) cat.byId[best.id] else null
+    }
+
+    /** [stroke]'s samples and how the review sees them now. */
+    fun stenoStrokeView(item: StenoReviewItem): com.xnotes.core.steno.glyph.StenoEdit.View {
+        val (rx, ry) = stenoSamples(item.stroke)
+        return com.xnotes.core.steno.glyph.StenoEdit.View(rx, ry, item.stroke.stenoFix, stenoFrame(item.pageIndex))
+    }
+
+    private fun stenoSamples(s: com.xnotes.core.model.Stroke): Pair<DoubleArray, DoubleArray> =
+        DoubleArray(s.sampleCount) { s.xAt(it) } to DoubleArray(s.sampleCount) { s.yAt(it) }
+
+    /** Where writing taught from this note comes from, so the corpus gate can leave it out when it
+     *  scores this very note. */
+    private fun stenoOrigin(): String = com.xnotes.core.steno.glyph.GlyphExample.ofNote(state.document.created)
+
+    private fun stenoFrame(pageIndex: Int): com.xnotes.core.steno.LineFrame? =
+        state.document.pages.getOrNull(pageIndex)?.let { com.xnotes.core.steno.LineFrame.of(it, state.document) }
+
+    /** Outlines samples [from]..[to] of [item]'s stroke on the canvas, turning to its page; null clears. */
+    fun stenoFocus(item: StenoReviewItem?, from: Int = 0, to: Int = 0) {
+        if (item == null) { controller.stenoFocus = null; view.requestRender(); return }
+        if (state.currentPageIndex() != item.pageIndex) goToPage(item.pageIndex)
+        controller.stenoFocus = Triple(item.pageIndex, item.stroke, from..to)
+        view.requestRender()
+    }
+
+    private fun stenoApply(item: StenoReviewItem, after: com.xnotes.core.steno.StenoFix) {
+        controller.applyStenoFix(item.pageIndex, item.stroke, after)
+        refreshContent()
+        view.requestRender()
+    }
+
+    /** Samples [from]..[to] are element [g]; the writing becomes an example of it, so it is
+     *  recognized in this hand from now on. */
+    fun stenoAssign(item: StenoReviewItem, from: Int, to: Int, g: com.xnotes.core.steno.glyph.Glyph) {
+        val (rx, ry) = stenoSamples(item.stroke)
+        val frame = stenoFrame(item.pageIndex)
+        val ex = com.xnotes.core.steno.glyph.StenoEdit.example(rx, ry, frame, from, to, stenoOrigin())
+        com.xnotes.platform.GlyphLibrary.save(g.copy(examples = g.examples + ex))
+        stenoApply(item, com.xnotes.core.steno.glyph.StenoEdit.assign(rx, ry, item.stroke.stenoFix, frame, from, to, g))
+    }
+
+    /** Samples [from]..[to] are no element: the cleaned hand, and the review leaves them be. */
+    fun stenoPlain(item: StenoReviewItem, from: Int, to: Int) {
+        val (rx, ry) = stenoSamples(item.stroke)
+        stenoApply(item, com.xnotes.core.steno.glyph.StenoEdit.plain(rx, ry, item.stroke.stenoFix, stenoFrame(item.pageIndex), controller.stenoParams, from, to))
+    }
+
+    /**
+     * Samples [from]..[to] replaced by a form written in the pad ([fx]/[fy], units), or by element
+     * [g]'s when the pad is empty, fitted between the stretch's ends. With [teach], the writing also
+     * becomes an example of [g], so writing like it is redrawn as [g] at pen-up from now on.
+     */
+    fun stenoReplace(
+        item: StenoReviewItem, from: Int, to: Int, fx: DoubleArray?, fy: DoubleArray?, g: com.xnotes.core.steno.glyph.Glyph?,
+        teach: Boolean = false,
+    ) {
+        val (rx, ry) = stenoSamples(item.stroke)
+        if (teach && g != null) {
+            val ex = com.xnotes.core.steno.glyph.StenoEdit.example(rx, ry, stenoFrame(item.pageIndex), from, to, stenoOrigin())
+            com.xnotes.platform.GlyphLibrary.save(g.copy(examples = g.examples + ex))
+        }
+        val (x, y) = when {
+            fx != null && fy != null && fx.size > 1 -> fx to fy
+            g != null -> g.shape.paths.maxBy { it.size }.let { it.x to it.y }
+            else -> return
+        }
+        stenoApply(item, com.xnotes.core.steno.glyph.StenoEdit.replace(rx, ry, item.stroke.stenoFix, stenoFrame(item.pageIndex), from, to, x, y, g))
+    }
+
+    /**
+     * A new element named [reading], from the pad's form ([fx]/[fy], units) when one is written,
+     * else from samples [from]..[to] as written; the stretch becomes it.
+     */
+    fun stenoNewElement(
+        item: StenoReviewItem, from: Int, to: Int, fx: DoubleArray?, fy: DoubleArray?,
+        reading: String, category: com.xnotes.core.steno.glyph.GlyphCategory,
+    ) {
+        val (rx, ry) = stenoSamples(item.stroke)
+        val frame = stenoFrame(item.pageIndex)
+        val v = com.xnotes.core.steno.glyph.StenoEdit.View(rx, ry, item.stroke.stenoFix, frame)
+        val fromPad = fx != null && fy != null && fx.size > 1
+        val sx = if (fromPad) fx!! else DoubleArray(to - from + 1) { v.bux[from + it] }
+        val sy = if (fromPad) fy!! else DoubleArray(to - from + 1) { v.uy[from + it] }
+        val shape = com.xnotes.core.steno.glyph.StenoEdit.shapeOf(sx, sy)
+        val ex = com.xnotes.core.steno.glyph.StenoEdit.example(rx, ry, frame, from, to, stenoOrigin())
+        val g = com.xnotes.core.steno.glyph.Glyph(
+            id = com.xnotes.platform.GlyphLibrary.newId(), reading = reading.trim(), category = category,
+            shape = shape, source = null, examples = listOf(ex),
+        )
+        com.xnotes.platform.GlyphLibrary.save(g)
+        val after = if (fromPad) com.xnotes.core.steno.glyph.StenoEdit.replace(rx, ry, item.stroke.stenoFix, frame, from, to, sx, sy, g)
+        else com.xnotes.core.steno.glyph.StenoEdit.assign(rx, ry, item.stroke.stenoFix, frame, from, to, g)
+        stenoApply(item, after)
+    }
+
+    /** Shows the current page's corrected 速記 writing as written ([raw]) or corrected. */
+    fun setStenoPageRaw(raw: Boolean) {
+        controller.setStenoPageRaw(state.currentPageIndex(), raw)
+        refreshContent()
+        view.requestRender()
+    }
+
+    /** Whether the current page shows any corrected 速記 writing as written. */
+    fun stenoPageShowsRaw(): Boolean = controller.stenoPageShowsRaw(state.currentPageIndex())
 
     /** Whether "/" opens the command menu; the text tool's config popup toggles it. */
     var slashCommands by mutableStateOf(settings.prefs.slashCommands)
@@ -2801,7 +3044,16 @@ class Editor(context: Context, val pane: Pane = Pane.PRIMARY) : ToolPopupHost, S
      * onto the undo stack. The paper colour is filled live each frame, so a colour-only change just
      * repaints; a ruling change ([pages] are the pages it may affect) rebuilds their background caches.
      */
+    /** Whether any page of [doc] is ruled as 速記 paper. */
+    private fun isStenoRuled(doc: Document): Boolean =
+        doc.pages.any { it.resolvedTemplate(doc) == PagePattern.SOKKI.id }
+
     private fun applyStyleChange(prev: PageStyle, next: PageStyle, pages: List<Page>) {
+        // Ruled as 速記 paper, the note becomes a stenography note: correction and its tools (fork).
+        if (next.template == PagePattern.SOKKI.id && !state.document.steno) {
+            state.document.steno = true
+            stenoNote = true
+        }
         val rulingChanged = prev.template != next.template ||
             prev.patternColor != next.patternColor ||
             prev.spacing != next.spacing ||
@@ -5693,7 +5945,15 @@ class Editor(context: Context, val pane: Pane = Pane.PRIMARY) : ToolPopupHost, S
         state.invalidateAllCaches()
         state.relayout()
         installInitialView(doc.path) // this note's remembered view, or fit width — never the last note's
+        // A note ruled as 速記 paper is a stenography note even if its file lost the flag (fork);
+        // it is saved with it from now on.
+        if (!doc.steno && isStenoRuled(doc)) { doc.steno = true; doc.dirty = true }
         if (doc.steno) selectTool(Tool.STENO) // a stenography note opens ready to write shorthand
+        // The hand's habits are read afresh in each note.
+        com.xnotes.core.steno.HandSlant.clear()
+        com.xnotes.core.steno.HandSize.clear()
+        stenoNote = doc.steno
+        stenoMarks = doc.stenoMarks
         refreshContent()
         view.requestRender()
     }
@@ -7649,6 +7909,8 @@ class Editor(context: Context, val pane: Pane = Pane.PRIMARY) : ToolPopupHost, S
         flushAutosave()
         autosaveUri = null
         state.document = blankDocument().also { stampNewNoteDefaults(it) }
+        stenoNote = false
+        stenoMarks = false
         rebuildPdfSource() // close the outgoing note's PDF source (a blank note has none)
         adoptOpenPdf(state.document) // and reclaim its temp PDF file now it's released
         history.clear()

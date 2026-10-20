@@ -290,6 +290,30 @@ class DocumentCodecTest {
         assertFalse(roundTrip(Document.blank(count = 1)).steno)
     }
 
+    @Test fun aNoteKeepsItsStenoMarksThroughASave() {
+        val doc = Document.blank(count = 1)
+        doc.steno = true
+        doc.stenoMarks = true
+        assertTrue(roundTrip(doc).stenoMarks)
+        assertFalse(roundTrip(Document.blank(count = 1)).stenoMarks)
+    }
+
+    @Test fun aStenoStrokeKeepsItsCorrectionThroughASave() {
+        val doc = Document()
+        val page = Page(1240.0, 1754.0)
+        val stroke = Stroke(Tool.STENO, ToolDefaults.configFor(Tool.STENO), mutableListOf(Sample(1.0, 2.0, 0.5), Sample(3.0, 40.0, 0.7), Sample(5.0, 41.0, 0.4)))
+        stroke.stenoFix = com.xnotes.core.steno.StenoFix(
+            listOf(com.xnotes.core.steno.FixSegment(0, 1), com.xnotes.core.steno.FixSegment(2, 2, com.xnotes.core.steno.FixKind.GLYPH, raw = true, glyph = "g1", reading = "be")),
+            floatArrayOf(0.5f, -1.25f, 0f), floatArrayOf(0f, 2f, 0.01f),
+        )
+        page.items.add(stroke)
+        doc.pages.add(page)
+        val back = (roundTrip(doc).pages[0].items[0] as Stroke).stenoFix!!
+        assertEquals(stroke.stenoFix!!.segments, back.segments)
+        assertEquals(-1.25f, back.dx[1], 1e-6f)
+        assertEquals(2f, back.dy[1], 1e-6f)
+    }
+
     @Test fun aPenStrokeWritesNoStenoKeys() {
         val doc = Document()
         val page = Page(1240.0, 1754.0)

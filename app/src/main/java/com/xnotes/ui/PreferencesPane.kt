@@ -202,11 +202,7 @@ fun PreferencesPane(
                 }
                 Spacer(Modifier.width(4.dp))
             } else if (!sidebarOpen) {
-                Tooltip(stringResource(R.string.show_sidebar)) {
-                    IconButton(onClick = onShowSidebar) {
-                        Icon(XnotesIcons.menu, stringResource(R.string.show_sidebar), tint = palette.text.toComposeColor(), modifier = Modifier.size(24.dp))
-                    }
-                }
+                SidebarMenuButton(onShowSidebar)
                 Spacer(Modifier.width(4.dp))
             }
             Text(stringResource(R.string.preferences), color = palette.text.toComposeColor(), fontWeight = FontWeight.Bold, fontSize = 20.sp)

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 白い熊 速記 — 速記 correction: a shaded shorthand stroke with a spark beside it. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <path
+        android:strokeColor="#FF000000"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M8,78 C20,68 34,46 46,26 M28,92 C42,95 54,88 64,78" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M46,26 C35,48 29,70 28,92 C42,74 52,50 46,26 Z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M76,8 L80,22 L94,26 L80,30 L76,44 L72,30 L58,26 L72,22 Z" />
+</vector>

@@ -82,6 +82,7 @@ fun SokkiUiPane(editor: Editor, onImportFont: () -> Unit, onClosePage: () -> Uni
     var pickingColor by remember { mutableStateOf<ColorSlot?>(null) }
     var pickingFont by remember { mutableStateOf(false) }
     var showExim by remember { mutableStateOf(false) }
+    var language by remember { mutableStateOf(com.xnotes.platform.AppLanguage.current(ctx)) }
     var automationOn by remember { mutableStateOf(AutomationAuth.enabled(ctx)) }
     var requireToken by remember { mutableStateOf(AutomationAuth.requireToken(ctx)) }
     var token by remember { mutableStateOf(AutomationAuth.token(ctx)) }
@@ -110,7 +111,15 @@ fun SokkiUiPane(editor: Editor, onImportFont: () -> Unit, onClosePage: () -> Uni
         Modifier.fillMaxSize().background(palette.bg.toComposeColor()),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 40.dp),
     ) {
-        item { SectionHeader("Export / Import", first = true) }
+        item { SectionHeader("Language", first = true) }
+        items2(com.xnotes.platform.AppLanguage.TAGS) { tag ->
+            LanguageRow(1, tag, selected = tag == language) {
+                (ctx as? android.app.Activity)?.let { com.xnotes.platform.AppLanguage.set(it, tag) }
+                language = com.xnotes.platform.AppLanguage.current(ctx)
+            }
+        }
+
+        item { SectionHeader("Export / Import") }
         item {
             NavRow(
                 1, "Export / Import…",
@@ -606,6 +615,24 @@ private fun SwitchRow(level: Int, label: String, about: String, checked: Boolean
                 checkedTrackColor = palette.accent.toComposeColor(),
             ),
         )
+    }
+}
+
+/** One language the app can be shown in; [tag] "" follows the phone. */
+@Composable
+private fun LanguageRow(level: Int, tag: String, selected: Boolean, onClick: () -> Unit) {
+    val palette = LocalPalette.current
+    val (name, about) = when (tag) {
+        "en" -> "English" to "Every caption and explanation in English."
+        "ja" -> "日本語" to "すべての表示を日本語で。"
+        else -> "System" to "Follow the phone's language."
+    }
+    RowScaffold(level, onClick = onClick) {
+        Column(Modifier.weight(1f)) {
+            Text(name, fontSize = 15.sp, color = palette.text.toComposeColor())
+            Text(about, fontSize = 11.sp, color = palette.textDim.toComposeColor())
+        }
+        if (selected) Text("✓", fontSize = 18.sp, color = palette.accent.toComposeColor())
     }
 }
 

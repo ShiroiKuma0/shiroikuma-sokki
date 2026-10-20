@@ -85,6 +85,7 @@ fun InfiniteToolbar(
         sections.forEachIndexed { index, section ->
             if (index > 0) Separator()
             for (entry in section.visibleEntries) {
+                androidx.compose.runtime.CompositionLocalProvider(LocalToolbarHint provides stringResource(entry.item.hintRes)) {
                 when (val item = entry.item) {
                     ToolbarItem.HOME -> ToolbarIcon(XnotesIcons.prev, stringResource(R.string.toolbar_home)) { onOpenBackstage() }
                     // A name has no room down a side rail.
@@ -182,6 +183,7 @@ fun InfiniteToolbar(
 
                     // Everything else belongs to the paged bar; a canvas layout never holds one.
                     else -> Unit
+                }
                 }
             }
         }

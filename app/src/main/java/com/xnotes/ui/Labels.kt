@@ -69,6 +69,10 @@ val ToolbarItem.labelRes: Int
         ToolbarItem.CALLIGRAPHY -> R.string.tool_calligraphy
         ToolbarItem.BRUSH -> R.string.tool_brush
         ToolbarItem.STENO -> R.string.tool_steno
+        ToolbarItem.STENO_FIX -> R.string.toolbar_steno_fix
+        ToolbarItem.STENO_VIEW -> R.string.toolbar_steno_view
+        ToolbarItem.STENO_MARKS -> R.string.toolbar_steno_marks
+        ToolbarItem.STENO_REVIEW -> R.string.toolbar_steno_review
         ToolbarItem.SPEED -> R.string.tool_speed
         ToolbarItem.TAPER -> R.string.tool_taper
         ToolbarItem.HIGHLIGHTER -> R.string.tool_highlighter
@@ -97,6 +101,52 @@ val ToolbarItem.labelRes: Int
         ToolbarItem.COLORS -> R.string.toolbar_colours
         ToolbarItem.WAYPOINTS -> R.string.toolbar_waypoints
         ToolbarItem.MINIMAP -> R.string.toolbar_minimap
+    }
+
+/** What each toolbar item does, shown under its name on a long press (fork). */
+@get:StringRes
+val ToolbarItem.hintRes: Int
+    get() = when (this) {
+        ToolbarItem.HOME -> R.string.toolbar_hint_home
+        ToolbarItem.SIDEBAR -> R.string.toolbar_hint_sidebar
+        ToolbarItem.PEN -> R.string.toolbar_hint_pen
+        ToolbarItem.DASHED -> R.string.toolbar_hint_dashed
+        ToolbarItem.CALLIGRAPHY -> R.string.toolbar_hint_calligraphy
+        ToolbarItem.BRUSH -> R.string.toolbar_hint_brush
+        ToolbarItem.STENO -> R.string.toolbar_hint_steno
+        ToolbarItem.STENO_FIX -> R.string.toolbar_hint_steno_fix
+        ToolbarItem.STENO_VIEW -> R.string.toolbar_hint_steno_view
+        ToolbarItem.STENO_MARKS -> R.string.toolbar_hint_steno_marks
+        ToolbarItem.STENO_REVIEW -> R.string.toolbar_hint_steno_review
+        ToolbarItem.SPEED -> R.string.toolbar_hint_speed
+        ToolbarItem.TAPER -> R.string.toolbar_hint_taper
+        ToolbarItem.HIGHLIGHTER -> R.string.toolbar_hint_highlighter
+        ToolbarItem.ERASER -> R.string.toolbar_hint_eraser
+        ToolbarItem.PAN -> R.string.toolbar_hint_pan
+        ToolbarItem.SELECT -> R.string.toolbar_hint_select
+        ToolbarItem.LASSO -> R.string.toolbar_hint_lasso
+        ToolbarItem.SCREENSHOT -> R.string.toolbar_hint_screenshot
+        ToolbarItem.WAND -> R.string.toolbar_hint_wand
+        ToolbarItem.SHAPE -> R.string.toolbar_hint_shape
+        ToolbarItem.RULER -> R.string.toolbar_hint_ruler
+        ToolbarItem.TEXT -> R.string.toolbar_hint_text
+        ToolbarItem.TEXT_BOX -> R.string.toolbar_hint_text_box
+        ToolbarItem.MARKUP -> R.string.toolbar_hint_markup
+        ToolbarItem.IMAGE -> R.string.toolbar_hint_image
+        ToolbarItem.UNDO -> R.string.toolbar_hint_undo
+        ToolbarItem.REDO -> R.string.toolbar_hint_redo
+        ToolbarItem.PAGE_NAV -> R.string.toolbar_hint_page_nav
+        ToolbarItem.STYLES -> R.string.toolbar_hint_styles
+        ToolbarItem.MARGINS -> R.string.toolbar_hint_margins
+        ToolbarItem.VIEW -> R.string.toolbar_hint_view
+        ToolbarItem.ZOOM -> R.string.toolbar_hint_zoom
+        ToolbarItem.FIT -> R.string.toolbar_hint_fit
+        ToolbarItem.ZOOM_LOCK -> R.string.toolbar_hint_zoom_lock
+        ToolbarItem.FULLSCREEN -> R.string.toolbar_hint_fullscreen
+        ToolbarItem.COLORS -> R.string.toolbar_hint_colors
+        ToolbarItem.WAYPOINTS -> R.string.toolbar_hint_waypoints
+        ToolbarItem.MINIMAP -> R.string.toolbar_hint_minimap
+        ToolbarItem.TITLE -> R.string.toolbar_title
     }
 
 @get:StringRes

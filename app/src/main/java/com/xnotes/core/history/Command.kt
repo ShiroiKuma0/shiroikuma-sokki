@@ -44,6 +44,21 @@ interface Command {
     fun touchedMarkups(): List<Pair<Page, TextMarkup>> = emptyList()
 }
 
+/**
+ * Swap a 速記 stroke's correction layer (fork): showing a stretch as written or corrected, or a new
+ * correction. The stroke's samples are not touched.
+ */
+class ReplaceStrokeFix(
+    private val page: Page,
+    private val stroke: com.xnotes.core.model.Stroke,
+    private val before: com.xnotes.core.steno.StenoFix?,
+    private val after: com.xnotes.core.steno.StenoFix?,
+) : Command {
+    override fun redo() { stroke.stenoFix = after }
+    override fun undo() { stroke.stenoFix = before }
+    override fun touched(locate: (CanvasItem) -> Page?) = listOf(page to stroke)
+}
+
 /** Append an item to a page (finishing a stroke, pasting/inserting, new text). */
 class AddItem(private val page: Page, private val item: CanvasItem) : Command {
     override fun redo() {

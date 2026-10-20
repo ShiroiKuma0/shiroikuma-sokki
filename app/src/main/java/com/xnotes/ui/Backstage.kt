@@ -165,7 +165,34 @@ import kotlinx.coroutines.withTimeout
 import kotlin.math.roundToInt
 
 /** Which pane the backstage shows on the right. */
-enum class BackstageView { HOME, PREFERENCES, SOKKI_UI, ABOUT, TRASH }
+enum class BackstageView { HOME, PREFERENCES, SOKKI_UI, ABOUT, TRASH, GLYPHS }
+
+/** Opens the 白い熊 速記 UI page: what a long press on a sidebar (hamburger) button does (fork). */
+internal val LocalOpenSokkiUi = androidx.compose.runtime.staticCompositionLocalOf<() -> Unit> { {} }
+
+/** The hamburger that shows the sidebar; a long press opens the 白い熊 速記 UI page (fork). */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+internal fun SidebarMenuButton(
+    onClick: () -> Unit,
+    description: String = stringResource(R.string.show_sidebar),
+    side: TipSide = LocalTipSide.current,
+) {
+    val palette = LocalPalette.current
+    val openSokkiUi = LocalOpenSokkiUi.current
+    Tooltip(description, side = side) {
+        Box(
+            Modifier.size(48.dp).clip(CircleShape).combinedClickable(role = Role.Button, onLongClick = openSokkiUi, onClick = onClick),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(XnotesIcons.menu, description, tint = palette.text.toComposeColor(), modifier = Modifier.size(24.dp))
+        }
+    }
+}
+
+/** The 速記 element catalogue's sidebar icon: the shorthand-correction glyph (fork). */
+@Composable
+private fun stenoIcon(): ImageVector = ImageVector.vectorResource(R.drawable.ic_steno_fix)
 
 /** Whether the Home explorer is awaiting a new file/folder name. */
 /** [STENO] is a paged note like [FILE], but on 速記 shorthand paper. */
@@ -341,63 +368,66 @@ private fun BackstageContent(
         }
     }
 
-    if (compact) {
-        Box(Modifier.fillMaxSize().background(palette.bg.toComposeColor())) {
-            BackstageMain(
-                Modifier.fillMaxSize(), editor, view, compact, drawerOpen, { animateClose = true; drawerOpen = true }, { selectView(BackstageView.HOME) },
-                calls, createMode, { createMode = it }, onImportCodeTheme, onImportFont, link, { selectView(BackstageView.PREFERENCES) },
-            )
-            AnimatedVisibility(
-                visible = drawerOpen,
-                enter = fadeIn(animationSpec = tween(SIDEBAR_ANIM_MS)),
-                exit = if (animateClose) fadeOut(animationSpec = tween(SIDEBAR_ANIM_MS)) else ExitTransition.None,
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                Box(Modifier.fillMaxSize().background(palette.materialColors.scrim.withAlpha(82).toComposeColor()).clickable { dismissDrawer() })
+    // A long press on any sidebar button opens the 白い熊 速記 UI page (fork).
+    androidx.compose.runtime.CompositionLocalProvider(LocalOpenSokkiUi provides { selectView(BackstageView.SOKKI_UI) }) {
+        if (compact) {
+            Box(Modifier.fillMaxSize().background(palette.bg.toComposeColor())) {
+                BackstageMain(
+                    Modifier.fillMaxSize(), editor, view, compact, drawerOpen, { animateClose = true; drawerOpen = true }, { selectView(BackstageView.HOME) },
+                    calls, createMode, { createMode = it }, onImportCodeTheme, onImportFont, link, { selectView(BackstageView.PREFERENCES) },
+                )
+                AnimatedVisibility(
+                    visible = drawerOpen,
+                    enter = fadeIn(animationSpec = tween(SIDEBAR_ANIM_MS)),
+                    exit = if (animateClose) fadeOut(animationSpec = tween(SIDEBAR_ANIM_MS)) else ExitTransition.None,
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    Box(Modifier.fillMaxSize().background(palette.materialColors.scrim.withAlpha(82).toComposeColor()).clickable { dismissDrawer() })
+                }
+                AnimatedVisibility(
+                    visible = drawerOpen,
+                    enter = slideInHorizontally(animationSpec = tween(SIDEBAR_ANIM_MS), initialOffsetX = { -it }),
+                    exit = if (animateClose) slideOutHorizontally(animationSpec = tween(SIDEBAR_ANIM_MS), targetOffsetX = { -it }) else ExitTransition.None,
+                ) {
+                    BackstageSidebar(Modifier.width(DRAWER_WIDTH), nav, dismissDrawer)
+                }
             }
-            AnimatedVisibility(
-                visible = drawerOpen,
-                enter = slideInHorizontally(animationSpec = tween(SIDEBAR_ANIM_MS), initialOffsetX = { -it }),
-                exit = if (animateClose) slideOutHorizontally(animationSpec = tween(SIDEBAR_ANIM_MS), targetOffsetX = { -it }) else ExitTransition.None,
-            ) {
-                BackstageSidebar(Modifier.width(DRAWER_WIDTH), nav, dismissDrawer)
-            }
-        }
-    } else {
-        // Expanding pushes the explorer along with the panel; collapsing hands it the room at once and the panel
-        // folds away over it, as the old sidebar did, since resizing the grid on every frame is what a fold costs.
-        // The width is read only in layout, so neither direction recomposes anything.
-        val width = animateDpAsState(if (railed) RAIL_WIDTH else SIDEBAR_WIDTH, tween(SIDEBAR_ANIM_MS), label = "sidebarWidth")
-        Box(Modifier.fillMaxSize().background(palette.bg.toComposeColor())) {
-            // A navigation surface is always on screen here, so the panes never need their own menu button.
-            BackstageMain(
-                Modifier.fillMaxSize().layout { measurable, constraints ->
-                    val inset = (if (railed) RAIL_WIDTH else width.value).roundToPx().coerceIn(0, constraints.maxWidth)
-                    val w = constraints.maxWidth - inset
-                    val placeable = measurable.measure(constraints.copy(minWidth = w, maxWidth = w))
-                    layout(constraints.maxWidth, placeable.height) { placeable.place(inset, 0) }
-                },
-                editor, view, compact, true, { setRailed(false) }, { selectView(BackstageView.HOME) },
-                calls, createMode, { createMode = it }, onImportCodeTheme, onImportFont, link, { selectView(BackstageView.PREFERENCES) },
-            )
-            // Both stay composed so a fold never pays to build one; only the current one is measured and placed.
-            Layout(
-                content = {
-                    BackstageRail(Modifier.width(RAIL_WIDTH), nav) { setRailed(false) }
-                    BackstageSidebar(Modifier.width(SIDEBAR_WIDTH), nav) { setRailed(true) }
-                },
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .layout { measurable, constraints ->
-                        val w = width.value.roundToPx().coerceIn(constraints.minWidth, constraints.maxWidth)
+        } else {
+            // Expanding pushes the explorer along with the panel; collapsing hands it the room at once and the panel
+            // folds away over it, as the old sidebar did, since resizing the grid on every frame is what a fold costs.
+            // The width is read only in layout, so neither direction recomposes anything.
+            val width = animateDpAsState(if (railed) RAIL_WIDTH else SIDEBAR_WIDTH, tween(SIDEBAR_ANIM_MS), label = "sidebarWidth")
+            Box(Modifier.fillMaxSize().background(palette.bg.toComposeColor())) {
+                // A navigation surface is always on screen here, so the panes never need their own menu button.
+                BackstageMain(
+                    Modifier.fillMaxSize().layout { measurable, constraints ->
+                        val inset = (if (railed) RAIL_WIDTH else width.value).roundToPx().coerceIn(0, constraints.maxWidth)
+                        val w = constraints.maxWidth - inset
                         val placeable = measurable.measure(constraints.copy(minWidth = w, maxWidth = w))
-                        layout(w, placeable.height) { placeable.place(0, 0) }
-                    }
-                    .background(palette.panel.toComposeColor())
-                    .clipToBounds(),
-            ) { measurables, constraints ->
-                val shown = measurables[if (railed) 0 else 1].measure(Constraints(maxHeight = constraints.maxHeight, minHeight = constraints.maxHeight))
-                layout(constraints.maxWidth, constraints.maxHeight) { shown.place(0, 0) }
+                        layout(constraints.maxWidth, placeable.height) { placeable.place(inset, 0) }
+                    },
+                    editor, view, compact, true, { setRailed(false) }, { selectView(BackstageView.HOME) },
+                    calls, createMode, { createMode = it }, onImportCodeTheme, onImportFont, link, { selectView(BackstageView.PREFERENCES) },
+                )
+                // Both stay composed so a fold never pays to build one; only the current one is measured and placed.
+                Layout(
+                    content = {
+                        BackstageRail(Modifier.width(RAIL_WIDTH), nav) { setRailed(false) }
+                        BackstageSidebar(Modifier.width(SIDEBAR_WIDTH), nav) { setRailed(true) }
+                    },
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .layout { measurable, constraints ->
+                            val w = width.value.roundToPx().coerceIn(constraints.minWidth, constraints.maxWidth)
+                            val placeable = measurable.measure(constraints.copy(minWidth = w, maxWidth = w))
+                            layout(w, placeable.height) { placeable.place(0, 0) }
+                        }
+                        .background(palette.panel.toComposeColor())
+                        .clipToBounds(),
+                ) { measurables, constraints ->
+                    val shown = measurables[if (railed) 0 else 1].measure(Constraints(maxHeight = constraints.maxHeight, minHeight = constraints.maxHeight))
+                    layout(constraints.maxWidth, constraints.maxHeight) { shown.place(0, 0) }
+                }
             }
         }
     }
@@ -488,6 +518,7 @@ private fun BackstageSidebar(modifier: Modifier, nav: SidebarNav, onCollapse: ()
                 nav.onSelectView(BackstageView.TRASH)
             }
         }
+        Command(stenoIcon(), stringResource(R.string.glyph_catalog), selected = nav.view == BackstageView.GLYPHS) { nav.onSelectView(BackstageView.GLYPHS) }
         Command(
             XnotesIcons.sliders, stringResource(R.string.preferences),
             selected = nav.view == BackstageView.PREFERENCES,
@@ -507,11 +538,7 @@ private fun BackstageRail(modifier: Modifier, nav: SidebarNav, onExpand: () -> U
         modifier.fillMaxHeight().background(palette.panel.toComposeColor()).padding(vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Tooltip(stringResource(R.string.expand_sidebar), side = TipSide.RIGHT) {
-            IconButton(onClick = onExpand, modifier = Modifier.size(48.dp)) {
-                Icon(XnotesIcons.menu, stringResource(R.string.expand_sidebar), tint = palette.text.toComposeColor(), modifier = Modifier.size(24.dp))
-            }
-        }
+        SidebarMenuButton(onExpand, stringResource(R.string.expand_sidebar), side = TipSide.RIGHT)
         Spacer(Modifier.height(10.dp))
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally) {
             RailItem(XnotesIcons.home, stringResource(R.string.home), selected = nav.homeSelected) { nav.onHome() }
@@ -530,6 +557,7 @@ private fun BackstageRail(modifier: Modifier, nav: SidebarNav, onExpand: () -> U
             }
         }
         if (nav.trashCount >= 0) RailItem(XnotesIcons.trash, stringResource(R.string.trash), selected = nav.view == BackstageView.TRASH) { nav.onSelectView(BackstageView.TRASH) }
+        RailItem(stenoIcon(), stringResource(R.string.glyph_catalog), selected = nav.view == BackstageView.GLYPHS) { nav.onSelectView(BackstageView.GLYPHS) }
         RailItem(
             XnotesIcons.sliders, stringResource(R.string.preferences),
             selected = nav.view == BackstageView.PREFERENCES,
@@ -574,11 +602,7 @@ private fun BackstageMain(
                         }
                     }
                 } else if (!sidebarOpen) {
-                    Tooltip(stringResource(R.string.show_sidebar)) {
-                        IconButton(onClick = onShowSidebar) {
-                            Icon(XnotesIcons.menu, stringResource(R.string.show_sidebar), tint = palette.text.toComposeColor(), modifier = Modifier.size(24.dp))
-                        }
-                    }
+                    SidebarMenuButton(onShowSidebar)
                 }
             }
         }
@@ -589,6 +613,7 @@ private fun BackstageMain(
                 BackstageView.TRASH -> TrashPane(editor, sidebarOpen, onShowSidebar, onOpenPreferences)
                 BackstageView.SOKKI_UI -> SokkiUiPane(editor, onImportFont, onClosePage = onBackToHome)
                 BackstageView.ABOUT -> AboutPane()
+                BackstageView.GLYPHS -> GlyphCatalogPane(sidebarOpen, onShowSidebar, params = { editor.controller.stenoParams })
             }
         }
     }
@@ -909,11 +934,7 @@ private fun ExplorerSection(
         Column(Modifier.fillMaxSize()) {
             Row(Modifier.fillMaxWidth().height(56.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (!sidebarOpen) {
-                    Tooltip(stringResource(R.string.show_sidebar)) {
-                        IconButton(onClick = onShowSidebar) {
-                            Icon(XnotesIcons.menu, stringResource(R.string.show_sidebar), tint = palette.text.toComposeColor(), modifier = Modifier.size(24.dp))
-                        }
-                    }
+                    SidebarMenuButton(onShowSidebar)
                     Spacer(Modifier.width(4.dp))
                     Text(stringResource(R.string.app_name), color = palette.text.toComposeColor(), fontWeight = FontWeight.Bold, fontSize = 20.sp)
                 }
@@ -1633,13 +1654,14 @@ private fun ExplorerSection(
             BoxWithConstraints(Modifier.fillMaxWidth()) {
                 val wide = maxWidth >= 760.dp
                 val headerWidth = maxWidth
+                val openSokkiUi = LocalOpenSokkiUi.current
                 Row(Modifier.fillMaxWidth().height(EXPLORER_HEADER), verticalAlignment = Alignment.CenterVertically) {
                     if (!sidebarOpen) {
                         Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
                             Tooltip(stringResource(R.string.show_sidebar)) {
                                 Box(
                                     Modifier.size(40.dp).floatingBacking(liftNow, CircleShape, floatFill, floatEdge)
-                                        .clip(CircleShape).clickable(role = Role.Button, onClick = onShowSidebar),
+                                        .clip(CircleShape).combinedClickable(role = Role.Button, onLongClick = openSokkiUi, onClick = onShowSidebar),
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     Icon(XnotesIcons.menu, stringResource(R.string.show_sidebar), tint = palette.text.toComposeColor(), modifier = Modifier.size(24.dp))

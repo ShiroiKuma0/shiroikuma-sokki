@@ -99,11 +99,7 @@ internal fun TrashPane(editor: Editor, sidebarOpen: Boolean, onShowSidebar: () -
             val searchRoom = maxWidth - emptyWidth - 12.dp - (if (sidebarOpen) 0.dp else 48.dp)
             Row(Modifier.fillMaxWidth().height(56.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (!sidebarOpen) {
-                    Tooltip(stringResource(R.string.show_sidebar)) {
-                        IconButton(onClick = onShowSidebar) {
-                            Icon(XnotesIcons.menu, stringResource(R.string.show_sidebar), tint = palette.text.toComposeColor(), modifier = Modifier.size(24.dp))
-                        }
-                    }
+                    SidebarMenuButton(onShowSidebar)
                 }
                 Text(stringResource(R.string.trash), color = palette.text.toComposeColor(), fontWeight = FontWeight.Bold, fontSize = 20.sp, maxLines = 1, modifier = Modifier.weight(1f))
                 ExplorerSearchField(query, { query = it }, expandedWidth = searchRoom.coerceIn(40.dp, 300.dp))
