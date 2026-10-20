@@ -126,6 +126,7 @@ fun Toolbar(
         editor.toolbarLayout.visibleSections.forEachIndexed { si, section ->
             if (si > 0) Separator()
             section.visibleEntries.forEach { entry ->
+                androidx.compose.runtime.CompositionLocalProvider(LocalToolbarHint provides stringResource(entry.item.hintRes)) {
                 ToolbarItemView(
                     editor = editor,
                     item = entry.item,
@@ -141,6 +142,7 @@ fun Toolbar(
                     onToggleFullscreen = onToggleFullscreen,
                     onImportTemplate = onImportTemplate,
                 )
+                }
             }
         }
     }
@@ -205,6 +207,36 @@ private fun ToolbarItemView(
 
         ToolbarItem.WAND ->
             ToolbarIcon(XnotesIcons.magicWand, stringResource(R.string.tool_wand), active = editor.wandEnabled) { editor.toggleWand() }
+        // 速記 correction belongs to stenography notes; anywhere else the two items stay hidden.
+        ToolbarItem.STENO_FIX -> if (editor.stenoNote) {
+            var open by remember { mutableStateOf(false) }
+            Box {
+                ToolbarIcon(ImageVector.vectorResource(R.drawable.ic_steno_fix), stringResource(R.string.toolbar_steno_fix), active = editor.stenoCorrect) { open = true }
+                if (open) StenoFixPopup(editor) { open = false }
+            }
+        }
+        ToolbarItem.STENO_VIEW -> if (editor.stenoNote) {
+            ToolbarIcon(ImageVector.vectorResource(R.drawable.ic_steno_view), stringResource(R.string.toolbar_steno_view), active = editor.stenoViewMode) { editor.toggleStenoView() }
+        }
+        ToolbarItem.STENO_MARKS -> if (editor.stenoNote) {
+            val fixed = com.xnotes.core.model.Stroke.STENO_MARK_FIXED.toComposeColor()
+            val raw = com.xnotes.core.model.Stroke.STENO_MARK_RAW.toComposeColor()
+            val legend = listOf(
+                HintKey(fixed, false, stringResource(R.string.steno_marks_key_fixed)),
+                HintKey(raw, false, stringResource(R.string.steno_marks_key_raw)),
+                HintKey(fixed, true, stringResource(R.string.steno_marks_key_ring)),
+            )
+            androidx.compose.runtime.CompositionLocalProvider(LocalToolbarKey provides legend) {
+                ToolbarIcon(ImageVector.vectorResource(R.drawable.ic_steno_marks), stringResource(R.string.toolbar_steno_marks), active = editor.stenoMarks) { editor.toggleStenoMarks() }
+            }
+        }
+        ToolbarItem.STENO_REVIEW -> if (editor.stenoNote) {
+            Box {
+                var open by remember { mutableStateOf(false) }
+                ToolbarIcon(ImageVector.vectorResource(R.drawable.ic_steno_review), stringResource(R.string.toolbar_steno_review), active = open) { open = true }
+                if (open) StenoReviewPanel(editor) { open = false }
+            }
+        }
         ToolbarItem.RULER ->
             ToolbarIcon(XnotesIcons.ruler, stringResource(R.string.tool_ruler), active = editor.rulerVisible) { editor.toggleRuler() }
 
@@ -453,10 +485,14 @@ internal fun ToolbarIcon(
     active: Boolean = false,
     enabled: Boolean = true,
     glideKey: Any? = null,
+    /** A longer explanation shown under the name on a long press (fork); the name alone without. */
+    description: String? = null,
     onClick: () -> Unit,
 ) {
     val palette = LocalPalette.current
     val bar = LocalBar.current
+    // A long press names the button (fork): the bar is icons only.
+    var hint by remember { mutableStateOf(false) }
     val glide = if (glideKey != null) LocalToolGlide.current else null
     val tint by animateColorAsState(
         when {
@@ -475,9 +511,14 @@ internal fun ToolbarIcon(
     val pressed by interaction.collectIsPressedAsState()
     val press by animateFloatAsState(if (pressed) 0.85f else 1f, spring(dampingRatio = 0.5f, stiffness = Spring.StiffnessMedium), label = "toolPress")
     Box(
-        Modifier.size(bar.button).clickable(interaction, indication = null, enabled = enabled, role = Role.Button, onClick = onClick),
+        Modifier.size(bar.button).combinedClickable(
+            interactionSource = interaction, indication = null, enabled = true, role = Role.Button,
+            onLongClick = { hint = true },
+            onClick = { if (enabled) onClick() },
+        ),
         contentAlignment = Alignment.Center,
     ) {
+        if (hint) ToolbarHint(contentDescription, description ?: LocalToolbarHint.current, LocalToolbarKey.current) { hint = false }
         Box(
             Modifier
                 .size(bar.circle)
@@ -491,6 +532,73 @@ internal fun ToolbarIcon(
             contentAlignment = Alignment.Center,
         ) {
             Icon(icon, contentDescription = contentDescription, tint = tint, modifier = Modifier.size(bar.icon).graphicsLayer { scaleX = press; scaleY = press })
+        }
+    }
+}
+
+/** What the toolbar item being drawn does: the long-press hint of every button it draws (fork). */
+internal val LocalToolbarHint = staticCompositionLocalOf<String?> { null }
+
+/** One row of a long-press hint's key (fork): a [ring] or a band of [color] as the page draws it, and what it means. */
+internal class HintKey(val color: androidx.compose.ui.graphics.Color, val ring: Boolean, val text: String)
+
+/** The key a button's long-press hint lists under its description, for a button whose marks need one (fork). */
+internal val LocalToolbarKey = staticCompositionLocalOf<List<HintKey>> { emptyList() }
+
+/**
+ * A toolbar button's name, and [description] when it has one, in a small card beside the button
+ * (fork): shown on a long press, gone after a few seconds or at a tap anywhere.
+ */
+@Composable
+private fun ToolbarHint(name: String, description: String?, key: List<HintKey> = emptyList(), onDismiss: () -> Unit) {
+    val palette = LocalPalette.current
+    val bar = LocalBar.current
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(if (key.isNotEmpty()) 12000L else if (description != null) 6000L else 2500L)
+        onDismiss()
+    }
+    val gap = with(LocalDensity.current) { bar.button.roundToPx() }
+    androidx.compose.ui.window.Popup(
+        alignment = if (bar.vertical) Alignment.CenterStart else Alignment.TopCenter,
+        offset = if (bar.vertical) androidx.compose.ui.unit.IntOffset(gap, 0) else androidx.compose.ui.unit.IntOffset(0, gap),
+        onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.PopupProperties(focusable = false, dismissOnClickOutside = true),
+    ) {
+        Column(
+            Modifier
+                .widthIn(max = 280.dp)
+                .clip(MaterialTheme.shapes.small)
+                .background(palette.menuBg.toComposeColor())
+                .border(1.dp, palette.border.toComposeColor(), MaterialTheme.shapes.small)
+                .clickable { onDismiss() }
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+        ) {
+            Text(name, color = palette.text.toComposeColor(), style = MaterialTheme.typography.labelLarge)
+            if (description != null) Text(description, color = palette.textDim.toComposeColor(), style = MaterialTheme.typography.bodySmall)
+            for (k in key) {
+                androidx.compose.foundation.layout.Row(Modifier.padding(top = 6.dp), verticalAlignment = Alignment.Top) {
+                    // The mark as the page draws it: a band of its colour with the ink over it, or a ring.
+                    androidx.compose.foundation.Canvas(Modifier.padding(top = 2.dp).size(width = 28.dp, height = 14.dp)) {
+                        val y = size.height / 2
+                        if (k.ring) {
+                            drawLine(androidx.compose.ui.graphics.Color(0xFFFFFF00), Offset(0f, y), Offset(size.width, y), strokeWidth = 1.5.dp.toPx())
+                            drawCircle(k.color, radius = 5.dp.toPx(), center = Offset(size.width / 2, y), style = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx()))
+                        } else {
+                            drawLine(k.color.copy(alpha = 0.6f), Offset(3.dp.toPx(), y), Offset(size.width - 3.dp.toPx(), y), strokeWidth = 10.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
+                            drawLine(androidx.compose.ui.graphics.Color(0xFFFFFF00), Offset(3.dp.toPx(), y), Offset(size.width - 3.dp.toPx(), y), strokeWidth = 1.5.dp.toPx())
+                        }
+                    }
+                    // The colour's name, before the dash, stands out from what it means.
+                    val cut = k.text.indexOf('—').let { if (it < 0) 0 else it }
+                    val line = androidx.compose.ui.text.buildAnnotatedString {
+                        pushStyle(androidx.compose.ui.text.SpanStyle(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, color = if (k.ring) palette.text.toComposeColor() else k.color))
+                        append(k.text.substring(0, cut))
+                        pop()
+                        append(k.text.substring(cut))
+                    }
+                    Text(line, color = palette.text.toComposeColor(), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp))
+                }
+            }
         }
     }
 }

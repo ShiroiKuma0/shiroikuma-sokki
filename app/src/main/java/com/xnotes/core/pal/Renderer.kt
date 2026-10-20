@@ -224,6 +224,15 @@ interface Renderer {
      */
     val writesText: Boolean get() = false
 
+    /**
+     * Whether 速記 writing painted here shows the page's marks: which elements are corrected and
+     * which are shown as written (fork). Only the screen's page caches turn it on, so an export, a
+     * thumbnail or a print never carries them.
+     */
+    var stenoMarks: Boolean
+        get() = false
+        set(_) {}
+
     /** What the drawing from here to [endMark] is. Only a structure-recording backend cares. */
     fun beginMark(mark: Mark) {}
 

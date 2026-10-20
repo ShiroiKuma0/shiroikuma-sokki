@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 白い熊 速記 — 速記 original view: an eye over a wavering hand-written line. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <path
+        android:strokeColor="#FF000000"
+        android:strokeWidth="6"
+        android:strokeLineJoin="round"
+        android:pathData="M8,38 C24,14 76,14 92,38 C76,62 24,62 8,38 Z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M50,38 m-11,0 a11,11 0 1,0 22,0 a11,11 0 1,0 -22,0" />
+    <path
+        android:strokeColor="#FF000000"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:pathData="M10,82 C18,74 24,90 32,80 C40,70 46,92 54,80 C62,70 68,90 76,80 C82,73 86,84 90,80" />
+</vector>

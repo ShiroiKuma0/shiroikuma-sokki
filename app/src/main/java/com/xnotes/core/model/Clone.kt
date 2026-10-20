@@ -43,6 +43,8 @@ fun Document.deepCopy(measurer: TextMeasurer): Document = Document(
     flow = flow.deepCopy(),
     created = created,
     templates = templates,
+    steno = steno,
+    stenoMarks = stenoMarks,
 )
 
 /**
@@ -74,4 +76,6 @@ fun Document.snapshot(): Document = Document(
     flow = flow.deepCopy(),
     created = created,
     templates = templates,
+    steno = steno,
+    stenoMarks = stenoMarks,
 )

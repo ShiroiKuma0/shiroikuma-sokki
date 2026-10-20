@@ -40,6 +40,8 @@ class Document(
     var templates: Map<String, String> = emptyMap(),
     /** A stenography note (fork): opens with the 速記 pen armed. Written only when true. */
     var steno: Boolean = false,
+    /** Whether the page shows its 速記 marks (fork; a view setting the note keeps, see [com.xnotes.core.pal.Renderer.stenoMarks]). */
+    var stenoMarks: Boolean = false,
 ) {
     /** Transient: set by the codec when legacy ink was compacted at load (debug overlay readout). */
     var compactedOnLoad = false

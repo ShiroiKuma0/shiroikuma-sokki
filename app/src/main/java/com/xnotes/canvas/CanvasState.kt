@@ -1065,7 +1065,7 @@ class CanvasState(
         val h = ceil(cover.h * res).toInt().coerceAtLeast(1)
         val surface = surfaceFactory.create(w, h, 1.0)
         surface.fill(TRANSPARENT)
-        val r = surface.renderer()
+        val r = surface.inkRenderer()
         r.scale(res, res)
         r.translate(-cover.left, -cover.top) // the surface covers the margins, so page space starts inset
         if (includeFlow) paintFlow?.invoke(page, r, cover)
@@ -1270,7 +1270,7 @@ class CanvasState(
             return
         }
         val cover = existing.cover
-        val r = existing.surface.renderer()
+        val r = existing.surface.inkRenderer()
         r.scale(res, res)
         r.translate(-cover.left, -cover.top)
         item.paint(r)
@@ -1291,7 +1291,7 @@ class CanvasState(
         if (pendingSharp) pendingSharpEdits.add(page to dirtyRect)
         val entry = caches[page] ?: return false
         val cover = entry.cover
-        val r = entry.surface.renderer()
+        val r = entry.surface.inkRenderer()
         r.save()
         r.scale(entry.res, entry.res)
         r.translate(-cover.left, -cover.top)
@@ -1348,6 +1348,10 @@ class CanvasState(
         cacheGen++
         sharpGen++
     }
+
+    /** A renderer for the ink layers, showing the 速記 marks when the note has them on. */
+    private fun com.xnotes.core.pal.RasterSurface.inkRenderer(): com.xnotes.core.pal.Renderer =
+        renderer().also { it.stenoMarks = document.stenoMarks }
 
     fun invalidateAllCaches() {
         caches.clear()
@@ -1658,7 +1662,7 @@ class CanvasState(
         val rb = base.renderer()
         rb.translate(o.x, o.y)
         rb.scale(z, z)
-        val ri = ink.renderer()
+        val ri = ink.inkRenderer()
         ri.translate(o.x, o.y)
         ri.scale(z, z)
         val border = Pen(palette.paperBorder, 1.0, cosmetic = true)
@@ -1691,7 +1695,7 @@ class CanvasState(
         val idx = document.pages.indexOf(page)
         val pr = pageRects.getOrNull(idx) ?: return
         val o0 = originFor(f.sx, f.sy, f.z)
-        val r = f.ink.renderer()
+        val r = f.ink.inkRenderer()
         r.save()
         r.translate(o0.x, o0.y)
         r.scale(f.z, f.z)
@@ -1708,7 +1712,7 @@ class CanvasState(
         val idx = document.pages.indexOf(page)
         val pr = pageRects.getOrNull(idx) ?: return
         val o0 = originFor(f.sx, f.sy, f.z)
-        val r = f.ink.renderer()
+        val r = f.ink.inkRenderer()
         r.save()
         r.translate(o0.x, o0.y)
         r.scale(f.z, f.z)

@@ -60,6 +60,7 @@ object SokkiBackup {
         TEXT("text", "New-note & new-canvas defaults (text · page · background)", listOf("new_note_style", "new_note_flow", "new_canvas_background")),
         EXPLORER("explorer", "Explorer (directory · sorting · start-up)", listOf("browse_root", "explorer_sort_key", "explorer_sort_descending", "start_on_home", "sidebar_visible")),
         FONTS("fonts", "Imported fonts", files = true),
+        GLYPHS("glyphs", "速記 elements (the shorthand catalogue)", files = true),
         CODE_THEME("code_theme", "Imported code theme", files = true);
 
         companion object {
@@ -110,6 +111,7 @@ object SokkiBackup {
                 onProgress(Progress(cat, i + 1, chosen.size))
                 when (cat) {
                     Cat.FONTS -> writeDir(zip, fontsDir(context), "fonts/", cancelled)
+                    Cat.GLYPHS -> writeDir(zip, com.xnotes.platform.GlyphLibrary.dir(context), "glyphs/", cancelled)
                     Cat.CODE_THEME -> writeCodeTheme(zip, context, settingsJson)
                     else -> {
                         val o = JSONObject()
@@ -168,6 +170,11 @@ object SokkiBackup {
                         target.parentFile?.mkdirs()
                         target.outputStream().use { zip.copyTo(it) }
                     }
+                    name.startsWith("glyphs/") && !e.isDirectory -> {
+                        found += Cat.GLYPHS
+                        val target = File(com.xnotes.platform.GlyphLibrary.dir(context), File(name).name)
+                        target.outputStream().use { zip.copyTo(it) }
+                    }
                     name.startsWith("code_theme/") && !e.isDirectory -> {
                         found += Cat.CODE_THEME
                         val target = File(codeThemeDir(context), File(name).name)
@@ -187,6 +194,9 @@ object SokkiBackup {
                 zip.closeEntry()
                 e = zip.nextEntry
             }
+        }
+        if (Cat.GLYPHS in found) {
+            android.os.Handler(android.os.Looper.getMainLooper()).post { com.xnotes.platform.GlyphLibrary.reload() }
         }
         return ImportResult(found.toList(), merged)
     }

@@ -22,6 +22,8 @@ import com.xnotes.core.pal.TextMeasurer
 class FakeRenderer : Renderer {
     val ops = mutableListOf<String>()
 
+    override var stenoMarks: Boolean = false
+
     /** Ribbon runs as `from to count`, so a test can see which points a pass actually painted. */
     val ribbonRuns = mutableListOf<Pair<Int, Int>>()
 

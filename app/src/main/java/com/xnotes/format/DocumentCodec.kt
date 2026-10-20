@@ -244,6 +244,7 @@ class DocumentCodec(
         doc.created?.let { j.name("created").value(java.time.Instant.ofEpochMilli(it).toString()) }
         j.name("dpi").value(doc.dpi)
         if (doc.steno) j.name("steno").value(true)
+        if (doc.stenoMarks) j.name("steno_marks").value(true)
         j.name("has_pdf").value(doc.pdfFile != null)
         j.name("bookmarks").beginArray()
         for (b in doc.bookmarks) {
@@ -372,6 +373,7 @@ class DocumentCodec(
         // Straight-line strokes must reload un-smoothed, else the EMA pulls their far end inward.
         if (s.straight) j.name("straight").value(true)
         if (s.locked) j.name("locked").value(true)
+        s.stenoFix?.let { StenoFixJson.write(j, it) }
         j.endObject()
     }
 
@@ -569,6 +571,7 @@ class DocumentCodec(
         val doc = Document(dpi = m.dpi)
         doc.created = m.created
         doc.steno = m.steno
+        doc.stenoMarks = m.stenoMarks
         doc.templates = templates
         doc.style = m.style
         doc.margins = m.margins
@@ -632,6 +635,7 @@ class DocumentCodec(
         var dpi = PageSize.DEFAULT_DPI
         var hasPdf = false
         var steno = false
+        var stenoMarks = false
         var style = PageStyle()
         var margins = PageMargins()
         val bookmarks = ArrayList<Bookmark>()
@@ -712,6 +716,7 @@ class DocumentCodec(
                 "dpi" -> m.dpi = intOr(p, PageSize.DEFAULT_DPI)
                 "has_pdf" -> m.hasPdf = boolOr(p, false)
                 "steno" -> m.steno = boolOr(p, false)
+                "steno_marks" -> m.stenoMarks = boolOr(p, false)
                 "style" -> m.style = parseStyle(p)
                 "margins" -> m.margins = parseMargins(p)
                 "bookmarks" -> parseBookmarks(p, m.bookmarks)
@@ -799,6 +804,7 @@ class DocumentCodec(
 
     /** Union of every kind's fields, so an item parses in one pass whatever its key order. */
     private class ItemScratch {
+        var stenoFix: com.xnotes.core.steno.StenoFix? = null
         var locked = false
         var kind: String? = null
         var tool: String? = null
@@ -903,6 +909,7 @@ class DocumentCodec(
                 "dash_length" -> s.dashLength = doubleOr(p, 10.0)
                 "dash_gap" -> s.dashGap = doubleOr(p, 8.0)
                 "locked" -> s.locked = boolOr(p, false)
+                "steno_fix" -> s.stenoFix = StenoFixJson.read(p)
                 else -> p.skipValue()
             }
         }
@@ -977,6 +984,7 @@ class DocumentCodec(
         )
         val stroke = Stroke(tool, config, emptyList(), s.speedScale, s.straight, s.smoothScale)
         s.samples?.let { stroke.setSamples(it.xs, it.ys, it.ps, it.ts, it.n, it.gs, it.ls) }
+        if (tool == Tool.STENO) stroke.stenoFix = s.stenoFix
         return stroke
     }
 
