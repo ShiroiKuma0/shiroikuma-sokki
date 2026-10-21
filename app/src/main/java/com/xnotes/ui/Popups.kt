@@ -1286,29 +1286,25 @@ fun FontMenuItems(
 }
 
 /**
- * 速記 correction (fork): whether writing is corrected as it is written, whether this page shows its
- * corrected writing as written, and how strongly the hand is steadied and set to the slant.
+ * 速記 correction (fork): whether writing is steadied as it is written, whether this page shows its
+ * steadied writing as written, and how strongly the hand is steadied.
  */
 @Composable
 fun StenoFixPopup(editor: Editor, onDismiss: () -> Unit) {
     val p = remember { editor.stenoPrefs }
     var correct by remember { mutableStateOf(p.stenoCorrect) }
     var steady by remember { mutableStateOf((p.stenoSteady * 100).toFloat()) }
-    var slant by remember { mutableStateOf((p.stenoSlant * 100).toFloat()) }
-    var degrees by remember { mutableStateOf(p.stenoSlantDegrees.toFloat()) }
     var pageRaw by remember { mutableStateOf(editor.stenoPageShowsRaw()) }
 
-    fun emit() = editor.setStenoPrefs(correct, steady / 100.0, slant / 100.0, degrees.toDouble())
+    fun emit() = editor.setStenoPrefs(correct, steady / 100.0)
 
     DropdownMenu(expanded = true, onDismissRequest = onDismiss) {
         Column(Modifier.width(250.dp).padding(horizontal = 14.dp, vertical = 8.dp)) {
             PopupTitle(stringResource(R.string.toolbar_steno_fix))
             ToggleRow(stringResource(R.string.caption_correct_as_written), correct) { correct = it; emit() }
             ToggleRow(stringResource(R.string.caption_page_as_written), pageRaw) { pageRaw = it; editor.setStenoPageRaw(it) }
-            // Each applies to what is written from now on; what is already corrected keeps its correction.
+            // Applies to what is written from now on; what is already steadied keeps its correction.
             SliderRow(stringResource(R.string.caption_steady), steady, 0f..100f, enabled = correct) { steady = it; emit() }
-            SliderRow(stringResource(R.string.caption_slant_fix), slant, 0f..100f, enabled = correct) { slant = it; emit() }
-            SliderRow(stringResource(R.string.caption_slant_degrees), degrees, 0f..45f, enabled = correct) { degrees = it; emit() }
         }
     }
 }

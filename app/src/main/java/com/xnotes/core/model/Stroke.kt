@@ -469,11 +469,7 @@ class Stroke(
     override fun paint(r: Renderer) {
         val g = geometry()
         val color = renderColor
-        // With the page's marks on, the marks' own mist stands in for the starlight.
-        val marks = r.stenoMarks && tool == Tool.STENO
-        val fix = stenoFix?.takeIf { it.size == sampleCount }
-        stenoFix?.let { if (!marks && it.anyRaw && !it.allRaw) paintRawGlow(r, g, color, it) }
-        if (marks) paintStenoMarks(r, fix, under = true)
+        stenoFix?.let { if (it.anyRaw && !it.allRaw) paintRawGlow(r, g, color, it) }
         when {
             // The dashed pen draws its (uniform-width) centreline as a dashed, round-capped
             // line rather than a solid ribbon; the full ribbon geometry is still used for
@@ -494,48 +490,6 @@ class Stroke(
                 r.saveLayerBlended(bounds().outset(2.0), color.a / 255.0, blendMode)
                 paintFills(r, g, color.withAlpha(255))
                 r.restore()
-            }
-        }
-        if (marks) paintStenoMarks(r, fix, under = false)
-    }
-
-    /**
-     * The page's 速記 marks (fork): a mist under all the writing, cyan where an element is drawn
-     * corrected and orange wherever the writing stands as written (an element shown as written,
-     * writing no element was recognized in, or a stroke with no correction at all), and a ring at
-     * each element's ends, so where one element stops and the next begins shows even where their
-     * mists run together. Drawn on the samples as shown, [under] the ink for the mist and over it
-     * for the rings.
-     */
-    private fun paintStenoMarks(r: Renderer, fix: com.xnotes.core.steno.StenoFix?, under: Boolean) {
-        val w = config.baseWidth
-        val n = sampleCount
-        if (n == 0) return
-        val segs = fix?.segments ?: listOf(com.xnotes.core.steno.FixSegment(0, n - 1, raw = true))
-        for (seg in segs) {
-            val element = seg.kind != com.xnotes.core.steno.FixKind.CLEAN
-            val corrected = element && !seg.raw
-            if (!under && !element) continue
-            val c = if (corrected) STENO_MARK_FIXED else STENO_MARK_RAW
-            fun px(i: Int) = xAt(i) + if (seg.raw || fix == null) 0f else fix.dx[i]
-            fun py(i: Int) = yAt(i) + if (seg.raw || fix == null) 0f else fix.dy[i]
-            if (under) {
-                val pts = (seg.from..seg.to).map { Pt(px(it), py(it)) }
-                // A wide bloom, and over it a solid band of the colour, so the mark still reads
-                // with the page zoomed out to read.
-                val reach = stenoMarkReach()
-                val band = reach * STENO_MARK_BAND
-                if (pts.size < 2) {
-                    r.fillCircleGlow(pts[0], reach / 2, c, reach)
-                    r.fillCircle(pts[0], band / 2, c.withAlpha(STENO_MARK_BAND_ALPHA))
-                } else {
-                    r.strokePolyline(pts, Pen(c, width = reach, cosmetic = false, glowRadius = reach * 0.6))
-                    r.strokePolyline(pts, Pen(c.withAlpha(STENO_MARK_BAND_ALPHA), width = band, cosmetic = false))
-                }
-            } else {
-                val ring = (w * STENO_MARK_RING).coerceAtLeast(STENO_MARK_RING_MIN)
-                val pen = Pen(c, width = (w * STENO_MARK_RING_WIDTH).coerceAtLeast(1.2), cosmetic = false)
-                for (i in listOf(seg.from, seg.to)) r.strokeEllipse(Pt(px(i), py(i)), ring, ring, pen)
             }
         }
     }
@@ -665,13 +619,9 @@ class Stroke(
 
     override fun paintBounds(): Rect = when {
         config.neon && tool != Tool.HIGHLIGHTER -> bounds().outset(neonGlowRadius() * 2 + 4)
-        stenoFix?.let { it.anyRaw && !it.allRaw } == true -> bounds().outset(maxOf(rawGlowRadius() * 2, stenoMarkReach() * 3) + 4)
-        // The page's marks may be on: room for their mist (see [paintStenoMarks]).
-        tool == Tool.STENO -> bounds().outset(stenoMarkReach() * 3 + 4)
+        stenoFix?.let { it.anyRaw && !it.allRaw } == true -> bounds().outset(rawGlowRadius() * 2 + 4)
         else -> bounds()
     }
-
-    private fun stenoMarkReach(): Double = (config.baseWidth * STENO_MARK_REACH).coerceAtLeast(STENO_MARK_MIN)
 
     /** How far the starlight round a stretch shown as written reaches. */
     private fun rawGlowRadius(): Double = (config.baseWidth * RAW_GLOW_FACTOR).coerceAtLeast(RAW_GLOW_MIN)
@@ -1012,19 +962,6 @@ class Stroke(
         private const val RAW_GLOW_FACTOR = 3.0
         private const val RAW_GLOW_MIN = 4.0
         private const val RAW_GLOW_ALPHA = 0.85
-
-        /** The page's 速記 marks: the mist's breadth and blur in hairline widths (at least
-         *  [STENO_MARK_MIN] px), the solid band over it (a share of the bloom, and its alpha), the end
-         *  rings' radius and line, and the two colours. */
-        private const val STENO_MARK_REACH = 7.0
-        private const val STENO_MARK_MIN = 9.0
-        private const val STENO_MARK_BAND = 0.75
-        private const val STENO_MARK_BAND_ALPHA = 150
-        private const val STENO_MARK_RING = 2.6
-        private const val STENO_MARK_RING_MIN = 4.0
-        private const val STENO_MARK_RING_WIDTH = 0.9
-        internal val STENO_MARK_FIXED = Rgba(0, 220, 255, 255)
-        internal val STENO_MARK_RAW = Rgba(255, 70, 0, 255)
 
         /** First allocation for a live stroke; grows by doubling from here. */
         private const val INITIAL_CAPACITY = 32

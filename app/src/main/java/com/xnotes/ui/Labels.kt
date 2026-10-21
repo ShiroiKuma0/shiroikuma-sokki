@@ -71,8 +71,6 @@ val ToolbarItem.labelRes: Int
         ToolbarItem.STENO -> R.string.tool_steno
         ToolbarItem.STENO_FIX -> R.string.toolbar_steno_fix
         ToolbarItem.STENO_VIEW -> R.string.toolbar_steno_view
-        ToolbarItem.STENO_MARKS -> R.string.toolbar_steno_marks
-        ToolbarItem.STENO_REVIEW -> R.string.toolbar_steno_review
         ToolbarItem.SPEED -> R.string.tool_speed
         ToolbarItem.TAPER -> R.string.tool_taper
         ToolbarItem.HIGHLIGHTER -> R.string.tool_highlighter
@@ -116,8 +114,6 @@ val ToolbarItem.hintRes: Int
         ToolbarItem.STENO -> R.string.toolbar_hint_steno
         ToolbarItem.STENO_FIX -> R.string.toolbar_hint_steno_fix
         ToolbarItem.STENO_VIEW -> R.string.toolbar_hint_steno_view
-        ToolbarItem.STENO_MARKS -> R.string.toolbar_hint_steno_marks
-        ToolbarItem.STENO_REVIEW -> R.string.toolbar_hint_steno_review
         ToolbarItem.SPEED -> R.string.toolbar_hint_speed
         ToolbarItem.TAPER -> R.string.toolbar_hint_taper
         ToolbarItem.HIGHLIGHTER -> R.string.toolbar_hint_highlighter

@@ -32,8 +32,6 @@ import com.xnotes.core.vector.VectorSeg
  */
 class AndroidRenderer(private val canvas: Canvas) : Renderer {
 
-    override var stenoMarks: Boolean = false
-
     private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE

@@ -1448,9 +1448,8 @@ class CanvasState(
         sharpGen++
     }
 
-    /** A renderer for the ink layers, showing the 速記 marks when the note has them on. */
-    private fun com.xnotes.core.pal.RasterSurface.inkRenderer(): com.xnotes.core.pal.Renderer =
-        renderer().also { it.stenoMarks = document.stenoMarks }
+    /** A renderer for the ink layers. */
+    private fun com.xnotes.core.pal.RasterSurface.inkRenderer(): com.xnotes.core.pal.Renderer = renderer()
 
     fun invalidateAllCaches() {
         caches.clear()

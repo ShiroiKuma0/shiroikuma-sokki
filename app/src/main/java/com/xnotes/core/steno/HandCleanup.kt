@@ -3,45 +3,24 @@ package com.xnotes.core.steno
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.acos
-import kotlin.math.atan
 import kotlin.math.exp
 import kotlin.math.hypot
 import kotlin.math.max
-import kotlin.math.tan
 
 /**
- * The first layer of 速記 correction, which needs no recognition: it steadies the hand, sets the
- * writing to one slant and settles its tops and bottoms onto the lines. Every sample keeps its
+ * The one correction 速記 writing gets: the hand steadied, and nothing else. The writing keeps
+ * its own slant, size and shapes — no element is recognized or redrawn. Every sample keeps its
  * index, so the result is a per-sample move ([StenoFix]) and the stroke's shading, which comes
  * from its pressure, is untouched.
  *
- * 1. **Steady**: the path is smoothed over arc length, piece by piece between its corners, so a
- *    tremor goes but a corner stays sharp; each piece keeps its two ends exactly.
- * 2. **Slant**: the hand's slant — its habit over the last strokes, see [HandSlant] — is set to
- *    the target (by default the book's) by shearing the stroke, never rotating it, about its base
- *    line, so heights stay where they were.
- *
- * Small loops (knots) are left exactly as written: the 速記 pen redraws them itself. Settling the
- * writing onto the lines waits for recognition, which knows what each element is meant to reach;
- * a blind warp of the whole stroke flattens its arches and loops.
+ * The path is smoothed over arc length, piece by piece between its corners, so the wobble of a
+ * long line goes but a corner stays sharp; each piece keeps its two ends exactly. Small loops
+ * (knots) are left exactly as written: the 速記 pen redraws them itself.
  */
 object HandCleanup {
 
-    /** How strongly each step applies, 0..1, and the slant to write at, in degrees from upright. */
-    data class Params(
-        val steady: Double = 0.6,
-        val slant: Double = 1.0,
-        val slantDegrees: Double = DEFAULT_SLANT_DEGREES,
-    )
-
-    /** The slant writing is set to by default: the book's. */
-    const val DEFAULT_SLANT_DEGREES = 24.0
-
-    /**
-     * The slant the catalogue's forms are printed at, as [slantOf] measures it: the length-weighted
-     * median of the straight downstrokes of the built-in elements (62 of them; t's is 27.7°).
-     */
-    const val BOOK_SLANT_DEGREES = 24.0
+    /** How strongly the hand is steadied, 0..1. */
+    data class Params(val steady: Double = 0.6)
 
     /** The unit assumed when a page has no lines to measure one from, in page px. */
     const val FALLBACK_UNIT = 15.0
@@ -55,12 +34,6 @@ object HandCleanup {
     /** The reach, in units, over which a corner's turning is measured. */
     const val CORNER_REACH = 0.2
 
-    /** Least length, in units, of a straight downstroke the slant is read from. */
-    const val MIN_SLANT_RUN = 0.4
-
-    /** The largest change of slant a stroke is given, in degrees. */
-    const val MAX_SLANT_CHANGE = 25.0
-
 
     /** The corrected positions of the samples ([rx], [ry]). */
     fun clean(rx: DoubleArray, ry: DoubleArray, frame: LineFrame?, p: Params = Params()): Pair<DoubleArray, DoubleArray> {
@@ -73,9 +46,13 @@ object HandCleanup {
             val s = steady(x, y, unit, p.steady)
             x = s.first; y = s.second
         }
-        val base = frame?.baseFor(median(y)) ?: y.max()
-        if (p.slant > 0.0) x = shear(x, y, base, unit, p)
         return x to y
+    }
+
+    /** The correction layer for a stroke ([rx], [ry]): the steadied hand, as one stretch. */
+    fun fix(rx: DoubleArray, ry: DoubleArray, frame: LineFrame?, p: Params = Params()): StenoFix {
+        val (cx, cy) = clean(rx, ry, frame, p)
+        return StenoFix.of(rx, ry, cx, cy)
     }
 
     // --- 1. steady ---
@@ -246,117 +223,5 @@ object HandCleanup {
             ox[i] = sx[i - from] + ex0 + (ex1 - ex0) * t
             oy[i] = sy[i - from] + ey0 + (ey1 - ey0) * t
         }
-    }
-
-    // --- 2. slant ---
-
-    /**
-     * The stroke sheared about [base] so its downstrokes lean at the target slant. A stroke with
-     * too little steep downstroke to measure (a dash, a dot) is left as it is.
-     */
-    private fun shear(x: DoubleArray, y: DoubleArray, base: Double, unit: Double, p: Params): DoubleArray {
-        val change = slantChange(x, y, unit, p.slantDegrees, p.slant)
-        return DoubleArray(x.size) { x[it] + change * (base - y[it]) }
-    }
-
-    /**
-     * The shear (forward x per px of height) that leans the stroke's downstrokes [strength] of the
-     * way to [degrees]; 0 when it has too little downstroke to measure.
-     */
-    fun slantChange(
-        x: DoubleArray, y: DoubleArray, unit: Double, degrees: Double, strength: Double,
-        hand: Double? = HandSlant.estimate(),
-    ): Double {
-        if (strength <= 0.0) return 0.0
-        val k = hand ?: slantOf(x, y, unit) ?: return 0.0
-        val target = tan(degrees * PI / 180.0)
-        val limit = tan(MAX_SLANT_CHANGE * PI / 180.0)
-        return ((target - k) * strength.coerceIn(0.0, 1.0)).coerceIn(-limit, limit)
-    }
-
-    /**
-     * The stroke as the catalogue reads it: unsmoothed, and sheared from the hand's slant to the
-     * book's, which its forms are printed at. The hand's slant is [hand] (forward lean per unit of
-     * height) — the habit read over many strokes, see [HandSlant] — or, until there is one, this
-     * stroke's own. Returns the samples and the shear applied.
-     */
-    fun toBook(rx: DoubleArray, ry: DoubleArray, frame: LineFrame?, hand: Double? = HandSlant.estimate()): Triple<DoubleArray, DoubleArray, Double> {
-        val unit = frame?.unit ?: FALLBACK_UNIT
-        val base = frame?.baseFor(median(ry)) ?: ry.max()
-        val k = hand ?: slantOf(rx, ry, unit)
-        val limit = tan(MAX_SLANT_CHANGE * PI / 180.0)
-        val change = if (k == null) 0.0 else (tan(BOOK_SLANT_DEGREES * PI / 180.0) - k).coerceIn(-limit, limit)
-        return Triple(DoubleArray(rx.size) { rx[it] + change * (base - ry[it]) }, ry.copyOf(), change)
-    }
-
-    /** How much steep downstroke, in units, [slantOf] would read the slant from. */
-    fun slantRun(x: DoubleArray, y: DoubleArray, unit: Double): Double =
-        straightDownstrokes(x, y, unit).sumOf { hypot(it.first, it.second) } / unit
-
-    /**
-     * How far a downstroke leans forward per unit of height: a length-weighted mean over the
-     * stroke's straight downstrokes — runs descending steeper than 45° that keep their direction
-     * (within [RUN_TURN]) for at least [MIN_SLANT_RUN] units. Curves are left out: the far side of
-     * a hook or a loop descends at any angle, and is the shape, not the slant. Null when the stroke
-     * has no such run.
-     */
-    fun slantOf(x: DoubleArray, y: DoubleArray, unit: Double): Double? {
-        var sum = 0.0
-        var len = 0.0
-        for ((dx, dy) in straightDownstrokes(x, y, unit)) {
-            val l = hypot(dx, dy)
-            sum += (-dx / dy) * l
-            len += l
-        }
-        if (len <= 0.0) return null
-        return sum / len
-    }
-
-    /** The straight downstrokes of a stroke (page px, y down), each as its (dx, dy). */
-    private fun straightDownstrokes(x: DoubleArray, y: DoubleArray, unit: Double): List<Pair<Double, Double>> {
-        val (cx, cy) = chords(x, y, unit)
-        val out = ArrayList<Pair<Double, Double>>()
-        fun steep(k: Int) = cy[k + 1] - cy[k] > 0 && abs(cx[k + 1] - cx[k]) < cy[k + 1] - cy[k]
-        fun angle(k: Int) = kotlin.math.atan2(cx[k + 1] - cx[k], cy[k + 1] - cy[k])
-        var i = 0
-        while (i < cx.size - 1) {
-            if (!steep(i)) { i++; continue }
-            val a0 = angle(i)
-            var j = i
-            while (j + 1 < cx.size - 1 && steep(j + 1) && abs(angle(j + 1) - a0) <= RUN_TURN) j++
-            val dx = cx[j + 1] - cx[i]
-            val dy = cy[j + 1] - cy[i]
-            if (hypot(dx, dy) >= MIN_SLANT_RUN * unit) out += dx to dy
-            i = j + 1
-        }
-        return out
-    }
-
-    /** How far, in radians, a straight downstroke may turn from where it began. */
-    private const val RUN_TURN = 0.25
-
-    /**
-     * The path's points [CHORD] units apart: the slant is read over chords that long, so a tremor
-     * between samples (each wobble a steep step one way or the other) can't sway it.
-     */
-    private fun chords(x: DoubleArray, y: DoubleArray, unit: Double): Pair<DoubleArray, DoubleArray> {
-        val ox = ArrayList<Double>()
-        val oy = ArrayList<Double>()
-        ox += x[0]; oy += y[0]
-        for (i in 1 until x.size) {
-            if (hypot(x[i] - ox.last(), y[i] - oy.last()) >= CHORD * unit || i == x.size - 1) { ox += x[i]; oy += y[i] }
-        }
-        return ox.toDoubleArray() to oy.toDoubleArray()
-    }
-
-    /** The chord, in units, the slant is read over. */
-    private const val CHORD = 0.05
-
-    /** The slant [k] (forward lean per unit height) in degrees from upright. */
-    fun degreesOf(k: Double): Double = atan(k) * 180.0 / PI
-
-    private fun median(v: DoubleArray): Double {
-        val s = v.sortedArray()
-        return s[s.size / 2]
     }
 }

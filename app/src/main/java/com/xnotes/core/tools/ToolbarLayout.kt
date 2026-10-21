@@ -28,10 +28,6 @@ enum class ToolbarItem(val id: String) {
 
     /** 速記 original view: taps flip corrected writing to as written (fork addition). */
     STENO_VIEW("steno_view"),
-    STENO_MARKS("steno_marks"),
-
-    /** 速記 review: step through the writing correction left alone, and fix it (fork addition). */
-    STENO_REVIEW("steno_review"),
     SPEED("speed"),
     TAPER("taper"),
     HIGHLIGHTER("highlighter"),
@@ -173,8 +169,6 @@ data class ToolbarLayout(val sections: List<ToolbarSection>) {
             ToolbarItem.STENO to ToolbarItem.BRUSH,
             ToolbarItem.STENO_FIX to ToolbarItem.STENO,
             ToolbarItem.STENO_VIEW to ToolbarItem.STENO_FIX,
-            ToolbarItem.STENO_REVIEW to ToolbarItem.STENO_VIEW,
-            ToolbarItem.STENO_MARKS to ToolbarItem.STENO_VIEW,
         )
 
         /**
@@ -203,7 +197,7 @@ data class ToolbarLayout(val sections: List<ToolbarSection>) {
             listOf(ToolbarItem.HOME, ToolbarItem.TITLE),
             listOf(ToolbarItem.SIDEBAR),
             listOf(
-                ToolbarItem.PEN, ToolbarItem.DASHED, ToolbarItem.CALLIGRAPHY, ToolbarItem.BRUSH, ToolbarItem.STENO, ToolbarItem.STENO_FIX, ToolbarItem.STENO_VIEW, ToolbarItem.STENO_MARKS, ToolbarItem.STENO_REVIEW, ToolbarItem.SPEED,
+                ToolbarItem.PEN, ToolbarItem.DASHED, ToolbarItem.CALLIGRAPHY, ToolbarItem.BRUSH, ToolbarItem.STENO, ToolbarItem.STENO_FIX, ToolbarItem.STENO_VIEW, ToolbarItem.SPEED,
                 ToolbarItem.TAPER, ToolbarItem.HIGHLIGHTER, ToolbarItem.ERASER,
             ),
             listOf(ToolbarItem.PAN, ToolbarItem.SELECT, ToolbarItem.LASSO, ToolbarItem.SCREENSHOT),

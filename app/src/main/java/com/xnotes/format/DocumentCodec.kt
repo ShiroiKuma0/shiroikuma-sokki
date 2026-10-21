@@ -268,7 +268,6 @@ class DocumentCodec(
         doc.created?.let { j.name("created").value(java.time.Instant.ofEpochMilli(it).toString()) }
         j.name("dpi").value(doc.dpi)
         if (doc.steno) j.name("steno").value(true)
-        if (doc.stenoMarks) j.name("steno_marks").value(true)
         j.name("has_pdf").value(doc.pdfFile != null)
         j.name("bookmarks").beginArray()
         for (b in doc.bookmarks) {
@@ -731,7 +730,6 @@ class DocumentCodec(
         val doc = Document(dpi = m.dpi)
         doc.created = m.created
         doc.steno = m.steno
-        doc.stenoMarks = m.stenoMarks
         doc.templates = templates
         doc.templatePackages = packages
         doc.style = m.style
@@ -804,7 +802,6 @@ class DocumentCodec(
         var dpi = PageSize.DEFAULT_DPI
         var hasPdf = false
         var steno = false
-        var stenoMarks = false
         var style = PageStyle()
         var margins = PageMargins()
         var newPageSize: PageSizeChoice? = null
@@ -889,7 +886,6 @@ class DocumentCodec(
                 "dpi" -> m.dpi = intOr(p, PageSize.DEFAULT_DPI)
                 "has_pdf" -> m.hasPdf = boolOr(p, false)
                 "steno" -> m.steno = boolOr(p, false)
-                "steno_marks" -> m.stenoMarks = boolOr(p, false)
                 "style" -> m.style = parseStyle(p)
                 "margins" -> m.margins = parseMargins(p)
                 "new_page_size" -> m.newPageSize = parseNewPageSize(p)

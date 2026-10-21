@@ -77,7 +77,6 @@ fun Document.deepCopy(measurer: TextMeasurer): Document = Document(
     templatePackages = templatePackages,
     newPageSize = newPageSize,
     steno = steno,
-    stenoMarks = stenoMarks,
 )
 
 /**
@@ -112,5 +111,4 @@ fun Document.snapshot(): Document = Document(
     templatePackages = templatePackages,
     newPageSize = newPageSize,
     steno = steno,
-    stenoMarks = stenoMarks,
 )

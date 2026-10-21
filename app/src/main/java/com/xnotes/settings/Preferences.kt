@@ -111,12 +111,10 @@ data class Preferences(
     val showExtensions: Boolean = false,
     /** Whether an exported PDF gets a bookmark for each heading of the note's text. */
     val pdfHeadingBookmarks: Boolean = true,
-    /** 速記 correction (fork): whether writing in a stenography note is corrected at pen-up, how
-     *  strongly the hand is steadied and set to the slant (0..1; 0 keeps the hand's own slant), and the slant, in degrees from upright. */
+    /** 速記 correction (fork): whether writing in a stenography note is steadied at pen-up, and how
+     *  strongly (0..1). The writing keeps its own slant, size and shapes. */
     val stenoCorrect: Boolean = true,
     val stenoSteady: Double = 0.6,
-    val stenoSlant: Double = 1.0,
-    val stenoSlantDegrees: Double = 24.0,
 ) {
     /**
      * A new note's page size in document pixels. A named size is laid out under
@@ -203,8 +201,6 @@ data class Preferences(
         .put("pdf_heading_bookmarks", pdfHeadingBookmarks)
         .put("steno_correct", stenoCorrect)
         .put("steno_steady", stenoSteady)
-        .put("steno_slant_book", stenoSlant)
-        .put("steno_slant_target", stenoSlantDegrees)
 
     companion object {
         val DEFAULT_ACCENT = Rgba(0, 230, 118, 255)
@@ -310,10 +306,6 @@ data class Preferences(
                 pdfHeadingBookmarks = o.optBoolean("pdf_heading_bookmarks", true),
                 stenoCorrect = o.optBoolean("steno_correct", true),
                 stenoSteady = o.optDouble("steno_steady", 0.6).coerceIn(0.0, 1.0),
-                // New keys: the old "steno_slant" (0.8) and "steno_slant_degrees" (25°) were written
-                // out with the old measure of slant; the book's is 24° by the straight downstrokes.
-                stenoSlant = o.optDouble("steno_slant_book", 1.0).coerceIn(0.0, 1.0),
-                stenoSlantDegrees = o.optDouble("steno_slant_target", 24.0).coerceIn(-10.0, 50.0),
             )
         }
     }

@@ -290,14 +290,6 @@ class DocumentCodecTest {
         assertFalse(roundTrip(Document.blank(count = 1)).steno)
     }
 
-    @Test fun aNoteKeepsItsStenoMarksThroughASave() {
-        val doc = Document.blank(count = 1)
-        doc.steno = true
-        doc.stenoMarks = true
-        assertTrue(roundTrip(doc).stenoMarks)
-        assertFalse(roundTrip(Document.blank(count = 1)).stenoMarks)
-    }
-
     @Test fun aStenoStrokeKeepsItsCorrectionThroughASave() {
         val doc = Document()
         val page = Page(1240.0, 1754.0)

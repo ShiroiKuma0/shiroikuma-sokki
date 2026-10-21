@@ -569,10 +569,7 @@ class InteractionController(
     /** Whether 速記 writing in a stenography note is corrected at pen-up. */
     var stenoCorrect: Boolean = true
 
-    /** The reviewed 速記 elements to recognize at pen-up; none, and only the clean-up runs. */
-    var stenoCatalogue: () -> com.xnotes.core.steno.glyph.StenoCorrection.Catalogue? = { null }
-
-    /** How strongly the hand is cleaned up, and the slant it is set to. */
+    /** How strongly the hand is steadied. */
     var stenoParams: com.xnotes.core.steno.HandCleanup.Params = com.xnotes.core.steno.HandCleanup.Params()
 
     /** While on, a tap on corrected 速記 writing flips the stretch under it between corrected and as
@@ -583,11 +580,6 @@ class InteractionController(
             requestRender()
         }
 
-    /** While the 速記 review is open: every press pans, and a tap on 速記 writing hands the review
-     *  that stroke and the sample under the tap, through [onStenoPick]. */
-    var stenoPickMode: Boolean = false
-    var onStenoPick: ((pageIndex: Int, stroke: Stroke, sample: Int) -> Unit)? = null
-
     /** Corrects [stroke] (a 速記 stroke just written on page [page]) in place, before it is filed. */
     private fun correctSteno(stroke: Stroke, page: com.xnotes.core.model.Page) {
         if (!stenoCorrect || !state.document.steno || stroke.tool != Tool.STENO || stroke.sampleCount < 3) return
@@ -595,50 +587,7 @@ class InteractionController(
         val rx = DoubleArray(n) { stroke.xAt(it) }
         val ry = DoubleArray(n) { stroke.yAt(it) }
         val frame = com.xnotes.core.steno.LineFrame.of(page, state.document)
-        val params = stenoParams
-        // The clean-up at once; recognition, which takes a moment, off the main thread. Its result
-        // replaces the clean-up only if nothing touched the stroke's layer in between.
-        if (frame != null) {
-            com.xnotes.core.steno.HandSlant.add(rx, ry, frame.unit)
-            val base = frame.baseFor(ry.sorted()[ry.size / 2])
-            com.xnotes.core.steno.HandSize.add(DoubleArray(ry.size) { frame.unitsAbove(ry[it], base) })
-        }
-        val cleaned = com.xnotes.core.steno.glyph.StenoCorrection.correct(rx, ry, frame, params, null)
-        stroke.stenoFix = cleaned
-        if (!com.xnotes.core.steno.glyph.Recognizer.tuning.live) return
-        val catalogue = stenoCatalogue() ?: return
-        stenoWorker.execute {
-            val full = runCatching { com.xnotes.core.steno.glyph.StenoCorrection.correct(rx, ry, frame, params, catalogue) }.getOrNull()
-                ?: return@execute
-            if (full.segments.none { it.kind == com.xnotes.core.steno.FixKind.GLYPH }) return@execute
-            handler.post {
-                if (stroke.stenoFix !== cleaned || page.items.none { it === stroke }) return@post
-                val before = stroke.paintBounds()
-                stroke.stenoFix = full
-                state.repairInkRegions(listOf(page to before, page to stroke.paintBounds()))
-                state.document.dirty = true
-                onContentChanged()
-                requestRender()
-            }
-        }
-    }
-
-    /** The stretch the 速記 review is on: page, stroke and sample range, outlined on the canvas. */
-    var stenoFocus: Triple<Int, Stroke, IntRange>? = null
-        set(value) {
-            field = value
-            requestRender()
-        }
-
-    /** Swaps [stroke]'s correction layer for [after], as one undo step. */
-    fun applyStenoFix(pageIndex: Int, stroke: Stroke, after: com.xnotes.core.steno.StenoFix) {
-        val page = state.document.pages.getOrNull(pageIndex) ?: return
-        applyFixEdit(com.xnotes.core.history.ReplaceStrokeFix(page, stroke, stroke.stenoFix, after), listOf(page to stroke))
-    }
-
-    /** One background thread for 速記 recognition, in writing order. */
-    private val stenoWorker by lazy {
-        java.util.concurrent.Executors.newSingleThreadExecutor { r -> Thread(r, "steno-recognize").apply { isDaemon = true } }
+        stroke.stenoFix = com.xnotes.core.steno.HandCleanup.fix(rx, ry, frame, stenoParams)
     }
 
     /** Applies [cmd] (built, not yet applied), files it as one undo step and repaints what it touched. */
@@ -663,13 +612,6 @@ class InteractionController(
         val seg = fix.segmentIndexAt(index).takeIf { it >= 0 } ?: return false
         val after = fix.withRaw(seg, !fix.segments[seg].raw)
         applyFixEdit(com.xnotes.core.history.ReplaceStrokeFix(page, stroke, fix, after), listOf(page to stroke))
-        return true
-    }
-
-    /** Hands the 速記 writing under [content] to the review. Returns whether a stroke was hit. */
-    private fun stenoPickTap(content: Pt): Boolean {
-        val (pageIndex, stroke, index) = stenoHit(content, correctedOnly = false) ?: return false
-        onStenoPick?.invoke(pageIndex, stroke, index.coerceIn(0, stroke.sampleCount - 1))
         return true
     }
 
@@ -977,7 +919,7 @@ class InteractionController(
         }
         when {
             // Original view: every press pans, and a tap flips the corrected writing under it.
-            stenoViewMode || stenoPickMode -> beginPan(vx, vy, fromPenButton = false)
+            stenoViewMode -> beginPan(vx, vy, fromPenButton = false)
             effectiveTool == Tool.PAN -> beginPan(vx, vy, fromPenButton = buttonHeld && penButtonTool == Tool.PAN)
             effectiveTool.isStroke -> {
                 readTilt(e, 0, -1)
@@ -1106,7 +1048,6 @@ class InteractionController(
                 mode = PointerMode.IDLE
                 val upViewport = Pt(e.getX(idx).toDouble(), e.getY(idx).toDouble())
                 val tap = !downStoppedFling && upViewport.distanceTo(panDownViewport) <= TAP_SLOP
-                if (tap && stenoPickMode && stenoPickTap(content)) return
                 if (tap && stenoViewMode && stenoViewTap(content)) return
                 if (tap) onTap?.invoke(upViewport)
                 if (panMayCommitText) {
@@ -4387,21 +4328,6 @@ class InteractionController(
                     r.saveLayerBlended(fs.stroke.paintBounds(), fadeAlpha, fs.stroke.blendMode)
                     fs.stroke.paint(r)
                     r.restore()
-                }
-            }
-
-            // The 速記 review's stretch: the corrected line traced over in the accent, the rest of
-            // the stroke left as it is.
-            stenoFocus?.let { (pi, stroke, range) ->
-                val pr = state.pageRects.getOrNull(pi) ?: return@let
-                val g = stroke.geometry()
-                if (range.first < 0 || range.last >= g.pointCount) return@let
-                val pts = (range.first..range.last).map { Pt(g.cx(it), g.cy(it)) }
-                r.withSave {
-                    r.translate(pr.left, pr.top)
-                    state.applyPageTransform(r, state.document.pages[pi])
-                    r.strokePolyline(pts, Pen(state.palette.accent.withAlpha(110), 9.0, cosmetic = true))
-                    r.strokePolyline(pts, Pen(state.palette.accent, 2.5, cosmetic = true))
                 }
             }
 

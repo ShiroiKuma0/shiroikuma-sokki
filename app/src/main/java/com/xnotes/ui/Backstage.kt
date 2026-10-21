@@ -165,7 +165,7 @@ import kotlinx.coroutines.withTimeout
 import kotlin.math.roundToInt
 
 /** Which pane the backstage shows on the right. */
-enum class BackstageView { HOME, PREFERENCES, SOKKI_UI, ABOUT, TRASH, GLYPHS }
+enum class BackstageView { HOME, PREFERENCES, SOKKI_UI, ABOUT, TRASH }
 
 /** Opens the 白い熊 速記 UI page: what a long press on a sidebar (hamburger) button does (fork). */
 internal val LocalOpenSokkiUi = androidx.compose.runtime.staticCompositionLocalOf<() -> Unit> { {} }
@@ -189,10 +189,6 @@ internal fun SidebarMenuButton(
         }
     }
 }
-
-/** The 速記 element catalogue's sidebar icon: the shorthand-correction glyph (fork). */
-@Composable
-private fun stenoIcon(): ImageVector = ImageVector.vectorResource(R.drawable.ic_steno_fix)
 
 /** Whether the Home explorer is awaiting a new file/folder name. */
 /** [STENO] is a paged note like [FILE], but on 速記 shorthand paper. */
@@ -518,7 +514,6 @@ private fun BackstageSidebar(modifier: Modifier, nav: SidebarNav, onCollapse: ()
                 nav.onSelectView(BackstageView.TRASH)
             }
         }
-        Command(stenoIcon(), stringResource(R.string.glyph_catalog), selected = nav.view == BackstageView.GLYPHS) { nav.onSelectView(BackstageView.GLYPHS) }
         Command(
             XnotesIcons.sliders, stringResource(R.string.preferences),
             selected = nav.view == BackstageView.PREFERENCES,
@@ -557,7 +552,6 @@ private fun BackstageRail(modifier: Modifier, nav: SidebarNav, onExpand: () -> U
             }
         }
         if (nav.trashCount >= 0) RailItem(XnotesIcons.trash, stringResource(R.string.trash), selected = nav.view == BackstageView.TRASH) { nav.onSelectView(BackstageView.TRASH) }
-        RailItem(stenoIcon(), stringResource(R.string.glyph_catalog), selected = nav.view == BackstageView.GLYPHS) { nav.onSelectView(BackstageView.GLYPHS) }
         RailItem(
             XnotesIcons.sliders, stringResource(R.string.preferences),
             selected = nav.view == BackstageView.PREFERENCES,
@@ -613,7 +607,6 @@ private fun BackstageMain(
                 BackstageView.TRASH -> TrashPane(editor, sidebarOpen, onShowSidebar, onOpenPreferences)
                 BackstageView.SOKKI_UI -> SokkiUiPane(editor, onImportFont, onClosePage = onBackToHome)
                 BackstageView.ABOUT -> AboutPane()
-                BackstageView.GLYPHS -> GlyphCatalogPane(sidebarOpen, onShowSidebar, params = { editor.controller.stenoParams })
             }
         }
     }

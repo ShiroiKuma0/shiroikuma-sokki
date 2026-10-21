@@ -178,7 +178,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         com.xnotes.platform.FontCatalog.init(this)
         com.xnotes.platform.TemplateLibrary.init(this)
-        com.xnotes.platform.GlyphLibrary.init(this)
         setTheme(com.xnotes.R.style.Theme_Xnotes) // leave the dark launch/splash theme behind
         applyFullscreen(!deviceHasDisplayCutout(this)) // provisional; reconciled once the editor loads prefs
         // The intent that started the task comes back whenever Android rebuilds it, from a saved state
@@ -1242,6 +1241,7 @@ private fun EditorPane(
                     onOpenBackstage = actions.onOpenBackstage,
                     onInsertImage = { actions.onInsertCanvasImage(editor, null) },
                     onClosePane = onClose,
+                    onReorder = editor::applyCanvasToolbarLayout,
                 )
             }
             ToolbarAround(bar, onCover = canvas::setToolbarCover) { floatingBar ->

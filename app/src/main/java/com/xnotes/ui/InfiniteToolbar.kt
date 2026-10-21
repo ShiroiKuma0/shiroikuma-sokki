@@ -51,6 +51,8 @@ fun InfiniteToolbar(
     onOpenBackstage: () -> Unit,
     onInsertImage: () -> Unit = {},
     onClosePane: (() -> Unit)? = null,
+    /** Keeps a layout the bar's own items were dragged into (fork); none, and they stay put. */
+    onReorder: ((com.xnotes.core.tools.ToolbarLayout) -> Unit)? = null,
 ) {
     // The stroke tools use the same designed drawables the paged toolbar does, so a pen looks like
     // a pen on either canvas rather than like a generic glyph.
@@ -82,10 +84,13 @@ fun InfiniteToolbar(
     // Pinned outside the scrolling strip so closing a split pane is always one tap away.
     ToolbarFrame(armed = editor.tool, trailing = onClosePane?.let { { ClosePaneButton(it) } }) {
         val sections = editor.toolbarLayout.visibleSections
+        val reorder = onReorder?.let { rememberBarReorder(editor.toolbarLayout, it) }
+        androidx.compose.runtime.CompositionLocalProvider(LocalBarReorder provides reorder) {
         sections.forEachIndexed { index, section ->
             if (index > 0) Separator()
             for (entry in section.visibleEntries) {
                 androidx.compose.runtime.CompositionLocalProvider(LocalToolbarHint provides stringResource(entry.item.hintRes)) {
+                ReorderSlot(entry.item) {
                 when (val item = entry.item) {
                     ToolbarItem.HOME -> ToolbarIcon(XnotesIcons.prev, stringResource(R.string.toolbar_home)) { onOpenBackstage() }
                     // A name has no room down a side rail.
@@ -185,7 +190,9 @@ fun InfiniteToolbar(
                     else -> Unit
                 }
                 }
+                }
             }
+        }
         }
 
         if (!LocalBar.current.vertical) editor.renderFailure?.let {

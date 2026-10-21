@@ -122,11 +122,15 @@ fun Toolbar(
     // Pinned outside the scrolling strip so closing a split pane is always one tap away.
     ToolbarFrame(armed = editor.tool, trailing = onClosePane?.let { { ClosePaneButton(it) } }) {
         // The bar is driven by the user-customisable layout; separators sit between non-empty
-        // sections, and each item dispatches to its renderer (see ToolbarItemView).
+        // sections, and each item dispatches to its renderer (see ToolbarItemView). A long press
+        // and a drag moves an item along the bar (fork).
+        val reorder = rememberBarReorder(editor.toolbarLayout) { editor.applyToolbarLayout(it) }
+        androidx.compose.runtime.CompositionLocalProvider(LocalBarReorder provides reorder) {
         editor.toolbarLayout.visibleSections.forEachIndexed { si, section ->
             if (si > 0) Separator()
             section.visibleEntries.forEach { entry ->
                 androidx.compose.runtime.CompositionLocalProvider(LocalToolbarHint provides stringResource(entry.item.hintRes)) {
+                ReorderSlot(entry.item) {
                 ToolbarItemView(
                     editor = editor,
                     item = entry.item,
@@ -143,7 +147,9 @@ fun Toolbar(
                     onImportTemplate = onImportTemplate,
                 )
                 }
+                }
             }
+        }
         }
     }
 
@@ -209,7 +215,7 @@ private fun ToolbarItemView(
 
         ToolbarItem.WAND ->
             ToolbarIcon(XnotesIcons.magicWand, stringResource(R.string.tool_wand), active = editor.wandEnabled) { editor.toggleWand() }
-        // 速記 correction belongs to stenography notes; anywhere else the two items stay hidden.
+        // 速記 correction belongs to stenography notes; anywhere else its items stay hidden.
         ToolbarItem.STENO_FIX -> if (editor.stenoNote) {
             var open by remember { mutableStateOf(false) }
             Box {
@@ -219,25 +225,6 @@ private fun ToolbarItemView(
         }
         ToolbarItem.STENO_VIEW -> if (editor.stenoNote) {
             ToolbarIcon(ImageVector.vectorResource(R.drawable.ic_steno_view), stringResource(R.string.toolbar_steno_view), active = editor.stenoViewMode) { editor.toggleStenoView() }
-        }
-        ToolbarItem.STENO_MARKS -> if (editor.stenoNote) {
-            val fixed = com.xnotes.core.model.Stroke.STENO_MARK_FIXED.toComposeColor()
-            val raw = com.xnotes.core.model.Stroke.STENO_MARK_RAW.toComposeColor()
-            val legend = listOf(
-                HintKey(fixed, false, stringResource(R.string.steno_marks_key_fixed)),
-                HintKey(raw, false, stringResource(R.string.steno_marks_key_raw)),
-                HintKey(fixed, true, stringResource(R.string.steno_marks_key_ring)),
-            )
-            androidx.compose.runtime.CompositionLocalProvider(LocalToolbarKey provides legend) {
-                ToolbarIcon(ImageVector.vectorResource(R.drawable.ic_steno_marks), stringResource(R.string.toolbar_steno_marks), active = editor.stenoMarks) { editor.toggleStenoMarks() }
-            }
-        }
-        ToolbarItem.STENO_REVIEW -> if (editor.stenoNote) {
-            Box {
-                var open by remember { mutableStateOf(false) }
-                ToolbarIcon(ImageVector.vectorResource(R.drawable.ic_steno_review), stringResource(R.string.toolbar_steno_review), active = open) { open = true }
-                if (open) StenoReviewPanel(editor) { open = false }
-            }
         }
         ToolbarItem.RULER ->
             ToolbarIcon(XnotesIcons.ruler, stringResource(R.string.tool_ruler), active = editor.rulerVisible) { editor.toggleRuler() }
@@ -524,6 +511,9 @@ internal fun ToolbarIcon(
     val bar = LocalBar.current
     // A long press names the button (fork): the bar is icons only.
     var hintShown by remember { mutableStateOf(false) }
+    // Carried along the bar, the item is being moved, not asked about.
+    val carrying = LocalBarReorder.current?.dragging != null
+    LaunchedEffect(carrying) { if (carrying) hintShown = false }
     val glide = if (glideKey != null) LocalToolGlide.current else null
     val tint by animateColorAsState(
         when {
