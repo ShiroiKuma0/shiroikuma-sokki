@@ -40,6 +40,7 @@ import com.xnotes.core.tools.ShapeConfig
 import com.xnotes.core.shapes.ShapeKind
 import com.xnotes.core.tools.Tool
 import com.xnotes.core.tools.ToolConfig
+import kotlin.math.atan2
 import kotlin.math.exp
 
 /** What the current gesture is doing. */

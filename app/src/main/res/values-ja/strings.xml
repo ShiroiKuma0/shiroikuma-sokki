@@ -149,7 +149,6 @@
     <string name="caption_fill">塗りつぶし</string>
     <string name="caption_opacity">不透明度</string>
     <string name="caption_dashed">破線</string>
-    <string name="caption_spacing_px">"間隔  %1$d px"</string>
     <string name="default_suffix">"  （既定）"</string>
     <string name="caption_opacity_percent">"不透明度  %1$d%%"</string>
     <string name="caption_value_percent">"%1$s  %2$d%%"</string>
@@ -773,7 +772,6 @@
     <string name="pref_colour_names">色の名前</string>
     <string name="name_a_colour">色に名前を付ける</string>
     <string name="pref_per_folder_views">ディレクトリごとに表示を記憶</string>
-    <string name="pref_show_create_button">クイック作成ボタンを表示</string>
     <string name="pref_show_folder_counts">ディレクトリに項目数を表示</string>
     <string name="pref_show_extensions">ファイルの拡張子を表示（.xnote、.xcanvas）</string>
     <string name="pref_dates">日付</string>
