@@ -7,13 +7,13 @@
 **A handwriting-first notebook for pen and stylus, tuned for shorthand.**
 
 A fork of [xnotes](https://github.com/shardulvs/xnotes-android) with **major additions**: a Czech
-shorthand pen that corrects what it reads into textbook form, 速記 shorthand paper as a page ruling,
-a Japanese ink brush, a measurable pen-pressure response, a fully settable house theme, and a
-nine-category backup with identity-checked sister-app automation.
+shorthand pen that keeps your hand and only steadies it, 速記 shorthand paper as a page ruling,
+a Japanese ink brush, a measurable pen-pressure response, a fully settable house theme, a toolbar you
+reorder by dragging, and an eight-category backup with identity-checked sister-app automation.
 
 Installs **side-by-side** with upstream (app id `shiroikuma.sokki`).
 
-**📥 Latest release: [`0.9.0+059`](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases)
+**📥 Latest release: [`0.9.4+001`](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-sokki/releases)
 
 <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-orange?style=flat-square" alt="License" /></a>
 <img src="https://img.shields.io/badge/Android-8.0%2B-3ddc84?style=flat-square&logo=android&logoColor=white" alt="Android 8.0+" />
@@ -22,31 +22,29 @@ Installs **side-by-side** with upstream (app id `shiroikuma.sokki`).
 
 ---
 
-## ✒️ A shorthand pen that reads what you write
+## ✒️ A shorthand pen that keeps your hand
 
-The **速記 pen** writes Czech (Herout–Mikulík) shorthand the way the textbook draws it: hairlines,
-and a shaded swell only on a pressed downstroke — shading means *a*, so it is a switch, not a
-gradient. Knots come out as clean ovals. **New Stenography Note** opens a page of 速記 paper with
-the pen armed.
+The **速記 pen** writes Czech (Herout–Mikulík) shorthand the way the textbook draws it: every line a
+hairline, and a pressed downstroke switching to one shaded width — shading means *a*, so it is a
+switch, not a gradient. Each shaded run eases in and out like a spindle, and knots come out as clean
+ovals. **New Stenography Note** opens a page of 速記 paper with the pen armed.
 
-At every pen-up the stroke is **steadied** (tremor out, the slant set to the book's, extremes
-snapped to the lines) and then **read**: an element the recognizer is *certain* of is redrawn in
-its textbook form, in its own span only, so nothing else on the line moves. Your writing is never
-overwritten — the correction is a layer over it, and any element can be flipped back to how you
-wrote it.
+At every pen-up the stroke is **steadied, and nothing more**: the tremor and the wiggle of long
+lines are smoothed out along the stroke, corners and knots stay sharp, and the slant, the heights
+and the shapes stay exactly yours. The writing itself is never overwritten — the steadying is a
+layer over it, a slider sets its strength, and any page can be shown as written.
 
-- **A catalogue of 104 elements**, traced from the textbook over their scans, each with its
-  reading, category and form; browse, inspect, edit, merge and split them, and try them on a test
-  pad that reads exactly as a note does.
-- **It learns your hand.** A drill takes you through the elements one by one; a review steps
-  through what was left uncorrected, where one tap says what a stretch is, makes it a new element,
-  or replaces it — and every answer is used at the very next pen-up.
-- **Element marks** show the whole page at a glance: cyan under every corrected element,
-  red-orange under everything that stands as written, a ring at each element's ends. The note
-  remembers whether they are on.
-- **It is held to a test.** A corpus of real recorded writing is scored element by element on
-  every build: a wrong element costs far more than a missed one, and nothing outside a recognized
-  element may move.
+Earlier builds also tried to recognize each element and redraw it in its textbook form. Measured on
+real writing it misread too much to help, so it is gone: the hand is trained to the book, not the
+book forced onto the hand.
+
+---
+
+## ↔️ A toolbar you arrange by hand
+
+Long-press any toolbar item to read what it does; long-press and drag it to move it. An accent bar
+shows where it will land, and the new order is kept — on the note toolbar and the canvas toolbar
+alike.
 
 ---
 
@@ -146,8 +144,8 @@ dividers.
 
 ## 💾 Backup, restore, and 保存復元 automation
 
-Nine logically split categories — theme, preferences, tools and toolbars, view defaults, text
-defaults, explorer, imported fonts, the 速記 elements, imported code theme — exported as one ZIP,
+Eight logically split categories — theme, preferences, tools and toolbars, view defaults, text
+defaults, explorer, imported fonts, imported code theme — exported as one ZIP,
 written `.part` and renamed only once complete, so a killed export can never leave something a
 restore would trust.
 
@@ -166,7 +164,7 @@ ignored rather than refused. The token is 24 `SecureRandom` bytes, compared cons
 its own preferences file that no export category touches.
 
 The archive holds everything **settable** — it does not hold the notes themselves, which live in the
-folder you pick in the explorer. The backup says so in the header it reports to a caller, rather
+directory you pick in the explorer. The backup says so in the header it reports to a caller, rather
 than letting a restore look more complete than it is.
 
 The app stays **SAF-only** — `MANAGE_EXTERNAL_STORAGE` is deliberately not declared, since it

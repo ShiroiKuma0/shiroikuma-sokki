@@ -3,6 +3,55 @@
 All notable fork changes on top of upstream [xnotes](https://github.com/shardulvs/xnotes-android).
 Versions read `<upstream version>+NNN`, where `NNN` counts our builds on that upstream base.
 
+## 0.9.4+001 — 2026-10-22
+
+Built on upstream **v0.9.4** (`versionCode` 65), as 0.9.4+001 — rebased from v0.9.0 through v0.9.3.
+
+### 速記 — the hand as written, only steadier
+
+- **Pen-up now only steadies the stroke:** the tremor and the wiggle of long lines are smoothed
+  along the stroke between its corners; corners and knots stay sharp, and the slant, heights and
+  shapes are left exactly as written. A *Strength* slider in the *Steadiness* popup sets how much.
+- **The ink is unchanged:** every line a hairline, and a pressed downstroke switching to one fixed
+  shaded width with spindle ends.
+- **Recognition is removed,** with everything built around it: the element catalogue and its 104
+  built-in elements, the studio, the review, the drill, element marks, slant and size correction,
+  and the 速記 elements backup category (a backup that still carries one imports without it).
+  Measured on 白い熊's own writing it misread too often to help.
+- **Notes stay compatible:** the `"steno_fix"` layer, *Original view* and *Show this page as
+  written* remain, so writing corrected by earlier builds still opens as it was and can be shown
+  as written.
+
+### Toolbar
+
+- **Drag to reorder:** long-press a toolbar item and drag it to move it; an accent bar shows where
+  it lands. Works on the note toolbar and the canvas toolbar, and the order is saved.
+- **Long-press hints and upstream's new pen-hover tooltips live side by side** on every toolbar
+  button; the sidebar button keeps its long-press to the 白い熊 速記 UI page.
+
+### Language
+
+- **Japanese for everything upstream added since 0.9.0:** 208 new captions — the shape library and
+  flowchart symbols, connectors and UML, covers and templates, the AI template guide, batch PDF
+  export and free page movement.
+
+### What the new base brings (upstream's work)
+
+- Over 90 shapes (flowchart, block arrows, callouts, 3D and math), connectors that stay attached,
+  labels, fills and line heads.
+- Scribble over ink to erase it — on by default, for every pen including 速記.
+- Note covers, page and cover templates from your own pictures or designed by an AI, and a choice
+  of new-page size.
+- Batch PDF export, mirroring, insert a PDF after any page, tooltips on pen hover.
+- Smoother horizontal page navigation, free page movement from the View menu, sharper page
+  borders, a denser explorer gallery.
+- Ink shows while writing on Honor devices, and the Lenovo Tab Pen Plus button works.
+
+### Fixes & behaviour
+
+- The imported-templates help says *directory*, not *folder*.
+- Held-stroke shape snapping, on by default upstream, still leaves the 速記 pen and the brush alone.
+
 ## 0.9.0+059 — 2026-10-20
 
 Built on upstream **v0.9.0** (`versionCode` 61), as 0.9.0+002.
