@@ -122,6 +122,7 @@
     <string name="view_double">見開き</string>
     <string name="view_cover">表紙付き見開き</string>
     <string name="caption_vertical_scrolling">縦スクロール</string>
+    <string name="caption_free_movement">ページを自由に動かす</string>
     <string name="caption_pdf_filters">PDF カラーフィルター</string>
     <string name="filter_contrast">コントラスト</string>
     <string name="filter_invert">反転</string>
