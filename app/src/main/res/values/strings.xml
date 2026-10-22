@@ -419,7 +419,7 @@
     <string name="templates_built_in">Built-in</string>
     <string name="templates_examples">Examples</string>
     <string name="templates_imported">Imported</string>
-    <string name="templates_imported_help">Kept in your notes folder, so they sync with your notes.</string>
+    <string name="templates_imported_help">Kept in your notes directory, so they sync with your notes.</string>
     <string name="cover_designs">Designs</string>
     <string name="import_template_file">Import template</string>
     <string name="page_from_image">Page template from image</string>
